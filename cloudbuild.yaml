@@ -17,5 +17,5 @@ steps:
    - 'us-central1'
    - '--platform'
    - 'managed'
-   images:
-    - 'gcr.io/$PROJECT_ID/hyperlocal-auto:$COMMIT_SHA'
+ images:
+ - 'gcr.io/$PROJECT_ID/hyperlocal-auto:$COMMIT_SHA'
