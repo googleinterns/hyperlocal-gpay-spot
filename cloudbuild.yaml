@@ -1,4 +1,4 @@
-steps:
+ steps:
  # build the container image
  - name: 'gcr.io/cloud-builders/docker'
    args: ['build', '-t', 'gcr.io/$PROJECT_ID/hyperlocal-auto:$COMMIT_SHA', '.']
@@ -17,5 +17,6 @@ steps:
    - 'us-central1'
    - '--platform'
    - 'managed'
-images:
+ images:
  - 'gcr.io/$PROJECT_ID/hyperlocal-auto:$COMMIT_SHA'
+
