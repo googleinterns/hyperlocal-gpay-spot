@@ -1,0 +1,19 @@
+{
+  "name": "spot-platform-codelab",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://dikshamodi@google.com@source.developers.google.com:2022/p/spot-eap/r/spot-platform-codelab"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
