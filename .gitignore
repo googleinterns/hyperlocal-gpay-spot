@@ -1,8 +1,13 @@
+### Security Key ###
+/client_secrets.json
+
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+
+
 
 ### STS ###
 .apt_generated
