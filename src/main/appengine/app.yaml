@@ -1,0 +1,4 @@
+runtime: java
+handlers:
+  - url: /*
+    script: This is ignored
