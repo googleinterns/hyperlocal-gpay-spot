@@ -16,7 +16,7 @@ public class MerchantController {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  @GetMapping("/shops/{id}") 
+  @GetMapping("/merchants/{id}") 
   public CompletableFuture<Object> getCatalog(@PathVariable Integer id) {
     CompletableFuture<Object> queryResult = CompletableFuture.supplyAsync(() -> {
       try {
