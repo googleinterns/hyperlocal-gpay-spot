@@ -1,4 +1,2 @@
-runtime: java
-handlers:
-  - url: /*
-    script: This is ignored
+runtime: java11
+instance_class: F4
