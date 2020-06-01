@@ -4,18 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Merchants {
-  private Integer MerchantID;
   private String ShopName; 
 
-  public Merchants(Integer id, String shop) {
-    this.MerchantID = id;
+  public Merchants(String shop) {
     this.ShopName = shop;
   }
-
-  public Integer getMerchanID() {
-    return MerchantID;
-  }
-
   public String getShopName() {
     return ShopName;
   }
