@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.view.RedirectView;
 
 // Rest Controller for Merchants
 @RestController
@@ -44,37 +43,31 @@ public class MerchantController {
 
   @PostMapping("/merchants/new") 
   public CompletableFuture<Merchants> addMerchant(@RequestBody String postInputString) {
-    CompletableFuture<Merchants> newMerchantObject = CompletableFuture.supplyAsync(() -> {
     JsonObject jsonObject = JsonParser.parseString(postInputString).getAsJsonObject(); 
-    
+      
     Merchants newMerchant = new Merchants(
-    jsonObject.get("ShopName").getAsString(),
-     jsonObject.get("Latitude").getAsDouble(),
-     jsonObject.get("Longitude").getAsDouble(),
-     jsonObject.get("TypeOfService").getAsString(),
-     jsonObject.get("AddressLine1").getAsString()
+    jsonObject.get("MerchantID").getAsInt(),
+    jsonObject.get("MerchantName").getAsString(),
+    jsonObject.get("MerchantPhone").getAsString()
     );
 
     Connection connection = MySQLConnectionBuilder.createConnectionPool(
-      "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
-      connection.sendPreparedStatement( 
-          String.format("INSERT INTO Merchants"
-          .concat("(`ShopName`, `Latitude`, `Longitude`, `TypeOfService`, `AddressLine1`)") 
-          .concat("VALUES (")
-          .concat(String.format("'%s',", newMerchant.getShopName()))
-          .concat(String.format("%s,", newMerchant.getLatitude()))
-          .concat(String.format("%s,", newMerchant.getLongitude()))
-          .concat(String.format("'%s',", newMerchant.getTypeOfService()))
-          .concat(String.format("'%s');", newMerchant.getAddressLine1())))
-      );
+      "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");   
+    
+    CompletableFuture<Merchants> insertedMerchant = connection
+        .sendPreparedStatement(
+      String.format("INSERT INTO Merchants"
+      .concat("(`MerchantID`, `MerchantName`, `MerchantPhone`)") 
+      .concat("VALUES (")
+      .concat(String.format("'%s',", newMerchant.getMerchantID()))
+      .concat(String.format("'%s',", newMerchant.getMerchantName()))
+      .concat(String.format("'%s');", newMerchant.getMerchantPhone())))
+    ).thenApply((result) -> {
+      publishMessage(postInputString);
       return newMerchant;
     });
-      
-    newMerchantObject = newMerchantObject.thenApply((newMerchant) -> {
-      publishMessage(postInputString);   
-      return newMerchant;
-    });
-    return newMerchantObject;
+
+    return insertedMerchant;
   }  
 
 
@@ -83,7 +76,7 @@ public class MerchantController {
        @RequestParam Integer MerchantID) {
     Connection connection = MySQLConnectionBuilder.createConnectionPool(
       "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
-      connection.sendPreparedStatement("UPDATE Merchants SET ShopName =' a new name' where MerchantID=13");    
+      connection.sendPreparedStatement("UPDATE Merchants SET MerchantName =' a new name' where MerchantID=1");    
   } 
 
   public void publishMessage(String message) {

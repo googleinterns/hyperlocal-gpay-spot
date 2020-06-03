@@ -1,38 +1,26 @@
 package com.example.hyperlocal;
 
 public class Merchants {
-  private String ShopName; 
-  private double Latitude;
-  private double Longitude;
-  private String TypeOfService;
-  private String AddressLine;
+  private Integer MerchantID; 
+  private String MerchantName;
+  private String MerchantPhone;
 
 
-  public Merchants(String shopName, Double latitude, Double longitude, String serviceType, String address) {
-    this.ShopName = shopName;
-    this.Latitude = latitude;
-    this.Longitude = longitude;
-    this.TypeOfService = serviceType;
-    this.AddressLine = address;
+  public Merchants(Integer MerchantID, String MerchantName, String MerchantPhone) {
+    this.MerchantID = MerchantID;
+    this.MerchantName = MerchantName;
+    this.MerchantPhone = MerchantPhone;
   }
 
-  public String getShopName() {
-    return ShopName;
+  public Integer getMerchantID() {
+    return MerchantID;
   }
 
-  public String getTypeOfService() {
-    return TypeOfService;
+  public String getMerchantName() {
+    return MerchantName;
   }
 
-  public String getAddressLine1() {
-    return AddressLine;
-  }
-
-  public Double getLatitude(){
-    return Latitude;
-  }
-
-  public Double getLongitude() {
-    return Longitude;
+  public String getMerchantPhone() {
+    return MerchantPhone;
   }
 }
