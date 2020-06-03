@@ -1,12 +1,12 @@
 package com.example.hyperlocal;
 
-public class Merchants {
+public class Merchant {
   private Long MerchantID; 
   private String MerchantName;
   private String MerchantPhone;
 
 
-  public Merchants(Long MerchantID, String MerchantName, String MerchantPhone) {
+  public Merchant(Long MerchantID, String MerchantName, String MerchantPhone) {
     this.MerchantID = MerchantID;
     this.MerchantName = MerchantName;
     this.MerchantPhone = MerchantPhone;
