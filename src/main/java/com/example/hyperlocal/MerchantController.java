@@ -39,60 +39,42 @@ public class MerchantController {
     // DB Connection
     Connection connection = MySQLConnectionBuilder.createConnectionPool("jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
     
-    // Promise: returns JSON string
-    CompletableFuture<String> shopPromise = connection
-      .sendPreparedStatement("SELECT * from `Shops` WHERE `ShopID` = ?;", Arrays.asList(shopID))
-      .thenApply((QueryResult queryResult) -> {
-        // Get Shop details
-        ResultSet rows = queryResult.getRows();
-        if(rows.size() == 0) return null;
-        else
-        {
-          RowData shopData = rows.get(0);
-          return new Shop(shopData);
-        }
-      }).thenApply((Shop shop) -> {
-        // Shop exists?
-        if(shop == null) return new Gson().toJson(Collections.singletonMap("error", "Shop not found."));
-        else
-        {
-          // Get Merchant Details
-          CompletableFuture<Merchant> merchantPromise = connection
-            .sendPreparedStatement("SELECT * from `Merchants` WHERE `MerchantID` = ?;", Arrays.asList(shop.MerchantID))
-            .thenApply((QueryResult merchantQuery) -> {
-              RowData merchantData = merchantQuery.getRows().get(0);
-              return new Merchant((Long)merchantData.get(0), (String)merchantData.get(1), (String)merchantData.get(2));
-            });
-          
-          // Get Catalog Details
-          CompletableFuture<ArrayList<Service>> catalogPromise = connection
-            .sendPreparedStatement("SELECT * from `Catalog` WHERE `ShopID` = ?;", Arrays.asList(shop.ShopID))
-            .thenApply((QueryResult catalogQuery) -> {
-              ResultSet catalogSet = catalogQuery.getRows();
-              ArrayList<Service> serviceList = new ArrayList<Service>();
-              for(RowData serviceRow : catalogSet) serviceList.add(new Service(serviceRow));
-              return serviceList;
-            });
-          
-          // Put everything into HashMap
-          HashMap<String, Object> shopMap = new HashMap<String, Object>();
-          shopMap.put("ShopDetails", shop);
-          try
-          {
-            shopMap.put("MerchantDetails", merchantPromise.get());
-            shopMap.put("Catalog", catalogPromise.get());
-          }
-          catch(Exception e)
-          {
-            return new Gson().toJson(Collections.singletonMap("error", "Internal Server Error: Could not fetch details"));
-          }
+    // Container obj for shop details
+    HashMap<String, Object> shopDetailsMap = new HashMap<String, Object>();
 
-          // Convert HashMap to JSON string
-          return new Gson().toJson(shopMap);
-        }
+    // Promise: returns JSON string
+    CompletableFuture<String> shopDetailsPromise = connection
+        // Get Shop details  
+      .sendPreparedStatement("SELECT * from `Shops` WHERE `ShopID` = ?;", Arrays.asList(shopID))
+      .thenCompose((QueryResult shopQueryResult) -> {
+        ResultSet shopRecords = shopQueryResult.getRows();
+        if(shopRecords.size() == 0) throw new NullPointerException("Shop not found."); // No shop with supplied ShopID found
+        RowData shopData = shopRecords.get(0);
+        Shop shop = new Shop(shopData);
+        shopDetailsMap.put("ShopDetails", shop);
+
+        // Get Merchant Details
+        return connection.sendPreparedStatement("SELECT * from `Merchants` WHERE `MerchantID` = ?;", Arrays.asList(shop.MerchantID));
+      }).thenCompose((QueryResult merchantQueryResult) -> {
+        RowData merchantData = merchantQueryResult.getRows().get(0);
+        Merchant merchant = new Merchant((Long)merchantData.get(0), (String)merchantData.get(1), (String)merchantData.get(2));
+        shopDetailsMap.put("MerchantDetails", merchant);
+        
+        // Get Catalog Details
+        return connection.sendPreparedStatement("SELECT * from `Catalog` WHERE `ShopID` = ?;", Arrays.asList(shopID));
+      }).thenApply((QueryResult catalogQueryResult) -> {
+        ResultSet catalogRecords = catalogQueryResult.getRows();
+        ArrayList<Service> serviceList = new ArrayList<Service>();
+        for(RowData serviceRecord : catalogRecords) serviceList.add(new Service(serviceRecord));
+        shopDetailsMap.put("Catalog", serviceList);
+        
+        // Container -> JSON String
+        return new Gson().toJson(shopDetailsMap);
+      }).exceptionally(ex -> {
+        return new Gson().toJson(Collections.singletonMap("error", ex.getMessage()));
       });
 
-    return shopPromise;
+    return shopDetailsPromise;
   }
 
   @PostMapping("/merchants/") 
