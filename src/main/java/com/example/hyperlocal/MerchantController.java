@@ -1,13 +1,11 @@
 package com.example.hyperlocal;
 
 import java.util.Collections;
-import java.io.Console;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
@@ -17,9 +15,6 @@ import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureAdapter;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -107,7 +102,6 @@ public class MerchantController {
     return future;
   }
 
-
   /*
     Upserts details of a merchant
       - MerchantID
@@ -118,36 +112,48 @@ public class MerchantController {
   */
 
   @PostMapping("/upsert/merchants")
-  public CompletableFuture<Merchant> upsertMerchant(@RequestBody String postInputString) {
+  public CompletableFuture<String> upsertMerchant(@RequestBody String postInputString) {
     JsonObject jsonObject = JsonParser.parseString(postInputString).getAsJsonObject();
 
     Merchant newMerchant = new Merchant(jsonObject);
 
     Connection connection = MySQLConnectionBuilder.createConnectionPool(
-        "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
+      "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
 
-    CompletableFuture<Merchant> upsertedMerchantDetails = connection
-      .sendPreparedStatement("SELECT COUNT(1) from Merchants where MerchantID = ?;",
+    CompletableFuture<String> upsertedMerchantDetails = connection
+      .sendPreparedStatement("SELECT * from Merchants where MerchantID = ?;",
           Arrays.asList(newMerchant.getMerchantID()))
       .thenCompose(queryResult -> {
-        if (queryResult.getRows().size() != 0) {
-          return connection.sendPreparedStatement(
-            "UPDATE `Merchants` SET "
-            .concat(String.format("`MerchantName` = '%s',", newMerchant.getMerchantName()))
-            .concat(String.format("`MerchantPhone` = '%s' ", newMerchant.getMerchantPhone()))
-            .concat(String.format("WHERE `MerchantID`= %s", newMerchant.getMerchantID())));
+        if (queryResult.getRows().size() != 0) {         
+          return updateMerchantDetails(newMerchant);
         }
         else{
-          return connection.sendPreparedStatement(
-              String.format("INSERT INTO Merchants".concat("(`MerchantID`, `MerchantName`, `MerchantPhone`)")
-                  .concat("VALUES (").concat(String.format("'%s',", newMerchant.getMerchantID()))
-                  .concat(String.format("'%s',", newMerchant.getMerchantName()))
-                  .concat(String.format("'%s');", newMerchant.getMerchantPhone()))));
+          return insertNewMerchant(newMerchant);
         }
       })
-      .thenApply((result) -> {
-        return newMerchant;
-      }); 
-    return upsertedMerchantDetails;
+      .thenCompose((result) -> {
+        return CompletableFuture.completedFuture(new Gson().toJson(newMerchant));
+      });
+      return upsertedMerchantDetails;
   }  
+
+  /* Helper function to call database and update it */
+  public CompletableFuture<QueryResult> updateMerchantDetails(Merchant merchantDetails) {
+    Connection connection = MySQLConnectionBuilder.createConnectionPool(
+      "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
+    return connection.sendPreparedStatement(
+      "UPDATE `Merchants` SET "
+      .concat(String.format("`MerchantName` = '%s',", merchantDetails.getMerchantName()))
+      .concat(String.format("`MerchantPhone` = '%s' ", merchantDetails.getMerchantPhone()))
+      .concat(String.format("WHERE `MerchantID`= %s;", merchantDetails.getMerchantID())));
+  }
+
+  /* Calls database and inserts a new Merchant record */
+  public CompletableFuture<QueryResult> insertNewMerchant(Merchant merchantDetails) {
+    Connection connection = MySQLConnectionBuilder.createConnectionPool(
+      "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
+    String InsertQueryParameters[] = new String[]{Long.toString(merchantDetails.getMerchantID()), merchantDetails.getMerchantName(), merchantDetails.getMerchantPhone()};
+      return connection.sendPreparedStatement(
+        "Insert into `Merchants` values (?,?,?);", Arrays.asList(InsertQueryParameters));
+  }
 }
