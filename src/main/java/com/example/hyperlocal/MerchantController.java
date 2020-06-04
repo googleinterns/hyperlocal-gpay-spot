@@ -1,6 +1,7 @@
 package com.example.hyperlocal;
 
 import java.util.Collections;
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -151,23 +152,22 @@ public class MerchantController {
         }
       })
       .thenApply((result) -> {
-        //Something is wrong here: Debugging it
-        // String publishPromiseAsString=null;
-        // try {
-        //   publishPromiseAsString = publishMessage(postInputString).get();
-        // } catch (InterruptedException | ExecutionException e) {
-        //   e.printStackTrace();
-        // }
-        Merchant insertedMerchant = new Merchant(
-         JsonParser.parseString(postInputString).getAsJsonObject()
-        );
+        Merchant insertedMerchant = null;
+        try {
+          String publishPromise = publishMessage(postInputString).get();
+            insertedMerchant = new Merchant(
+            JsonParser.parseString(postInputString).getAsJsonObject()
+          );
+        } catch (Exception e) {
+          System.out.println("Couldn't insert to pubsub Queue");
+        }
         return insertedMerchant;
       }); 
     return upsertedMerchantDetails;
   }  
 
 
-  public CompletableFuture<String> publishMessage(String message) {
+  public CompletableFuture<String> publishMessage(String message) throws InterruptedException, ExecutionException {
     return this.publisher.publish("projects/speedy-anthem-217710/topics/testTopic",message).completable();
   }
 
