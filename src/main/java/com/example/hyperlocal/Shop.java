@@ -1,7 +1,9 @@
 package com.example.hyperlocal;
 
 import com.github.jasync.sql.db.RowData;
-import java.math.BigDecimal; 
+import com.google.gson.JsonObject;
+
+import java.math.BigDecimal;
 
 public class Shop {
     public Long ShopID;
@@ -28,6 +30,16 @@ public class Shop {
         this.Longitude = ((BigDecimal)data.get(4)).doubleValue();
         this.AddressLine1 = (String)data.get(5);
         this.TypeOfService = (String)data.get(6);
+    }
+
+    public Shop(JsonObject data) {
+      this.ShopID = data.get("ShopID").getAsLong();
+      this.MerchantID = data.get("MerchantID").getAsLong();
+      this.ShopName = data.get("ShopName").getAsString();
+      this.AddressLine1 = data.get("AddressLine1").getAsString();
+      this.TypeOfService = data.get("TypeOfService").getAsString();
+      this.Latitude = data.get("Latitude").getAsDouble();
+      this.Longitude = data.get("Longitude").getAsDouble();
     }
 
 }

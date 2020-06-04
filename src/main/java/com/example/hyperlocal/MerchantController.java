@@ -30,12 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MerchantController {
 
-  private final PubSubTemplate publisher;
-
-  public MerchantController(PubSubTemplate pubSubTemplate) {
-    this.publisher = pubSubTemplate;
-  }
-
   @GetMapping("/get/shop/{shopID}")
   public CompletableFuture<String> getShopDetails(@PathVariable Integer shopID) {
     // DB Connection
@@ -123,8 +117,8 @@ public class MerchantController {
     Returns: Merchant Object with updated Details if exists, else return inserted Merchant object
   */
 
-  @PostMapping("/merchants")
-  public CompletableFuture<Merchant> addMerchant(@RequestBody String postInputString) {
+  @PostMapping("/upsert/merchants")
+  public CompletableFuture<Merchant> upsertMerchant(@RequestBody String postInputString) {
     JsonObject jsonObject = JsonParser.parseString(postInputString).getAsJsonObject();
 
     Merchant newMerchant = new Merchant(jsonObject);
@@ -152,23 +146,8 @@ public class MerchantController {
         }
       })
       .thenApply((result) -> {
-        Merchant insertedMerchant = null;
-        try {
-          String publishPromise = publishMessage(postInputString).get();
-            insertedMerchant = new Merchant(
-            JsonParser.parseString(postInputString).getAsJsonObject()
-          );
-        } catch (Exception e) {
-          System.out.println("Couldn't insert to pubsub Queue");
-        }
-        return insertedMerchant;
+        return newMerchant;
       }); 
     return upsertedMerchantDetails;
   }  
-
-
-  public CompletableFuture<String> publishMessage(String message) throws InterruptedException, ExecutionException {
-    return this.publisher.publish("projects/speedy-anthem-217710/topics/testTopic",message).completable();
-  }
-
 }
