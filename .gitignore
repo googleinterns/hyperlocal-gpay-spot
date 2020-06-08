@@ -14,6 +14,7 @@ target/
 *cred.json
 *.project
 .mvn
+logs
 
 ### IntelliJ IDEA ###
 .idea

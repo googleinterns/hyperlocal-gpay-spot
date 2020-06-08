@@ -7,96 +7,107 @@ import java.util.concurrent.ExecutionException;
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
+import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
 
 @RestController
 public class ShopController {
 
   private final PubSubTemplate publisher;
-  private final Connection connection;
-  private Shop upsertedShop;
+  private static String DATABASE_URL;
+  private static Connection connection;
+  private static String SHOP_UPDATE_PREPARED_STATEMENT;
+  private static String SHOP_INSERT_PREPARED_STATEMENT;
+  private static String PUBSUB_URL;
+  private static Logger logger = LogManager.getLogger(ShopController.class);
 
   public ShopController(PubSubTemplate pubSubTemplate) {
+    DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";
     this.publisher = pubSubTemplate;
-    upsertedShop = null;
-    connection = MySQLConnectionBuilder.createConnectionPool(
-        "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal");
+    connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
+    SHOP_INSERT_PREPARED_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";
+    SHOP_UPDATE_PREPARED_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
+    PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
+  }
+
+  @GetMapping("/shops/all")
+  public CompletableFuture<QueryResult> abc() {
+    return connection.sendPreparedStatement("SELECT * from Shops;");
   }
 
   /*
-   * Route to handle shop upserts for a merchant
-   * returns: upserted Shop Instance
-  */
+   * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
+   */
+  @PostMapping("/insert/shop")
+  public CompletableFuture<String> insertShop(@RequestBody String shopDetailsString)
+      throws InterruptedException, ExecutionException {
+    JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
-  @PostMapping("/upsert/shop")
-  public CompletableFuture<String> upsertShop(@RequestBody String postInputString) {
-    JsonObject shopDataAsJson = JsonParser.parseString(postInputString).getAsJsonObject();
-
-    return connection.sendPreparedStatement("SELECT * from Shops where MerchantID = ?;",
-      Arrays.asList(shopDataAsJson.get("MerchantID").getAsLong()))
-    .thenCompose(queryResult -> {
-      if (queryResult.getRows().size() != 0) {
-        return updateShopDetails(shopDataAsJson);
-      } else {
-        return insertNewShop(shopDataAsJson);
-      }
-    })    
-    .thenCompose((queryResult) -> {
-      return connection.sendPreparedStatement(
-        "Select * from Shops where MerchantID = ?;", 
-        Arrays.asList(shopDataAsJson.get("MerchantID").toString())
-      );
-    })
-    .thenCompose((QueryResult queryResult) -> {
-      upsertedShop = new Shop(queryResult.getRows().get(0));
-      return CompletableFuture.completedFuture(upsertedShop);
-    })
-    .thenCompose((shop) -> {
-      CompletableFuture<String> publishPromise = null;
-      try {
-        publishPromise = publishMessage(Long.toString(upsertedShop.ShopID));
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
-      }
-      return publishPromise;
-    }).thenApply((publishPromise) ->{
-      return new Gson().toJson(upsertedShop);
+    return insertNewShop(shopDataAsJson).thenCompose((QueryResult queryResult) -> {
+      CompletableFuture<Long> shopID = CompletableFuture
+          .completedFuture(((MySQLQueryResult) queryResult).getLastInsertId());
+      return shopID;
+    }).thenCompose((shopID) -> {
+      shopDataAsJson.addProperty("ShopID", shopID);
+      return CompletableFuture.completedFuture(shopID);
+    }).thenCompose((shopID) -> {
+      return publishMessage(Long.toString(shopID));
+    }).exceptionally(e -> {
+      logger.error(String.format("ShopID %s: Could not publish to PubSub. Exited exceptionally!",
+          shopDataAsJson.get("ShopID").getAsString()));
+      return "";
+    }).thenApply((publishPromise) -> {
+      return new Gson().toJson(shopDataAsJson);
     });
-  }  
-
-  public CompletableFuture<String> publishMessage(String message) throws InterruptedException, ExecutionException {
-    return this.publisher.publish("projects/speedy-anthem-217710/topics/testTopic",message).completable();
   }
 
-  public CompletableFuture<QueryResult> updateShopDetails(JsonObject shopDataAsJsonObject) {
-    return connection.sendPreparedStatement(
-      "UPDATE `Shops` SET "
-      .concat(String.format("`ShopName` = '%s',", shopDataAsJsonObject.get("ShopName").getAsString()))
-      .concat(String.format("`TypeOfService` = '%s',", shopDataAsJsonObject.get("TypeOfService").getAsString()))
-      .concat(String.format("`Latitude` = '%s',", shopDataAsJsonObject.get("Latitude").getAsDouble()))
-      .concat(String.format("`Longitude` = '%s',", shopDataAsJsonObject.get("Longitude").getAsDouble()))
-      .concat(String.format("`AddressLine1` = '%s' ", shopDataAsJsonObject.get("AddressLine1").getAsString()))
-      .concat(String.format("WHERE `MerchantID`= %s;", shopDataAsJsonObject.get("MerchantID").getAsLong()))
-    );
+  /*
+   * Expects: All shop details (including the ShopID of the shop to be Updated)
+   */
+
+  @PostMapping("/update/shop/")
+  public CompletableFuture<String> updateShop(@RequestBody String shopDetailsString) {
+    JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
+
+    return updateShopDetails(shopDataAsJson).thenCompose((queryResult) -> {
+      return publishMessage(shopDataAsJson.get("ShopID").getAsString());
+    }).exceptionally(e -> {
+      e.printStackTrace();
+      return "";
+    }).thenApply((publishPromise) -> {
+      return new Gson().toJson(shopDataAsJson);
+    });
   }
 
-  public CompletableFuture<QueryResult> insertNewShop(JsonObject shopDatJsonObject) {
-    return connection.sendPreparedStatement(
-      "INSERT INTO `Shops` (ShopName, TypeOfService, Latitude, Longitude, AddressLine1, MerchantID) VALUES ("
-      .concat(String.format("'%s' ,", shopDatJsonObject.get("ShopName").getAsString()))
-      .concat(String.format("'%s' ,", shopDatJsonObject.get("TypeOfService").getAsString()))
-      .concat(String.format("'%s' ,", shopDatJsonObject.get("Latitude").getAsString()))
-      .concat(String.format("'%s' ,", shopDatJsonObject.get("Longitude").getAsString()))
-      .concat(String.format("'%s' ,", shopDatJsonObject.get("AddressLine1").getAsString()))
-      .concat(String.format("'%s') ;", shopDatJsonObject.get("MerchantID").getAsString()))
-    );
+  public CompletableFuture<String> publishMessage(String message) {
+    return this.publisher.publish(PUBSUB_URL, message).completable();
+  }
+
+  public CompletableFuture<QueryResult> updateShopDetails(JsonObject shopDataJsonObject) {
+    String UpdateQueryParameters[] = new String[] { shopDataJsonObject.get("ShopName").getAsString(),
+        shopDataJsonObject.get("TypeOfService").getAsString(), shopDataJsonObject.get("Latitude").getAsString(),
+        shopDataJsonObject.get("Longitude").getAsString(), shopDataJsonObject.get("AddressLine1").getAsString(),
+        shopDataJsonObject.get("ShopID").getAsString() };
+
+    return connection.sendPreparedStatement(SHOP_UPDATE_PREPARED_STATEMENT, Arrays.asList(UpdateQueryParameters));
+  }
+
+  public CompletableFuture<QueryResult> insertNewShop(JsonObject shopDataJsonObject) {
+    String InsertQueryParameters[] = new String[] { shopDataJsonObject.get("ShopName").getAsString(),
+        shopDataJsonObject.get("TypeOfService").getAsString(), shopDataJsonObject.get("Latitude").getAsString(),
+        shopDataJsonObject.get("Longitude").getAsString(), shopDataJsonObject.get("AddressLine1").getAsString(),
+        shopDataJsonObject.get("MerchantID").getAsString() };
+
+    return connection.sendPreparedStatement(SHOP_INSERT_PREPARED_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 }
