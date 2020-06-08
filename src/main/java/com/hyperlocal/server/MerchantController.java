@@ -18,16 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MerchantController {
 
-  private static String DATABASE_URL; 
+  private static final String DATABASE_URL="jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
   private static Connection connection;
-  private static String MERCHANT_UPDATE_PREPARED_STATEMENT;
-  private static String MERCHANT_INSERT_PREPARED_STATEMENT;
+  private static final String MERCHANT_UPDATE_PREPARED_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
+  private static final String MERCHANT_INSERT_PREPARED_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
 
   public MerchantController() {
-    DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
-    MERCHANT_INSERT_PREPARED_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
-    MERCHANT_UPDATE_PREPARED_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
   }
 
   /*
