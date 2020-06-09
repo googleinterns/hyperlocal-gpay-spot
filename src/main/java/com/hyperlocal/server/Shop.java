@@ -7,9 +7,19 @@ import java.math.BigDecimal;
 
 public class Shop {
     public Long ShopID;
-    public transient Long MerchantID;
+    public Long MerchantID;
     public String ShopName, AddressLine1, TypeOfService;
     public Double Latitude, Longitude;
+    public Shop() {
+      this.ShopID = 1L;
+      this.MerchantID = 1L;
+      this.ShopName = "Test";
+      this.AddressLine1 = "TEST";
+      this.TypeOfService = "TEST";
+      this.Latitude = 32.32;
+      this.Longitude = 32.32;
+    }
+
     public Shop(Long ShopID, Long MerchantID, String ShopName, Double Latitude, Double Longitude, String AddressLine1, String TypeOfService)
     {
         this.ShopID = ShopID;

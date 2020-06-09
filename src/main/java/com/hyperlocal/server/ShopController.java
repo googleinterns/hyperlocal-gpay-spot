@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -35,11 +36,16 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
 
+  @PostMapping("/shops/all")
+  public @ResponseBody String check() {
+    return connection.sendPreparedStatement("Select * from Shops;").toString();
+  } 
+
   /*
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
   @PostMapping("/insert/shop")
-  public CompletableFuture<String> insertShop(@RequestBody String shopDetailsString)
+  public @ResponseBody CompletableFuture<String> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
