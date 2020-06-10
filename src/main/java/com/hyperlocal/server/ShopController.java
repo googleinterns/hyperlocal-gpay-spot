@@ -4,22 +4,16 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import javax.sql.RowSet;
-
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
-import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -31,8 +25,8 @@ public class ShopController {
   private final PubSubTemplate publisher;
   private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
   private static Connection connection;
-  private static final String SHOP_UPDATE_PREPARED_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
-  private static final String SHOP_INSERT_PREPARED_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
+  private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
+  private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
   private static final String PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
@@ -101,7 +95,7 @@ public class ShopController {
         shopDataJsonObject.get("Longitude").getAsString(), shopDataJsonObject.get("AddressLine1").getAsString(),
         shopDataJsonObject.get("ShopID").getAsString() };
 
-    return connection.sendPreparedStatement(SHOP_UPDATE_PREPARED_STATEMENT, Arrays.asList(UpdateQueryParameters));
+    return connection.sendPreparedStatement(SHOP_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
   }
 
   public CompletableFuture<QueryResult> insertNewShop(JsonObject shopDataJsonObject) {
@@ -110,6 +104,6 @@ public class ShopController {
         shopDataJsonObject.get("Longitude").getAsString(), shopDataJsonObject.get("AddressLine1").getAsString(),
         shopDataJsonObject.get("MerchantID").getAsString() };
 
-    return connection.sendPreparedStatement(SHOP_INSERT_PREPARED_STATEMENT, Arrays.asList(InsertQueryParameters));
+    return connection.sendPreparedStatement(SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 }
