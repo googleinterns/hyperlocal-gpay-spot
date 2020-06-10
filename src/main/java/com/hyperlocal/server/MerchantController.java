@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MerchantController {
 
-  private static final String DATABASE_URL="jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
+  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
   private static Connection connection;
   private static final String MERCHANT_UPDATE_PREPARED_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
   private static final String MERCHANT_INSERT_PREPARED_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
@@ -40,23 +40,17 @@ public class MerchantController {
    */
 
   @PostMapping("/update/merchant/")
-  public CompletableFuture<String> upsertMerchant(@RequestBody String postInputString) {
-    JsonObject jsonObject = JsonParser.parseString(postInputString).getAsJsonObject();
-
-    Merchant newMerchant = new Merchant(jsonObject);
-
-    CompletableFuture<String> upsertedMerchantDetails = updateMerchantDetails(newMerchant).thenApply((result) -> {
+  public CompletableFuture<String> updateMerchant(@RequestBody String postInputString) {
+    JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
+    CompletableFuture<String> updatedMerchantDetails = updateMerchantDetails(newMerchant).thenApply((result) -> {
       return new Gson().toJson(newMerchant);
     });
-    return upsertedMerchantDetails;
+    return updatedMerchantDetails;
   }
 
   @PostMapping("/insert/merchant")
   public CompletableFuture<String> insertMerchant(@RequestBody String postInputString) {
-    JsonObject jsonObject = JsonParser.parseString(postInputString).getAsJsonObject();
-
-    Merchant newMerchant = new Merchant(jsonObject);
-
+    JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
     CompletableFuture<String> insertedMerchantDetails = insertNewMerchant(newMerchant).thenApply((result) -> {
       return new Gson().toJson(newMerchant);
     });
@@ -64,16 +58,16 @@ public class MerchantController {
   }
 
   /* Helper function to call database and update it */
-  public CompletableFuture<QueryResult> updateMerchantDetails(Merchant merchantDetails) {
-    String UpdateQueryParameters[] = new String[] { merchantDetails.getMerchantName(),
-        merchantDetails.getMerchantPhone() };
+  public CompletableFuture<QueryResult> updateMerchantDetails(JsonObject merchantDetails) {
+    String UpdateQueryParameters[] = new String[] { merchantDetails.get("MerchantName").getAsString(),
+        merchantDetails.get("MerchantPhone").getAsString() };
     return connection.sendPreparedStatement(MERCHANT_UPDATE_PREPARED_STATEMENT, Arrays.asList(UpdateQueryParameters));
   }
 
   /* Calls database and inserts a new Merchant record */
-  public CompletableFuture<QueryResult> insertNewMerchant(Merchant merchantDetails) {
-    String InsertQueryParameters[] = new String[] { Long.toString(merchantDetails.getMerchantID()),
-        merchantDetails.getMerchantName(), merchantDetails.getMerchantPhone() };
+  public CompletableFuture<QueryResult> insertNewMerchant(JsonObject merchantDetails) {
+    String InsertQueryParameters[] = new String[] { merchantDetails.get("MerchantID").getAsString(),
+        merchantDetails.get("MerchantName").getAsString(), merchantDetails.get("MerchantPhone").getAsString() };
     return connection.sendPreparedStatement(MERCHANT_INSERT_PREPARED_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 }
