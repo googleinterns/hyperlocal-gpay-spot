@@ -36,11 +36,6 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
 
-  @PostMapping("/shops/all")
-  public @ResponseBody String check() {
-    return connection.sendPreparedStatement("Select * from Shops;").toString();
-  } 
-
   /*
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
