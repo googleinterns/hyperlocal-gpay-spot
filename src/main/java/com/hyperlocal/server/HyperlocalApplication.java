@@ -15,7 +15,7 @@ import org.springframework.messaging.MessageHandler;
 @SpringBootApplication
 public class HyperlocalApplication {
   public static void main(String[] args) throws IOException {
-		SpringApplication.run(HyperlocalApplication.class, args);
+    SpringApplication.run(HyperlocalApplication.class, args);
   }
   
   @MessagingGateway(defaultRequestChannel = "pubsubOutputChannel")
