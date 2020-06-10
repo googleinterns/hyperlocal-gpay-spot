@@ -57,12 +57,11 @@ public class ShopControllerTest {
     CompletableFuture.supplyAsync(() -> {
         return CompletableFuture.completedFuture(new QueryResult(1, "SUCCESS", resultSet));
       })
-      .thenApply((queryResult) -> {
+      .thenAccept((queryResult) -> {
           when(connection.sendPreparedStatement(SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
             .thenReturn(queryResult);
           assertEquals(queryResult, controller.insertNewShop(JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject()));
           verify(controller).insertNewShop(JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject());
-          return null;
       });
   }
 
