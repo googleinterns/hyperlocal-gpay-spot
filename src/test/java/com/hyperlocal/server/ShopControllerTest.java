@@ -4,10 +4,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.CompletableFuture;
 
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
+import com.github.jasync.sql.db.ResultSet;
+import com.github.jasync.sql.db.ResultSetKt;
+import com.github.jasync.sql.db.RowData;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 
@@ -31,11 +38,11 @@ public class ShopControllerTest {
   @Mock
   PubSubTemplate template;
 
-  @Mock 
+  @Mock
   Connection connection;
 
   @Mock
-  CompletableFuture<QueryResult> mockQueryResult;
+  ResultSet resultSet;
 
   @Spy
   ShopController controller = new ShopController(template);
@@ -43,14 +50,20 @@ public class ShopControllerTest {
   @Test
   public void shouldInsertShop() throws Exception {
     assertThat(controller).isNotNull();
-    assertThat(SHOP_DATA_AS_STRING).isNotNull();    
+    assertThat(SHOP_DATA_AS_STRING).isNotNull();
 
-    String InsertQueryParameters[] = new String[] {"3","4","Test Shop", "43.424234", "43.4242444", "S-124", "Test"};
+    String InsertQueryParameters[] = new String[] { "3", "4", "Test Shop", "43.424234", "43.4242444", "S-124", "Test" };
 
-    when(connection.sendPreparedStatement(SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
-    .thenReturn(mockQueryResult);
-    controller.insertShop(SHOP_DATA_AS_STRING);
-    verify(controller).insertNewShop(JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject());
+    CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.completedFuture(new QueryResult(1, "SUCCESS", resultSet));
+      })
+      .thenApply((queryResult) -> {
+          when(connection.sendPreparedStatement(SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
+            .thenReturn(queryResult);
+          assertEquals(queryResult, controller.insertNewShop(JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject()));
+          verify(controller).insertNewShop(JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject());
+          return null;
+      });
   }
 
   @Test
