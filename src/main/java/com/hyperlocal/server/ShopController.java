@@ -4,8 +4,11 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import javax.sql.RowSet;
+
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
+import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.google.gson.Gson;
@@ -15,6 +18,8 @@ import com.google.gson.JsonParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -35,10 +40,27 @@ public class ShopController {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
+  
+	@CrossOrigin(origins = "http://localhost:3000")
+  @GetMapping("/shops/all")
+  public ResultSet getR() {
+    ResultSet r = null;
+    try {
+      return connection.sendPreparedStatement("Select * from Shops;").get().getRows();
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return r;
+  }
 
   /*
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
+  @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/insert/shop")
   public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
@@ -66,6 +88,7 @@ public class ShopController {
    * Expects: All shop details (including the ShopID of the shop to be Updated)
    */
 
+  @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/update/shop/")
   public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();

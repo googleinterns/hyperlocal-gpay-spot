@@ -6,9 +6,10 @@ import java.util.concurrent.CompletableFuture;
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +39,7 @@ public class MerchantController {
    * Returns: Merchant Object with updated Details if exists, else return inserted
    * Merchant object
    */
+	@CrossOrigin(origins = "http://localhost:3000")
 
   @PostMapping("/update/merchant/")
   public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
@@ -46,6 +48,7 @@ public class MerchantController {
       return new Merchant(newMerchant);
     });
   }
+	@CrossOrigin(origins = "http://localhost:3000")
 
   @PostMapping("/insert/merchant")
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
