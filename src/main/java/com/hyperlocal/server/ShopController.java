@@ -40,7 +40,7 @@ public class ShopController {
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
   @PostMapping("/insert/shop")
-  public @ResponseBody CompletableFuture<String> insertShop(@RequestBody String shopDetailsString)
+  public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
@@ -58,7 +58,7 @@ public class ShopController {
           shopDataAsJson.get("ShopID").getAsString()));
       return "";
     }).thenApply((publishPromise) -> {
-      return new Gson().toJson(shopDataAsJson);
+      return new Shop(shopDataAsJson);
     });
   }
 
@@ -67,7 +67,7 @@ public class ShopController {
    */
 
   @PostMapping("/update/shop/")
-  public CompletableFuture<String> updateShop(@RequestBody String shopDetailsString) {
+  public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
     return updateShopDetails(shopDataAsJson).thenCompose((QueryResult queryResult) -> {
@@ -81,7 +81,7 @@ public class ShopController {
           shopDataAsJson.get("ShopID").getAsString()));
       return "";
     }).thenApply((publishPromise) -> {
-      return new Gson().toJson(shopDataAsJson);
+      return new Shop(shopDataAsJson);
     });
   }
 

@@ -40,34 +40,32 @@ public class MerchantController {
    */
 
   @PostMapping("/update/merchant/")
-  public CompletableFuture<String> updateMerchant(@RequestBody String postInputString) {
+  public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
-    CompletableFuture<String> updatedMerchantDetails = updateMerchantDetails(newMerchant).thenApply((result) -> {
-      return new Gson().toJson(newMerchant);
+    return updateMerchantDetails(newMerchant).thenApply((result) -> {
+      return new Merchant(newMerchant);
     });
-    return updatedMerchantDetails;
   }
 
   @PostMapping("/insert/merchant")
-  public CompletableFuture<String> insertMerchant(@RequestBody String postInputString) {
+  public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
-    CompletableFuture<String> insertedMerchantDetails = insertNewMerchant(newMerchant).thenApply((result) -> {
-      return new Gson().toJson(newMerchant);
+    return insertNewMerchant(newMerchant).thenApply((result) -> {
+      return new Merchant(newMerchant);
     });
-    return insertedMerchantDetails;
   }
 
   /* Helper function to call database and update it */
   public CompletableFuture<QueryResult> updateMerchantDetails(JsonObject merchantDetails) {
-    String UpdateQueryParameters[] = new String[] { merchantDetails.get("MerchantName").getAsString(),
-        merchantDetails.get("MerchantPhone").getAsString() };
+    String UpdateQueryParameters[] = new String[] { merchantDetails.get("MerchantID").getAsString(), 
+      merchantDetails.get("MerchantName").getAsString(), merchantDetails.get("MerchantPhone").getAsString() };
     return connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
   }
 
   /* Calls database and inserts a new Merchant record */
   public CompletableFuture<QueryResult> insertNewMerchant(JsonObject merchantDetails) {
     String InsertQueryParameters[] = new String[] { merchantDetails.get("MerchantID").getAsString(),
-        merchantDetails.get("MerchantName").getAsString(), merchantDetails.get("MerchantPhone").getAsString() };
+      merchantDetails.get("MerchantName").getAsString(), merchantDetails.get("MerchantPhone").getAsString() };
     return connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 }
