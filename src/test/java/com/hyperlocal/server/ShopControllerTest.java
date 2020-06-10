@@ -2,6 +2,7 @@ package com.hyperlocal.server;
 
 import static org.mockito.Mockito.verify;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,9 @@ import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 @SpringBootTest
 public class ShopControllerTest {
 
-  private final String SHOP_DATA_AS_STRING = "{\"ShopID\":3,\"MerchantID\": \"4\",\"ShopName\":\"Test Shop\", \"Latitude\": 23.2323,\"Longitude\":23.53656, \"AddressLine1\":\"S-12\", \"TypeOfService\":\"Test\"}";
- 
+  private final Shop shop = new Shop(3L, 4L, "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
+  private final String SHOP_DATA_AS_STRING = new Gson().toJson(shop);
+
   @Mock
   PubSubTemplate template;
 

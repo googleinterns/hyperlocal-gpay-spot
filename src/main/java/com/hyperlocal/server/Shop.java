@@ -10,6 +10,7 @@ public class Shop {
     public Long MerchantID;
     public String ShopName, AddressLine1, TypeOfService;
     public Double Latitude, Longitude;
+    
     public Shop() {
       this.ShopID = 1L;
       this.MerchantID = 1L;

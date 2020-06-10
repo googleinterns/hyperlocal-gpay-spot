@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShopController {
 
   private final PubSubTemplate publisher;
-  private static final String DATABASE_URL="jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
+  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
   private static Connection connection;
-  private static final String SHOP_UPDATE_PREPARED_STATEMENT="UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
-  private static final String SHOP_INSERT_PREPARED_STATEMENT="INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
-  private static final String PUBSUB_URL="projects/speedy-anthem-217710/topics/testTopic";
+  private static final String SHOP_UPDATE_PREPARED_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
+  private static final String SHOP_INSERT_PREPARED_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
+  private static final String PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
   public ShopController(PubSubTemplate pubSubTemplate) {
@@ -70,10 +70,15 @@ public class ShopController {
   public CompletableFuture<String> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
-    return updateShopDetails(shopDataAsJson).thenCompose((queryResult) -> {
-      return publishMessage(shopDataAsJson.get("ShopID").getAsString());
+    return updateShopDetails(shopDataAsJson).thenCompose((QueryResult queryResult) -> {
+      CompletableFuture<Long> shopID = CompletableFuture
+          .completedFuture(((MySQLQueryResult) queryResult).getLastInsertId());
+      return shopID;
+    }).thenCompose((shopID) -> {
+      return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
-      e.printStackTrace();
+      logger.error(String.format("ShopID %s: Could not publish to PubSub. Exited exceptionally!",
+          shopDataAsJson.get("ShopID").getAsString()));
       return "";
     }).thenApply((publishPromise) -> {
       return new Gson().toJson(shopDataAsJson);

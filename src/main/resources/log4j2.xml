@@ -2,8 +2,8 @@
 <Configuration status="WARN" monitorInterval="30">
   <Properties>
     <Property name="LOG_PATTERN">
-            %d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${hostName} --- [%15.15t] %-40.40c{1.} : %m%n%ex
-        </Property>
+      %d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${hostName} --- [%15.15t] %-40.40c{1.} : %m%n%ex
+    </Property>
   </Properties>
   <Appenders>
     <RollingFile name="FileAppender" fileName="logs/hyperlocalServer.log" filePattern="logs/log4j2-hyperlocalserver-%d{yyyy-MM-dd}-%i.log">
