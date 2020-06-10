@@ -39,7 +39,6 @@ public class MerchantController {
    * Returns: Merchant Object with updated Details if exists, else return inserted
    * Merchant object
    */
-	@CrossOrigin(origins = "http://localhost:3000")
 
   @PostMapping("/update/merchant/")
   public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
@@ -48,7 +47,6 @@ public class MerchantController {
       return new Merchant(newMerchant);
     });
   }
-	@CrossOrigin(origins = "http://localhost:3000")
 
   @PostMapping("/insert/merchant")
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {

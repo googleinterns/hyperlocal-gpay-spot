@@ -41,26 +41,10 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
   
-	@CrossOrigin(origins = "http://localhost:3000")
-  @GetMapping("/shops/all")
-  public ResultSet getR() {
-    ResultSet r = null;
-    try {
-      return connection.sendPreparedStatement("Select * from Shops;").get().getRows();
-    } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    return r;
-  }
-
   /*
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
-  @CrossOrigin(origins = "http://localhost:3000")
+
   @PostMapping("/insert/shop")
   public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
@@ -88,7 +72,6 @@ public class ShopController {
    * Expects: All shop details (including the ShopID of the shop to be Updated)
    */
 
-  @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/update/shop/")
   public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
