@@ -9,7 +9,6 @@ import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MerchantController {
 
   private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
-  private static Connection connection;
+  private Connection connection;
   private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
   private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
 
@@ -58,8 +57,8 @@ public class MerchantController {
 
   /* Helper function to call database and update it */
   public CompletableFuture<QueryResult> updateMerchantDetails(JsonObject merchantDetails) {
-    String UpdateQueryParameters[] = new String[] { merchantDetails.get("MerchantID").getAsString(), 
-      merchantDetails.get("MerchantName").getAsString(), merchantDetails.get("MerchantPhone").getAsString() };
+    String UpdateQueryParameters[] = new String[] { merchantDetails.get("MerchantName").getAsString(), 
+    merchantDetails.get("MerchantPhone").getAsString(), merchantDetails.get("MerchantID").getAsString()};
     return connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
   }
 
