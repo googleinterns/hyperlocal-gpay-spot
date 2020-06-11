@@ -4,7 +4,7 @@ import com.github.jasync.sql.db.RowData;
 import com.google.gson.JsonObject;
 
 public class Merchant {
-  public Long MerchantID; 
+  public Long MerchantID;
   public String MerchantName;
   public String MerchantPhone;
 
@@ -20,11 +20,10 @@ public class Merchant {
     this.MerchantPhone = MerchantPhone;
   }
 
-  public Merchant(RowData data)
-  {
-    this.MerchantID = (Long)data.get(0);
-    this.MerchantName = (String)data.get(1);
-    this.MerchantPhone = (String)data.get(2);
+  public Merchant(RowData data) {
+    this.MerchantID = (Long) data.get(0);
+    this.MerchantName = (String) data.get(1);
+    this.MerchantPhone = (String) data.get(2);
   }
 
   public Merchant(JsonObject data) {

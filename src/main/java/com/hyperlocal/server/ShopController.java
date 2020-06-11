@@ -34,7 +34,7 @@ public class ShopController {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
-  
+
   /*
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
@@ -44,13 +44,11 @@ public class ShopController {
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
-    return insertNewShop(shopDataAsJson).thenCompose((QueryResult queryResult) -> {
-      CompletableFuture<Long> shopID = CompletableFuture
-          .completedFuture(((MySQLQueryResult) queryResult).getLastInsertId());
-      return shopID;
-    }).thenCompose((shopID) -> {
+    return insertNewShop(shopDataAsJson).thenApply((queryResult) -> {
+      return ((MySQLQueryResult) queryResult).getLastInsertId();
+    }).thenApply((shopID) -> {
       shopDataAsJson.addProperty("ShopID", shopID);
-      return CompletableFuture.completedFuture(shopID);
+      return shopID;
     }).thenCompose((shopID) -> {
       return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
@@ -70,10 +68,8 @@ public class ShopController {
   public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
-    return updateShopDetails(shopDataAsJson).thenCompose((QueryResult queryResult) -> {
-      CompletableFuture<Long> shopID = CompletableFuture
-          .completedFuture(((MySQLQueryResult) queryResult).getLastInsertId());
-      return shopID;
+    return updateShopDetails(shopDataAsJson).thenApply((QueryResult queryResult) -> {
+      return ((MySQLQueryResult) queryResult).getLastInsertId();
     }).thenCompose((shopID) -> {
       return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
