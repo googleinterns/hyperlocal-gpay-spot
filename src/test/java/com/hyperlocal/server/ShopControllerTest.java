@@ -66,7 +66,7 @@ public class ShopControllerTest {
   @Test
   public void shouldInsertShop() throws Exception {
     assertThat(controller).isNotNull();
-    assertThat(SHOP_DATA_AS_STRING).isNotNull();
+    assertThat(shopJson).isNotNull();
     String InsertQueryParameters[] = new String[] { "Test Shop", "Test", "43.424234", "43.4242444", "S-124", "4" };
 
     CompletableFuture<QueryResult> queryResult = CompletableFuture.completedFuture(new QueryResult(1, "SUCCESS", resultSet));
