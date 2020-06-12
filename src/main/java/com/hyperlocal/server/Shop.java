@@ -6,51 +6,51 @@ import com.google.gson.JsonObject;
 import java.math.BigDecimal;
 
 public class Shop {
-    public Long ShopID;
-    public Long MerchantID;
-    public String ShopName, AddressLine1, TypeOfService;
-    public Double Latitude, Longitude;
+    public Long shopID;
+    public Long merchantID;
+    public String shopName, addressLine1, typeOfService;
+    public Double latitude, longitude;
     
     public Shop() {
-      this.ShopID = 1L;
-      this.MerchantID = 1L;
-      this.ShopName = "Test";
-      this.AddressLine1 = "TEST";
-      this.TypeOfService = "TEST";
-      this.Latitude = 32.32;
-      this.Longitude = 32.32;
+      this.shopID = 1L;
+      this.merchantID = 1L;
+      this.shopName = "Test";
+      this.addressLine1 = "TEST";
+      this.typeOfService = "TEST";
+      this.latitude = 32.32;
+      this.longitude = 32.32;
     }
 
-    public Shop(Long ShopID, Long MerchantID, String ShopName, Double Latitude, Double Longitude, String AddressLine1, String TypeOfService)
+    public Shop(Long shopID, Long merchantID, String shopName, Double latitude, Double longitude, String addressLine1, String typeOfService)
     {
-        this.ShopID = ShopID;
-        this.MerchantID = MerchantID;
-        this.ShopName = ShopName;
-        this.AddressLine1 = AddressLine1;
-        this.TypeOfService = TypeOfService;
-        this.Latitude = Latitude;
-        this.Longitude = Longitude;
+        this.shopID = shopID;
+        this.merchantID = merchantID;
+        this.shopName = shopName;
+        this.addressLine1 = addressLine1;
+        this.typeOfService = typeOfService;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public Shop(RowData data)
     {
-        this.ShopID = (Long)data.get(0);
-        this.MerchantID = (Long)data.get(1);
-        this.ShopName = (String)data.get(2);
-        this.Latitude = ((BigDecimal)data.get(3)).doubleValue();
-        this.Longitude = ((BigDecimal)data.get(4)).doubleValue();
-        this.AddressLine1 = (String)data.get(5);
-        this.TypeOfService = (String)data.get(6);
+        this.shopID = (Long)data.get(0);
+        this.merchantID = (Long)data.get(1);
+        this.shopName = (String)data.get(2);
+        this.latitude = ((BigDecimal)data.get(3)).doubleValue();
+        this.longitude = ((BigDecimal)data.get(4)).doubleValue();
+        this.addressLine1 = (String)data.get(5);
+        this.typeOfService = (String)data.get(6);
     }
 
     public Shop(JsonObject data) {
-      this.ShopID = data.get("ShopID").getAsLong();
-      this.MerchantID = data.get("MerchantID").getAsLong();
-      this.ShopName = data.get("ShopName").getAsString();
-      this.AddressLine1 = data.get("AddressLine1").getAsString();
-      this.TypeOfService = data.get("TypeOfService").getAsString();
-      this.Latitude = data.get("Latitude").getAsDouble();
-      this.Longitude = data.get("Longitude").getAsDouble();
+      this.shopID = data.get("ShopID").getAsLong();
+      this.merchantID = data.get("MerchantID").getAsLong();
+      this.shopName = data.get("ShopName").getAsString();
+      this.addressLine1 = data.get("AddressLine1").getAsString();
+      this.typeOfService = data.get("TypeOfService").getAsString();
+      this.latitude = data.get("Latitude").getAsDouble();
+      this.longitude = data.get("Longitude").getAsDouble();
     }
 
 }

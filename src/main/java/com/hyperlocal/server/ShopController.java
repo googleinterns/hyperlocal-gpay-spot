@@ -1,20 +1,30 @@
 package com.hyperlocal.server;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
+import com.github.jasync.sql.db.ResultSet;
+import com.github.jasync.sql.db.RowData;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,12 +37,157 @@ public class ShopController {
   private Connection connection;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
+  private static final String SELECT_SHOP_STATEMENT = "SELECT * from `Shops` WHERE `ShopID` = ?;";
+  private static final String SELECT_SHOPS_BY_MERCHANT_STATEMENT = "SELECT * from `Shops` WHERE `MerchantID` = ?;";
+  private static final String SELECT_MERCHANT_STATEMENT = "SELECT * from `Merchants` WHERE `MerchantID` = ?;";
+  private static final String SELECT_CATALOG_BY_SHOP_STATEMENT = "SELECT * from `Catalog` WHERE `ShopID` = ?;";
+  private static final String INSERT_CATALOG_STATEMENT = "INSERT INTO `Catalog` (`ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL`) VALUES (?, ?, ?, ?);";
+  private static final String UPDATE_CATALOG_STATEMENT = "UPDATE `Catalog` SET `ServiceName` = ?, `ServiceDescription` = ?, `ImageURL` = ? WHERE `ServiceID` = ?;";
+  private static final String DELETE_CATALOG_STATEMENT = "DELETE FROM `Catalog` WHERE `ServiceID` = ?;";
   private static final String PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
+  }
+
+  /* To-do server-side checks: 
+  - Access control
+  - Data validation */
+
+  // Fetch all shops by merchantID
+  @GetMapping("/api/merchant/{merchantID}/shops")
+  public CompletableFuture<HashMap<String, Object>> getShopsByMerchantID(@PathVariable Long merchantID) {
+    // Container obj for merchant's shops
+    HashMap<String, Object> shopsMap = new HashMap<String, Object>();
+
+    // Promise: returns merchant's shops
+    CompletableFuture<HashMap<String, Object>> shopsPromise = connection
+        // Get associated shops
+      .sendPreparedStatement(SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID))
+      .thenApply((QueryResult shopQueryResult) -> {        
+        ResultSet shopRecords = shopQueryResult.getRows();
+        ArrayList<Shop> shopsList = new ArrayList<Shop>();
+        for(RowData shopRecord : shopRecords) shopsList.add(new Shop(shopRecord));
+        shopsMap.put("count", shopsList.size());
+        shopsMap.put("shops", shopsList);
+        return shopsMap;
+        
+        // If something goes wrong:
+      }).exceptionally(ex -> {
+        logger.error("Executed exceptionally: getShopsByMerchantID()", ex);
+        return Helper.generateError(ex.getMessage());
+      });
+
+    return shopsPromise;
+  }
+
+
+  // Fetch catalog, shop & merchant details by shopID.
+  @GetMapping("/api/shop/{shopID}")
+  public CompletableFuture<HashMap<String, Object>> getShopDetails(@PathVariable Long shopID) {
+
+    // Container obj for shop details
+    HashMap<String, Object> shopDetailsMap = new HashMap<String, Object>();
+
+    // Promise: returns shop details
+    CompletableFuture<HashMap<String, Object>> shopDetailsPromise = connection
+        // Get Shop details:
+      .sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
+      .thenCompose((QueryResult shopQueryResult) -> {
+        ResultSet wrappedShopRecord = shopQueryResult.getRows();
+        if(wrappedShopRecord.size() == 0) throw new NullPointerException("Shop not found."); // No shop with supplied ShopID found
+        RowData shopRecord = wrappedShopRecord.get(0);
+        Shop shop = new Shop(shopRecord);
+        shopDetailsMap.put("shopDetails", shop);
+
+        // Get Merchant Details:
+        return connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(shop.merchantID));
+      }).thenCompose((QueryResult merchantQueryResult) -> {
+        RowData merchantRecord = merchantQueryResult.getRows().get(0);
+        Merchant merchant = new Merchant((Long)merchantRecord.get(0), (String)merchantRecord.get(1), (String)merchantRecord.get(2));
+        shopDetailsMap.put("merchantDetails", merchant);
+        
+        // Get Catalog Details:
+        return connection.sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
+      }).thenApply((QueryResult catalogQueryResult) -> {
+        ResultSet catalogRecords = catalogQueryResult.getRows();
+        ArrayList<Service> servicesList = new ArrayList<Service>();
+        for(RowData serviceRecord : catalogRecords) servicesList.add(new Service(serviceRecord));
+        shopDetailsMap.put("catalog", servicesList);        
+        return shopDetailsMap;
+        
+        // If something goes wrong:
+      }).exceptionally(ex -> {
+        logger.error("Executed exceptionally: getShopDetails()", ex);
+        return Helper.generateError(ex.getMessage());
+      });
+
+    return shopDetailsPromise;
+  }
+
+
+
+  @PostMapping("/api/shop/{shopID}/catalog/update")
+  public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID, @RequestBody String updatePayload) {
+    // Container obj for upsert status
+    JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
+    JsonArray addCommands = commands.getAsJsonArray("add");
+    JsonArray editCommands = commands.getAsJsonArray("edit");
+    JsonArray delCommands = commands.getAsJsonArray("delete");
+    
+    CompletableFuture<QueryResult> statusPromise = connection.sendQuery("BEGIN");
+
+    // Process add commands
+    for(JsonElement addCommandRaw : addCommands)
+    {
+      statusPromise = statusPromise.thenCompose((QueryResult result) -> {
+        JsonObject addCommand = addCommandRaw.getAsJsonObject();
+        String serviceName = addCommand.get("serviceName").getAsString();
+        String serviceDescription = addCommand.get("serviceDescription").getAsString();
+        String imageURL = addCommand.get("imageURL").getAsString();
+        return connection.sendPreparedStatement(INSERT_CATALOG_STATEMENT, Arrays.asList(shopID, serviceName, serviceDescription, imageURL));
+      });
+    }
+
+    // Process edit commands
+    for(JsonElement editCommandRaw : editCommands)
+    {
+      statusPromise = statusPromise.thenCompose((QueryResult result) -> {
+        JsonObject editCommand = editCommandRaw.getAsJsonObject();
+        Long serviceID = editCommand.get("serviceID").getAsLong();
+        String serviceName = editCommand.get("serviceName").getAsString();
+        String serviceDescription = editCommand.get("serviceDescription").getAsString();
+        String imageURL = editCommand.get("imageURL").getAsString();
+        return connection.sendPreparedStatement(UPDATE_CATALOG_STATEMENT, Arrays.asList(serviceName, serviceDescription, imageURL, serviceID));
+      });
+    }
+
+    // Process delete commands
+    for(JsonElement delCommandRaw : delCommands)
+    {
+      statusPromise = statusPromise.thenCompose((QueryResult result) -> {
+        Long serviceID = delCommandRaw.getAsJsonObject().get("serviceID").getAsLong();
+        return connection.sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(serviceID));
+      });
+    }
+    
+    return statusPromise
+      .thenCompose((QueryResult result) -> {
+        // If successful, commit
+        return connection.sendQuery("COMMIT");
+      }).thenApply((QueryResult result) -> {
+        HashMap<String, Object> successMap = new HashMap<String, Object>();
+        successMap.put("success", true);
+        return successMap;
+      })
+      .exceptionally((ex) -> {
+        // Else, auto-rollback when connection closes
+        logger.error("Executed exceptionally: upsertCatalog()", ex);
+        return Helper.generateError(ex.getMessage());
+      });
+
   }
 
   /*
