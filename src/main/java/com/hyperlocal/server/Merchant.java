@@ -4,43 +4,43 @@ import com.github.jasync.sql.db.RowData;
 import com.google.gson.JsonObject;
 
 public class Merchant {
-  public Long MerchantID;
-  public String MerchantName;
-  public String MerchantPhone;
+  public Long merchantID;
+  public String merchantName;
+  public String merchantPhone;
 
   public Merchant() {
-    this.MerchantID = null;
-    this.MerchantName = null;
-    this.MerchantPhone = null;
+    this.merchantID = null;
+    this.merchantName = null;
+    this.merchantPhone = null;
   }
 
-  public Merchant(Long MerchantID, String MerchantName, String MerchantPhone) {
-    this.MerchantID = MerchantID;
-    this.MerchantName = MerchantName;
-    this.MerchantPhone = MerchantPhone;
+  public Merchant(Long merchantID, String merchantName, String merchantPhone) {
+    this.merchantID = merchantID;
+    this.merchantName = merchantName;
+    this.merchantPhone = merchantPhone;
   }
 
   public Merchant(RowData data) {
-    this.MerchantID = (Long) data.get(0);
-    this.MerchantName = (String) data.get(1);
-    this.MerchantPhone = (String) data.get(2);
+    this.merchantID = (Long) data.get(0);
+    this.merchantName = (String) data.get(1);
+    this.merchantPhone = (String) data.get(2);
   }
 
   public Merchant(JsonObject data) {
-    this.MerchantID = data.get("MerchantID").getAsLong();
-    this.MerchantName = data.get("MerchantName").getAsString();
-    this.MerchantPhone = data.get("MerchantPhone").getAsString();
+    this.merchantID = data.get("MerchantID").getAsLong();
+    this.merchantName = data.get("MerchantName").getAsString();
+    this.merchantPhone = data.get("MerchantPhone").getAsString();
   }
 
   public Long getMerchantID() {
-    return MerchantID;
+    return merchantID;
   }
 
   public String getMerchantName() {
-    return MerchantName;
+    return merchantName;
   }
 
   public String getMerchantPhone() {
-    return MerchantPhone;
+    return merchantPhone;
   }
 }
