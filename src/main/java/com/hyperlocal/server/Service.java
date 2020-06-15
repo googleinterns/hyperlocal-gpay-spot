@@ -15,4 +15,15 @@ public class Service {
         this.serviceDescription = (String)data.get(3);
         this.imageURL = (String)data.get(4);
     }
+
+    public boolean equals(Object obj)
+    {
+      if(obj == null || !(obj instanceof Service)) return false;
+      Service serviceObj = (Service) obj;
+      return this.serviceID.equals(serviceObj.serviceID) &&
+             this.shopID.equals(serviceObj.shopID) &&
+             this.serviceName.equals(serviceObj.serviceName) &&
+             this.serviceDescription.equals(serviceObj.serviceDescription) &&
+             this.imageURL.equals(serviceObj.imageURL);
+    }
 }

@@ -44,13 +44,26 @@ public class Shop {
     }
 
     public Shop(JsonObject data) {
-      this.shopID = data.get("ShopID").getAsLong();
-      this.merchantID = data.get("MerchantID").getAsLong();
-      this.shopName = data.get("ShopName").getAsString();
-      this.addressLine1 = data.get("AddressLine1").getAsString();
-      this.typeOfService = data.get("TypeOfService").getAsString();
-      this.latitude = data.get("Latitude").getAsDouble();
-      this.longitude = data.get("Longitude").getAsDouble();
+      this.shopID = data.get("shopID").getAsLong();
+      this.merchantID = data.get("merchantID").getAsLong();
+      this.shopName = data.get("shopName").getAsString();
+      this.addressLine1 = data.get("addressLine1").getAsString();
+      this.typeOfService = data.get("typeOfService").getAsString();
+      this.latitude = data.get("latitude").getAsDouble();
+      this.longitude = data.get("longitude").getAsDouble();
+    }
+
+    public boolean equals(Object obj)
+    {
+      if(obj == null || !(obj instanceof Shop)) return false;
+      Shop shopObj = (Shop) obj;
+      return this.shopID.equals(shopObj.shopID) &&
+             this.merchantID.equals(shopObj.merchantID) &&
+             this.shopName.equals(shopObj.shopName) &&
+             this.addressLine1.equals(shopObj.addressLine1) &&
+             this.typeOfService.equals(shopObj.typeOfService) &&
+             Helper.doubleThresholdCompare(this.latitude, shopObj.latitude, 0.0000001) &&
+             Helper.doubleThresholdCompare(this.longitude, shopObj.longitude, 0.0000001);
     }
 
 }

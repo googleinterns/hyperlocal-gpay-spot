@@ -57,15 +57,15 @@ public class MerchantController {
 
   /* Helper function to call database and update it */
   public CompletableFuture<QueryResult> updateMerchantDetails(JsonObject merchantDetails) {
-    String UpdateQueryParameters[] = new String[] { merchantDetails.get("MerchantName").getAsString(),
-        merchantDetails.get("MerchantPhone").getAsString(), merchantDetails.get("MerchantID").getAsString() };
+    String UpdateQueryParameters[] = new String[] { merchantDetails.get("merchantName").getAsString(),
+        merchantDetails.get("merchantPhone").getAsString(), merchantDetails.get("merchantID").getAsString() };
     return connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
   }
 
   /* Calls database and inserts a new Merchant record */
   public CompletableFuture<QueryResult> insertNewMerchant(JsonObject merchantDetails) {
-    String InsertQueryParameters[] = new String[] { merchantDetails.get("MerchantID").getAsString(),
-        merchantDetails.get("MerchantName").getAsString(), merchantDetails.get("MerchantPhone").getAsString() };
+    String InsertQueryParameters[] = new String[] { merchantDetails.get("merchantID").getAsString(),
+        merchantDetails.get("merchantName").getAsString(), merchantDetails.get("merchantPhone").getAsString() };
     return connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 }
