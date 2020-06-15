@@ -27,9 +27,9 @@ public class Merchant {
   }
 
   public Merchant(JsonObject data) {
-    this.merchantID = data.get("MerchantID").getAsLong();
-    this.merchantName = data.get("MerchantName").getAsString();
-    this.merchantPhone = data.get("MerchantPhone").getAsString();
+    this.merchantID = data.get("merchantID").getAsLong();
+    this.merchantName = data.get("merchantName").getAsString();
+    this.merchantPhone = data.get("merchantPhone").getAsString();
   }
 
   public Long getMerchantID() {
@@ -43,4 +43,14 @@ public class Merchant {
   public String getMerchantPhone() {
     return merchantPhone;
   }
+
+  public boolean equals(Object obj)
+  {
+    if(obj == null || !(obj instanceof Merchant)) return false;
+    Merchant merchantObj = (Merchant) obj;
+    return this.merchantID.equals(merchantObj.merchantID) &&
+           this.merchantName.equals(merchantObj.merchantName) &&
+           this.merchantPhone.equals(merchantObj.merchantPhone);
+  }
+
 }
