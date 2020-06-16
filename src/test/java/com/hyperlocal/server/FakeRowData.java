@@ -10,10 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class Record implements RowData {
+public class FakeRowData implements RowData {
     ArrayList<Object> list;
 
-    public Record(Object... list) {
+    public FakeRowData(Object... list) {
         this.list = new ArrayList<Object>();
         for (Object item : list)
             this.list.add(item);
