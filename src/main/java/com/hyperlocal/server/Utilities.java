@@ -1,7 +1,7 @@
 package com.hyperlocal.server;
 import java.util.HashMap;
 
-public class Helper {
+public class Utilities {
     
     // Shorthand for a HashMap with error message
     public static HashMap<String, Object> generateError(Object msg)

@@ -8,10 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class Records implements ResultSet {
+public class FakeResultSet implements ResultSet {
     ArrayList<RowData> list;
 
-    public Records(RowData... list) {
+    public FakeResultSet(RowData... list) {
         this.list = new ArrayList<RowData>();
         for (RowData item : list)
             this.list.add(item);

@@ -1,5 +1,6 @@
 package com.hyperlocal.server;
 
+import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,10 +41,10 @@ public class ShopController {
   private Connection connection;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
-  private static final String SELECT_SHOP_STATEMENT = "SELECT * from `Shops` WHERE `ShopID` = ?;";
-  private static final String SELECT_SHOPS_BY_MERCHANT_STATEMENT = "SELECT * from `Shops` WHERE `MerchantID` = ?;";
-  private static final String SELECT_MERCHANT_STATEMENT = "SELECT * from `Merchants` WHERE `MerchantID` = ?;";
-  private static final String SELECT_CATALOG_BY_SHOP_STATEMENT = "SELECT * from `Catalog` WHERE `ShopID` = ?;";
+  private static final String SELECT_SHOP_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `ShopID` = ?;";
+  private static final String SELECT_SHOPS_BY_MERCHANT_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `MerchantID` = ?;";
+  private static final String SELECT_MERCHANT_STATEMENT = "SELECT `MerchantID`, `MerchantName`, `MerchantPhone` from `Merchants` WHERE `MerchantID` = ?;";
+  private static final String SELECT_CATALOG_BY_SHOP_STATEMENT = "SELECT `ServiceID`, `ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL` from `Catalog` WHERE `ShopID` = ?;";
   private static final String INSERT_CATALOG_STATEMENT = "INSERT INTO `Catalog` (`ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL`) VALUES (?, ?, ?, ?);";
   private static final String UPDATE_CATALOG_STATEMENT = "UPDATE `Catalog` SET `ServiceName` = ?, `ServiceDescription` = ?, `ImageURL` = ? WHERE `ServiceID` = ?;";
   private static final String DELETE_CATALOG_STATEMENT = "DELETE FROM `Catalog` WHERE `ServiceID` = ?;";
@@ -59,29 +60,26 @@ public class ShopController {
   - Access control
   - Data validation */
 
-  
+
   // Fetch all shops by merchantID
   @GetMapping("/api/merchant/{merchantID}/shops")
-  public CompletableFuture<HashMap<String, Object>> getShopsByMerchantID(@PathVariable Long merchantID) {
+  public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable Long merchantID) {
     // Container obj for merchant's shops
-    HashMap<String, Object> shopsMap = new HashMap<String, Object>();
+    List<Shop> shopsList = new ArrayList<Shop>();
 
     // Promise: returns merchant's shops
-    CompletableFuture<HashMap<String, Object>> shopsPromise = connection
+    CompletableFuture<List<Shop>> shopsPromise = connection
         // Get associated shops
       .sendPreparedStatement(SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID))
       .thenApply((QueryResult shopQueryResult) -> {
         ResultSet shopRecords = shopQueryResult.getRows();
-        ArrayList<Shop> shopsList = new ArrayList<Shop>();
         for(RowData shopRecord : shopRecords) shopsList.add(new Shop(shopRecord));
-        shopsMap.put("count", shopsList.size());
-        shopsMap.put("shops", shopsList);
-        return shopsMap;
+        return shopsList;
         
         // If something goes wrong:
       }).exceptionally(ex -> {
         logger.error("Executed exceptionally: getShopsByMerchantID()", ex);
-        return Helper.generateError(ex.getMessage());
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
 
     return shopsPromise;
@@ -101,7 +99,7 @@ public class ShopController {
       .sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
       .thenCompose((QueryResult shopQueryResult) -> {
         ResultSet wrappedShopRecord = shopQueryResult.getRows();
-        if(wrappedShopRecord.size() == 0) throw new NullPointerException("Shop not found."); // No shop with supplied ShopID found
+        if(wrappedShopRecord.size() == 0) throw new RuntimeException("Not found"); // No shop with supplied ShopID found
         RowData shopRecord = wrappedShopRecord.get(0);
         Shop shop = new Shop(shopRecord);
         shopDetailsMap.put("shopDetails", shop);
@@ -117,15 +115,15 @@ public class ShopController {
         return connection.sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
       }).thenApply((QueryResult catalogQueryResult) -> {
         ResultSet catalogRecords = catalogQueryResult.getRows();
-        ArrayList<Service> servicesList = new ArrayList<Service>();
-        for(RowData serviceRecord : catalogRecords) servicesList.add(new Service(serviceRecord));
-        shopDetailsMap.put("catalog", servicesList);        
+        ArrayList<CatalogItem> servicesList = new ArrayList<CatalogItem>();
+        for(RowData serviceRecord : catalogRecords) servicesList.add(new CatalogItem(serviceRecord));
+        shopDetailsMap.put("catalog", servicesList);
         return shopDetailsMap;
         
         // If something goes wrong:
       }).exceptionally(ex -> {
         logger.error("Executed exceptionally: getShopDetails()", ex);
-        return Helper.generateError(ex.getMessage());
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
 
     return shopDetailsPromise;
@@ -187,7 +185,7 @@ public class ShopController {
       .exceptionally((ex) -> {
         // Else, auto-rollback when connection closes
         logger.error("Executed exceptionally: upsertCatalog()", ex);
-        return Helper.generateError(ex.getMessage());
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
 
   }
