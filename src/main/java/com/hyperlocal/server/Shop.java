@@ -62,8 +62,8 @@ public class Shop {
              this.shopName.equals(shopObj.shopName) &&
              this.addressLine1.equals(shopObj.addressLine1) &&
              this.typeOfService.equals(shopObj.typeOfService) &&
-             Helper.doubleThresholdCompare(this.latitude, shopObj.latitude, 0.0000001) &&
-             Helper.doubleThresholdCompare(this.longitude, shopObj.longitude, 0.0000001);
+             Utilities.doubleThresholdCompare(this.latitude, shopObj.latitude, 0.0000001) &&
+             Utilities.doubleThresholdCompare(this.longitude, shopObj.longitude, 0.0000001);
     }
 
 }

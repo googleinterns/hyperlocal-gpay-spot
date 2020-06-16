@@ -132,7 +132,6 @@ public class ShopController {
 
   @PostMapping("/api/shop/{shopID}/catalog/update")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID, @RequestBody String updatePayload) {
-    // Container obj for upsert status
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
     JsonArray addCommands = commands.getAsJsonArray("add");
     JsonArray editCommands = commands.getAsJsonArray("edit");
