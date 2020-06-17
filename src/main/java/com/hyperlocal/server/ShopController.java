@@ -64,10 +64,8 @@ public class ShopController {
   // Fetch all shops by merchantID
   @GetMapping("/api/merchant/{merchantID}/shops")
   public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable Long merchantID) {
-    // Container obj for merchant's shops
     List<Shop> shopsList = new ArrayList<Shop>();
 
-    // Promise: returns merchant's shops
     CompletableFuture<List<Shop>> shopsPromise = connection
         // Get associated shops
       .sendPreparedStatement(SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID))
@@ -76,7 +74,6 @@ public class ShopController {
         for(RowData shopRecord : shopRecords) shopsList.add(new Shop(shopRecord));
         return shopsList;
         
-        // If something goes wrong:
       }).exceptionally(ex -> {
         logger.error("Executed exceptionally: getShopsByMerchantID()", ex);
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
@@ -90,10 +87,8 @@ public class ShopController {
   @GetMapping("/api/shop/{shopID}")
   public CompletableFuture<HashMap<String, Object>> getShopDetails(@PathVariable Long shopID) {
 
-    // Container obj for shop details
     HashMap<String, Object> shopDetailsMap = new HashMap<String, Object>();
 
-    // Promise: returns shop details
     CompletableFuture<HashMap<String, Object>> shopDetailsPromise = connection
         // Get Shop details:
       .sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
@@ -108,7 +103,7 @@ public class ShopController {
         return connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(shop.merchantID));
       }).thenCompose((QueryResult merchantQueryResult) -> {
         RowData merchantRecord = merchantQueryResult.getRows().get(0);
-        Merchant merchant = new Merchant((Long)merchantRecord.get(0), (String)merchantRecord.get(1), (String)merchantRecord.get(2));
+        Merchant merchant = new Merchant(merchantRecord);
         shopDetailsMap.put("merchantDetails", merchant);
         
         // Get Catalog Details:
@@ -120,7 +115,6 @@ public class ShopController {
         shopDetailsMap.put("catalog", servicesList);
         return shopDetailsMap;
         
-        // If something goes wrong:
       }).exceptionally(ex -> {
         logger.error("Executed exceptionally: getShopDetails()", ex);
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);

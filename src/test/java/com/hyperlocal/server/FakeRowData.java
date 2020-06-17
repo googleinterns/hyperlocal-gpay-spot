@@ -5,22 +5,35 @@ import com.github.jasync.sql.db.RowData;
 import org.joda.time.LocalDateTime;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
 public class FakeRowData implements RowData {
-    ArrayList<Object> list;
-
+    HashMap<String, Object> map;
+    List<Object> list;
     public FakeRowData(Object... list) {
+        this.map = new HashMap<String, Object>();
         this.list = new ArrayList<Object>();
+        String columnName = null;
+        boolean itemHasColumnValue = false;
         for (Object item : list)
-            this.list.add(item);
+        {
+            if(!itemHasColumnValue) columnName = (String) item;
+            else
+            {
+                this.map.put(columnName, item);
+                this.list.add(item);
+            }
+            itemHasColumnValue = !itemHasColumnValue;
+        }
+        return;
     }
 
     public Object get(int index) {
-        return list.get(index);
+        return this.list.get(index);
     }
 
     @Override
@@ -156,9 +169,8 @@ public class FakeRowData implements RowData {
     }
 
     @Override
-    public Object get(String arg0) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object get(String columnName) {
+        return map.get(columnName);
     }
 
     @Override

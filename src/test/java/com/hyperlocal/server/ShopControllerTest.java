@@ -61,23 +61,27 @@ public class ShopControllerTest {
 
     /* ARRANGE */
     assertThat(controller).isNotNull();
-    // Param
     Long merchantID = 1000000000000L;
-    // Def: Mocked database output
-    RowData shopRecord = new FakeRowData(1L, 200L, "Arvind Shop", new BigDecimal(23.33), new BigDecimal(23.33), "Mumbai", "Groceries");
+
+    RowData shopRecord = new FakeRowData(
+      "ShopID", 1L, 
+      "MerchantID", 1000000000000L, 
+      "ShopName", "Arvind Shop", 
+      "Latitude", new BigDecimal(23.33), 
+      "Longitude", new BigDecimal(23.33), 
+      "AddressLine1", "Mumbai", 
+      "TypeOfService", "Groceries"
+      );
     ResultSet shopRecords = new FakeResultSet(shopRecord);
     QueryResult shopsQueryResult = new QueryResult(0L, "Success", shopRecords);
     CompletableFuture<QueryResult> queryResultPromise = CompletableFuture.completedFuture(shopsQueryResult);
     when(connection.sendPreparedStatement(SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
     .thenReturn(queryResultPromise);
-    // Def: Expected output:
     List<Shop> expectedList = new ArrayList<Shop>();
     expectedList.add(new Shop(shopRecord));
 
-
     /* ACT */
     CompletableFuture<List<Shop>> actualListPromise = controller.getShopsByMerchantID(merchantID);
-    
 
     /* ASSERT */
     assertEquals(expectedList, actualListPromise.get());
@@ -90,42 +94,51 @@ public class ShopControllerTest {
     /* ARRANGE */
     assertThat(controller).isNotNull();
 
-    // Param
     Long shopID = 1000000000000L;
 
-    // Def database output
     Long merchantID = 2000000000000L;
-
-    RowData shopRecord = new FakeRowData(shopID, merchantID, "Arvind Shop", new BigDecimal(23.33), new BigDecimal(23.33), "Mumbai", "Groceries");
+    RowData shopRecord = new FakeRowData(
+      "ShopID", shopID, 
+      "MerchantID", merchantID, 
+      "ShopName", "Arvind Shop", 
+      "Latitude", new BigDecimal(23.33), 
+      "Longitude", new BigDecimal(23.33), 
+      "AddressLine1", "Mumbai", 
+      "TypeOfService", "Groceries"
+      );
     ResultSet wrappedShopRecord = new FakeResultSet(shopRecord);
     QueryResult shopQueryResult = new QueryResult(0L, "Success", wrappedShopRecord);
-
-    RowData merchantRecord = new FakeRowData(merchantID, "Arvind", "9876543210");
+    RowData merchantRecord = new FakeRowData(
+      "MerchantID", merchantID, 
+      "MerchantName", "Arvind", 
+      "MerchantPhone", "9876543210"
+      );
     ResultSet wrappedMerchantRecord = new FakeResultSet(merchantRecord);
     QueryResult merchantQueryResult = new QueryResult(0L, "Success", wrappedMerchantRecord);
 
-    RowData serviceRecord = new FakeRowData(101L, shopID, "Apples", "Fresh off the market!", "#");
+    RowData serviceRecord = new FakeRowData(
+      "ServiceID", 101L, 
+      "ShopID", shopID, 
+      "ServiceName", "Apples", 
+      "ServiceDescription", "Fresh off the market!", 
+      "ImageURL", "#");
     ResultSet serviceRecords = new FakeResultSet(serviceRecord);
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
-    // Expected output
     HashMap<String, Object> expectedMap = new HashMap<String, Object>();
     expectedMap.put("shopDetails", new Shop(shopRecord));
     expectedMap.put("merchantDetails", new Merchant(merchantRecord));
     expectedMap.put("catalog", new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
 
-    // Mocking database calls
     when(connection.sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
     .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
     when(connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
     .thenReturn(CompletableFuture.completedFuture(merchantQueryResult));
     when(connection.sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID)))
     .thenReturn(CompletableFuture.completedFuture(servicesQueryResult));
-    
 
     /* ACT */
     CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.getShopDetails(shopID);
-    
     
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
@@ -146,15 +159,12 @@ public class ShopControllerTest {
     Long shopID = 1000000000000L;
     HashMap<String, Object> payload = new HashMap<String, Object>();
     
-    // Populating Payload
-    // Add
     HashMap<String, Object> addCommand = new HashMap<String, Object>();
     List<Object> addList = Arrays.asList(shopID, "Mango", "Lorem ipsum", "#");
     addCommand.put("serviceName", addList.get(1));
     addCommand.put("serviceDescription", addList.get(2));
     addCommand.put("imageURL", addList.get(3));
     payload.put("add", new HashMap[]{addCommand});
-    // Edit
     HashMap<String, Object> editCommand = new HashMap<String, Object>();
     List<Object> editList = Arrays.asList("Apples", "Lorem ipsum", "#", 9000000000L);
     editCommand.put("serviceName", editList.get(0));
@@ -162,20 +172,16 @@ public class ShopControllerTest {
     editCommand.put("imageURL", editList.get(2));
     editCommand.put("serviceID", editList.get(3));
     payload.put("edit", new HashMap[]{editCommand});
-    // Delete
     HashMap<String, Object> deleteCommand = new HashMap<String, Object>();
     Long deleteServiceID = 9000000000L;
     deleteCommand.put("serviceID", deleteServiceID);
     payload.put("delete", new HashMap[]{deleteCommand});
 
-    // Def database output
     QueryResult emptyQueryResult = new QueryResult(1L, "Success", resultSet);
 
-    // Expected output
     HashMap<String, Object> expectedMap = new HashMap<String, Object>();
     expectedMap.put("success", true);
     
-    // Mocking database calls
     when(connection.sendQuery("BEGIN"))
     .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(INSERT_CATALOG_STATEMENT, addList))
@@ -187,10 +193,8 @@ public class ShopControllerTest {
     when(connection.sendQuery("COMMIT"))
     .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
 
-
     /* ACT */
     CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(shopID, new Gson().toJson(payload));
-
 
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
