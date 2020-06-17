@@ -34,13 +34,13 @@ public class Shop {
 
     public Shop(RowData data)
     {
-        this.shopID = (Long)data.get(0);
-        this.merchantID = (Long)data.get(1);
-        this.shopName = (String)data.get(2);
-        this.latitude = ((BigDecimal)data.get(3)).doubleValue();
-        this.longitude = ((BigDecimal)data.get(4)).doubleValue();
-        this.addressLine1 = (String)data.get(5);
-        this.typeOfService = (String)data.get(6);
+        this.shopID = (Long)data.get("ShopID");
+        this.merchantID = (Long)data.get("MerchantID");
+        this.shopName = (String)data.get("ShopName");
+        this.latitude = ((BigDecimal)data.get("Latitude")).doubleValue();
+        this.longitude = ((BigDecimal)data.get("Longitude")).doubleValue();
+        this.addressLine1 = (String)data.get("AddressLine1");
+        this.typeOfService = (String)data.get("TypeOfService");
     }
 
     public Shop(JsonObject data) {

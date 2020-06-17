@@ -9,11 +9,11 @@ public class CatalogItem {
     
     public CatalogItem(RowData data)
     {
-        this.serviceID = (Long)data.get(0);
-        this.shopID = (Long)data.get(1);
-        this.serviceName = (String)data.get(2);
-        this.serviceDescription = (String)data.get(3);
-        this.imageURL = (String)data.get(4);
+        this.serviceID = (Long)data.get("ServiceID");
+        this.shopID = (Long)data.get("ShopID");
+        this.serviceName = (String)data.get("ServiceName");
+        this.serviceDescription = (String)data.get("ServiceDescription");
+        this.imageURL = (String)data.get("ImageURL");
     }
 
     public boolean equals(Object obj)

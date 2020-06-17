@@ -21,9 +21,9 @@ public class Merchant {
   }
 
   public Merchant(RowData data) {
-    this.merchantID = (Long) data.get(0);
-    this.merchantName = (String) data.get(1);
-    this.merchantPhone = (String) data.get(2);
+    this.merchantID = (Long) data.get("MerchantID");
+    this.merchantName = (String) data.get("MerchantName");
+    this.merchantPhone = (String) data.get("MerchantPhone");
   }
 
   public Merchant(JsonObject data) {
