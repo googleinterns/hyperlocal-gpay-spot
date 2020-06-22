@@ -94,7 +94,7 @@ public class ShopController {
       .sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
       .thenCompose((QueryResult shopQueryResult) -> {
         ResultSet wrappedShopRecord = shopQueryResult.getRows();
-        if(wrappedShopRecord.size() == 0) throw new RuntimeException("Not found"); // No shop with supplied ShopID found
+        if(wrappedShopRecord.size() == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
         RowData shopRecord = wrappedShopRecord.get(0);
         shopDetails.updateShop(new Shop(shopRecord));
 
@@ -111,9 +111,6 @@ public class ShopController {
         for(RowData serviceRecord : catalogRecords) shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
         return shopDetails;
         
-      }).exceptionally(ex -> {
-        logger.error("Executed exceptionally: getShopDetails()", ex);
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
 
     return shopDetailsPromise;
