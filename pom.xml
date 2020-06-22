@@ -33,6 +33,12 @@
 
 
   <dependencies>
+    <dependency>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+      <version>1.30.4</version>
+    </dependency>
+
     <!-- mysql -->
     <dependency>
       <groupId>com.github.jasync-sql</groupId>
