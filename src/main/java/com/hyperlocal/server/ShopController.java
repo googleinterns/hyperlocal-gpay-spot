@@ -1,5 +1,7 @@
 package com.hyperlocal.server;
 
+import com.hyperlocal.server.Data.*;
+
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -15,7 +17,6 @@ import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
@@ -31,7 +32,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 public class ShopController {
@@ -85,35 +85,31 @@ public class ShopController {
 
   // Fetch catalog, shop & merchant details by shopID.
   @GetMapping("/api/shop/{shopID}")
-  public CompletableFuture<HashMap<String, Object>> getShopDetails(@PathVariable Long shopID) {
+  public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
-    HashMap<String, Object> shopDetailsMap = new HashMap<String, Object>();
+    ShopDetails shopDetails = new ShopDetails();
 
-    CompletableFuture<HashMap<String, Object>> shopDetailsPromise = connection
+    CompletableFuture<ShopDetails> shopDetailsPromise = connection
         // Get Shop details:
       .sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
       .thenCompose((QueryResult shopQueryResult) -> {
         ResultSet wrappedShopRecord = shopQueryResult.getRows();
         if(wrappedShopRecord.size() == 0) throw new RuntimeException("Not found"); // No shop with supplied ShopID found
         RowData shopRecord = wrappedShopRecord.get(0);
-        Shop shop = new Shop(shopRecord);
-        shopDetailsMap.put("shopDetails", shop);
+        shopDetails.updateShop(new Shop(shopRecord));
 
         // Get Merchant Details:
-        return connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(shop.merchantID));
+        return connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(shopDetails.shop.merchantID));
       }).thenCompose((QueryResult merchantQueryResult) -> {
         RowData merchantRecord = merchantQueryResult.getRows().get(0);
-        Merchant merchant = new Merchant(merchantRecord);
-        shopDetailsMap.put("merchantDetails", merchant);
+        shopDetails.updateMerchant(new Merchant(merchantRecord));
         
         // Get Catalog Details:
         return connection.sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
       }).thenApply((QueryResult catalogQueryResult) -> {
         ResultSet catalogRecords = catalogQueryResult.getRows();
-        ArrayList<CatalogItem> servicesList = new ArrayList<CatalogItem>();
-        for(RowData serviceRecord : catalogRecords) servicesList.add(new CatalogItem(serviceRecord));
-        shopDetailsMap.put("catalog", servicesList);
-        return shopDetailsMap;
+        for(RowData serviceRecord : catalogRecords) shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
+        return shopDetails;
         
       }).exceptionally(ex -> {
         logger.error("Executed exceptionally: getShopDetails()", ex);
