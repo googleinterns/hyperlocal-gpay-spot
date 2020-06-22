@@ -1,5 +1,6 @@
 package com.hyperlocal.server;
 
+import com.hyperlocal.server.Data.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -125,10 +126,7 @@ public class ShopControllerTest {
     ResultSet serviceRecords = new FakeResultSet(serviceRecord);
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
-    HashMap<String, Object> expectedMap = new HashMap<String, Object>();
-    expectedMap.put("shopDetails", new Shop(shopRecord));
-    expectedMap.put("merchantDetails", new Merchant(merchantRecord));
-    expectedMap.put("catalog", new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
+    ShopDetails expectedShopDetails = new ShopDetails(new Shop(shopRecord), new Merchant(merchantRecord), new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
 
     when(connection.sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
     .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
@@ -138,10 +136,10 @@ public class ShopControllerTest {
     .thenReturn(CompletableFuture.completedFuture(servicesQueryResult));
 
     /* ACT */
-    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.getShopDetails(shopID);
+    CompletableFuture<ShopDetails> actualShopDetailsPromise = controller.getShopDetails(shopID);
     
     /* ASSERT */
-    assertEquals(expectedMap, actualMapPromise.get());
+    assertEquals(expectedShopDetails, actualShopDetailsPromise.get());
     verify(connection).sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID));
     verify(connection).sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(merchantID));
     verify(connection).sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));

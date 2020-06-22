@@ -1,8 +1,8 @@
-package com.hyperlocal.server;
+package com.hyperlocal.server.Data;
 
+import com.hyperlocal.server.Utilities;
 import com.github.jasync.sql.db.RowData;
 import com.google.gson.JsonObject;
-
 import java.math.BigDecimal;
 
 public class Shop {

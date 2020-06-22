@@ -1,4 +1,4 @@
-package com.hyperlocal.server;
+package com.hyperlocal.server.Data;
 
 import com.github.jasync.sql.db.RowData;
 

@@ -1,5 +1,7 @@
 package com.hyperlocal.server;
 
+import com.hyperlocal.server.Data.*;
+
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
