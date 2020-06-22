@@ -30,12 +30,12 @@ public class ShopDetails {
         this.catalog = catalog;
     }
 
-    public void updateShop(Shop shop)
+    public void setShop(Shop shop)
     {
         this.shop = shop;
     }
 
-    public void updateMerchant(Merchant merchant)
+    public void setMerchant(Merchant merchant)
     {
         this.merchant = merchant;
     }

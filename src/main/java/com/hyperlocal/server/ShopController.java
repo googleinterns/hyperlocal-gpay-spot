@@ -96,13 +96,14 @@ public class ShopController {
         ResultSet wrappedShopRecord = shopQueryResult.getRows();
         if(wrappedShopRecord.size() == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
         RowData shopRecord = wrappedShopRecord.get(0);
-        shopDetails.updateShop(new Shop(shopRecord));
+        shopDetails.setShop(new Shop(shopRecord));
 
         // Get Merchant Details:
         return connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(shopDetails.shop.merchantID));
       }).thenCompose((QueryResult merchantQueryResult) -> {
-        RowData merchantRecord = merchantQueryResult.getRows().get(0);
-        shopDetails.updateMerchant(new Merchant(merchantRecord));
+        ResultSet wrappedMerchantRecord = merchantQueryResult.getRows();
+        if(wrappedMerchantRecord.size() == 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong. No merchant found for the shop.");
+        shopDetails.setMerchant(new Merchant(wrappedMerchantRecord.get(0)));
         
         // Get Catalog Details:
         return connection.sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
