@@ -1,0 +1,47 @@
+{
+    "mappings": {
+        "properties": {
+            "pin": {
+                "properties": {
+                    "location": {
+                        "type": "geo_point"
+                    }
+                }
+            },
+            "shopname": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "typeofservice": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "shopid": {
+                "type": "integer",
+                "index": false
+            },
+            "merchantname": {
+                "type": "text"
+            },
+            "merchantphone": {
+                "type": "text"
+            },
+            "catalogitems": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            }
+        }
+    }
+}
