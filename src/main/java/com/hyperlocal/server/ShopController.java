@@ -82,7 +82,6 @@ public class ShopController {
     return shopsPromise;
   }
 
-
   // Fetch catalog, shop & merchant details by shopID.
   @GetMapping("/api/shop/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
@@ -181,7 +180,7 @@ public class ShopController {
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
 
-  @PostMapping("/insert/shop")
+  @PostMapping("/api/insert/shop")
   public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
@@ -206,14 +205,14 @@ public class ShopController {
    * Expects: All shop details (including the ShopID of the shop to be Updated)
    */
 
-  @PostMapping("/update/shop/")
+  @PostMapping("/api/update/shop/")
   public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
     return updateShopDetails(shopDataAsJson).thenApply((QueryResult queryResult) -> {
-      return ((MySQLQueryResult) queryResult).getLastInsertId();
+      return shopDataAsJson.get("shopID").getAsString();
     }).thenCompose((shopID) -> {
-      return publishMessage(Long.toString(shopID));
+      return publishMessage(shopID);
     }).exceptionally(e -> {
       logger.error(String.format("ShopID %s: Could not publish to PubSub. Exited exceptionally!",
           shopDataAsJson.get("shopID").getAsString()));
