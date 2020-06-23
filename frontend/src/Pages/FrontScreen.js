@@ -34,8 +34,7 @@ class FrontScreen extends React.Component {
 
   render() {
     if (this.state.auth === false) {
-      this.authenticate();
-      return <> </>;
+      return <><p>Screen is Loading. Please authenticate</p></>;
     } else {
       return (
         <Container className="p-5 center">
