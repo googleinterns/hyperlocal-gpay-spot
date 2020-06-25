@@ -47,7 +47,7 @@ public class MerchantControllerTest {
 
     String InsertQueryParameters[] = new String[] { "4", "Test Merchant", "7867986767" };
     CompletableFuture<QueryResult> queryResult = CompletableFuture
-        .completedFuture(new QueryResult("1", "SUCCESS", resultSet));
+        .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
     when(connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
         .thenReturn(queryResult);
@@ -63,7 +63,7 @@ public class MerchantControllerTest {
 
     String updateQueryParameters[] = new String[] { "Test Merchant", "7867986767", "4" };
     CompletableFuture<QueryResult> queryResult = CompletableFuture
-        .completedFuture(new QueryResult("1", "SUCCESS", resultSet));
+        .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
     when(connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
         .thenReturn(queryResult);
