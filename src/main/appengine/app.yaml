@@ -1,2 +1,5 @@
 runtime: java11
 instance_class: F4
+service: elastic
+vpc_access_connector:
+  name: "projects/speedy-anthem-217710/locations/asia-northeast1/connectors/elasticsearch-connector"

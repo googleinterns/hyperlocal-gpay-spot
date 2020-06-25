@@ -9,6 +9,16 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
@@ -27,9 +37,11 @@ import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShopController {
 
   private final PubSubTemplate publisher;
-  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
+  private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
   private Connection connection;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
@@ -58,12 +70,54 @@ public class ShopController {
 
   /* To-do server-side checks: 
   - Access control
-  - Data validation */
+  - Data validation
+  - Remove Cross Origin annotations */
+
+  @CrossOrigin(origins = "http://localhost:3000")
+  @GetMapping("/api/query/elastic")
+    public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String query, @RequestParam String queryRadius, 
+    @RequestParam String latitude, @RequestParam String longitude) {
+      String queryString = "{\"query\":{\"bool\":{\"must\":{\"multi_match\":{\"query\":\"%s\",\"fields\":[\"shopname\",\"typeofservice\",\"merchantname\",\"catalogitems\"],\"fuzziness\":\"AUTO\"}},\"filter\":{\"geo_distance\":{\"distance\":\"%s\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
+      queryString = String.format(queryString, query, queryRadius, latitude, longitude);
+      HttpClient client = HttpClient.newHttpClient();
+      HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create("http://10.128.0.13:9200/shops/_search/"))
+        .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
+        .setHeader​("Content-Type","application/json")
+        .build();
+
+      return client.sendAsync(request, BodyHandlers.ofString()).
+        thenApply(HttpResponse::body)
+        .thenApply((responseString) -> {
+          return responseString;
+        });
+    }
 
 
+  @CrossOrigin(origins = "http://localhost:3000")
+  @GetMapping("/api/browse/elastic")
+    public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String latitude, @RequestParam String longitude) {
+      String queryString = "{\"query\":{\"bool\":{\"must\":{\"match_all\":{}},\"filter\":{\"geo_distance\":{\"distance\":\"3km\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
+      queryString = String.format(queryString, latitude, longitude);
+      HttpClient client = HttpClient.newHttpClient();
+      HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create("http://10.128.0.13:9200/shops/_search/"))
+        .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
+        .setHeader​("Content-Type","application/json")
+        .build();
+
+      return client.sendAsync(request, BodyHandlers.ofString()).
+        thenApply(HttpResponse::body)
+        .thenApply((responseString) -> {
+          return responseString;
+        });
+    }
+
+
+  @CrossOrigin(origins = "http://localhost:3000")
   // Fetch all shops by merchantID
   @GetMapping("/api/merchant/{merchantID}/shops")
-  public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable Long merchantID) {
+  public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable String merchantID) {
     List<Shop> shopsList = new ArrayList<Shop>();
 
     CompletableFuture<List<Shop>> shopsPromise = connection
@@ -82,7 +136,7 @@ public class ShopController {
     return shopsPromise;
   }
 
-
+  @CrossOrigin(origins = "http://localhost:3000")
   // Fetch catalog, shop & merchant details by shopID.
   @GetMapping("/api/shop/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
@@ -118,6 +172,7 @@ public class ShopController {
   }
 
 
+  @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/api/shop/{shopID}/catalog/update")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID, @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
@@ -181,7 +236,9 @@ public class ShopController {
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
 
-  @PostMapping("/insert/shop")
+
+  @CrossOrigin(origins = "http://localhost:3000")
+  @PostMapping("/api/insert/shop")
   public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
@@ -206,14 +263,16 @@ public class ShopController {
    * Expects: All shop details (including the ShopID of the shop to be Updated)
    */
 
-  @PostMapping("/update/shop/")
+
+  @CrossOrigin(origins = "http://localhost:3000")
+  @PostMapping("/api/update/shop/")
   public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
 
     return updateShopDetails(shopDataAsJson).thenApply((QueryResult queryResult) -> {
-      return ((MySQLQueryResult) queryResult).getLastInsertId();
+      return shopDataAsJson.get("shopID").getAsString();
     }).thenCompose((shopID) -> {
-      return publishMessage(Long.toString(shopID));
+      return publishMessage(shopID);
     }).exceptionally(e -> {
       logger.error(String.format("ShopID %s: Could not publish to PubSub. Exited exceptionally!",
           shopDataAsJson.get("shopID").getAsString()));
