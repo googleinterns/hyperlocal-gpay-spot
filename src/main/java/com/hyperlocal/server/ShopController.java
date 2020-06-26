@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShopController {
 
   private final PubSubTemplate publisher;
-  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";//"jdbc:mysql://10.124.32.3:3306/hyperlocal";
+  private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
   private Connection connection;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
@@ -73,7 +73,7 @@ public class ShopController {
   - Data validation
   - Remove Cross Origin annotations */
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @GetMapping("/api/query/elastic")
     public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String query, @RequestParam String queryRadius, 
     @RequestParam String latitude, @RequestParam String longitude) {
@@ -94,7 +94,7 @@ public class ShopController {
     }
 
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @GetMapping("/api/browse/elastic")
     public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String latitude, @RequestParam String longitude) {
       String queryString = "{\"query\":{\"bool\":{\"must\":{\"match_all\":{}},\"filter\":{\"geo_distance\":{\"distance\":\"3km\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
@@ -114,7 +114,7 @@ public class ShopController {
     }
 
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   // Fetch all shops by merchantID
   @GetMapping("/api/merchant/{merchantID}/shops")
   public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable String merchantID) {
@@ -136,7 +136,7 @@ public class ShopController {
     return shopsPromise;
   }
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   // Fetch catalog, shop & merchant details by shopID.
   @GetMapping("/api/shop/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
@@ -172,7 +172,7 @@ public class ShopController {
   }
 
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @PostMapping("/api/shop/{shopID}/catalog/update")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID, @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
@@ -237,7 +237,7 @@ public class ShopController {
    */
 
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @PostMapping("/api/insert/shop")
   public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
@@ -256,6 +256,9 @@ public class ShopController {
       return "";
     }).thenApply((publishPromise) -> {
       return new Shop(shopDataAsJson);
+    }).exceptionally((ex) -> {
+        ex.printStackTrace();
+        return null;
     });
   }
 
@@ -264,7 +267,7 @@ public class ShopController {
    */
 
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @PostMapping("/api/update/shop/")
   public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();

@@ -1,4 +1,4 @@
-const base = 'http://penguin.termina.linux.test:8080';
+const base = 'https://speedy-anthem-217710.an.r.appspot.com';
 
 const ROUTES = {
     'merchant': {

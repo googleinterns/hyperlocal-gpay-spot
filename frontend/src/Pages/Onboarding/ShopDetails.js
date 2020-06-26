@@ -32,7 +32,7 @@ class ShopDetails extends React.Component {
 
   submitDetails = () => {
     this.setState({pageLoading: true});
-    axios.post("http://penguin.termina.linux.test:8080/api/insert/shop/", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/insert/shop/", {
       merchantID: this.props.user.ID,
       shopName: this.state.shopName,
       typeOfService: this.state.typeOfService,
@@ -119,7 +119,7 @@ class ShopDetails extends React.Component {
                           block
                           className="fixedBottomBtn"
                           onClick={this.submitDetails}>
-                          Finish
+                          Proceed
                       </Button>
                   </>
           }

@@ -25,7 +25,7 @@ class ShopDetails extends React.Component {
   }
 
   resetAndReloadDetails = () => {
-    return axios.get("http://penguin.termina.linux.test:8080/api/merchant/" + this.state.merchantID + "/shops")
+    return axios.get("https://speedy-anthem-217710.an.r.appspot.com/api/merchant/" + this.state.merchantID + "/shops")
       .then(res => {
         console.log(res.data);
         let shopDetails = res.data[0];
@@ -47,7 +47,7 @@ class ShopDetails extends React.Component {
 
 
   submitDetails = () => {
-    axios.post("http://penguin.termina.linux.test:8080/update/shop/", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/update/shop/", {
       merchantID: this.state.merchantID,
       shopID: this.state.shopID,
       shopName: this.state.shopName,

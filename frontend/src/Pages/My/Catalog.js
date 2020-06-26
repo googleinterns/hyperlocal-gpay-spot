@@ -101,7 +101,7 @@ class Catalog extends React.Component {
 
     if(!itemsToAdd.length && !itemsToEdit.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
 
-    axios.post("http://penguin.termina.linux.test:8080/api/shop/"+this.state.shopID+"/catalog/update", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/shop/"+this.state.shopID+"/catalog/update", {
       add: itemsToAdd,
       edit: itemsToEdit,
       delete: itemsToDelete
@@ -117,7 +117,7 @@ class Catalog extends React.Component {
   }
 
   resetAndReloadServices = () => {
-    return axios.get("http://penguin.termina.linux.test:8080/api/shop/"+this.props.user.shop.shopID)
+    return axios.get("https://speedy-anthem-217710.an.r.appspot.com/api/shop/"+this.props.user.shop.shopID)
     .then(res => {
       if(!("catalog" in res.data))
           throw new Error(res.data.error);

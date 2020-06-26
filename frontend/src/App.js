@@ -43,7 +43,7 @@ class App extends React.Component {
       let curState = {...state};
       curState.user.idToken = idToken;
       curState.user.ID = idToken.sub;
-      curState.user.name = idToken.firstName;
+      curState.user.name = idToken.given_name;
       return curState;
     });
   }

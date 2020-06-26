@@ -37,8 +37,9 @@ class FrontScreen extends React.Component {
     //   "exp": 1353604926,
     //   "nonce": "0394852-3190485-2490358",
     //   "hd": "example.com",
-    //   "firstName": "Arvind"
+    //   "given_name": "Arvind"
     // };
+    console.log("Identity API response: ", decoded);
     this.setState(decoded);
     this.setState({
       "auth": true
@@ -50,7 +51,15 @@ class FrontScreen extends React.Component {
     console.log(this.props)
     this.setState({pageLoading: true});
     let merchantShops = await axios.get(ROUTES.api.get.shopsByMerchantID.replace('%b', this.props.user.ID));
-    if(!merchantShops.data[0]) this.props.history.push(ROUTES.merchant.onboarding.shopInfo);
+    if(!merchantShops.data[0])
+    {
+        let merchantObj = await axios.post('https://speedy-anthem-217710.an.r.appspot.com/api/insert/merchant', {
+            merchantID: this.props.user.ID,
+            merchantName: this.props.user.name,
+            merchantPhone: "0123456789"
+        });
+        this.props.history.push(ROUTES.merchant.onboarding.shopInfo);
+    }
     else 
     {
       this.props.setShop(merchantShops.data[0]);

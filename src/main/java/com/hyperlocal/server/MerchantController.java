@@ -14,13 +14,14 @@ import com.google.gson.JsonParser;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 // Rest Controller for Merchants
 
 @RestController
 public class MerchantController {
 
-  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";//"jdbc:mysql://10.124.32.3:3306/hyperlocal";
+  private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
   private Connection connection;
   private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
   private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
@@ -41,6 +42,7 @@ public class MerchantController {
    * Merchant object
    */
 
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @PostMapping("/api/update/merchant/")
   public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
@@ -49,11 +51,15 @@ public class MerchantController {
     });
   }
 
+  @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @PostMapping("/api/insert/merchant")
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
     return insertNewMerchant(newMerchant).thenApply((result) -> {
       return new Merchant(newMerchant);
+    }).exceptionally((ex) -> {
+        ex.printStackTrace();
+        return null;
     });
   }
 

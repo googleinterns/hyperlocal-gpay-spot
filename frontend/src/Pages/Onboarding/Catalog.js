@@ -101,7 +101,7 @@ class Catalog extends React.Component {
 
     if(!itemsToAdd.length && !itemsToEdit.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
 
-    axios.post("http://penguin.termina.linux.test:8080/api/shop/"+this.props.user.shop.shopID+"/catalog/update", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/shop/"+this.props.user.shop.shopID+"/catalog/update", {
       add: itemsToAdd,
       edit: itemsToEdit,
       delete: itemsToDelete
@@ -285,7 +285,7 @@ class Catalog extends React.Component {
         block
         disabled={this.state.pageLoading}
         className="fixedBottomBtn">
-        Update
+        Finish
       </Button>
       </>
     );
