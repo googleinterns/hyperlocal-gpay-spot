@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShopController {
 
   private final PubSubTemplate publisher;
-  private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
+  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";//"jdbc:mysql://10.124.32.3:3306/hyperlocal";
   private Connection connection;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;

@@ -1,3 +1,5 @@
+const base = 'http://penguin.termina.linux.test:8080';
+
 const ROUTES = {
     'merchant': {
         'dashboard' : '/my/dashboard',
@@ -6,6 +8,11 @@ const ROUTES = {
         'onboarding': {
             'shopInfo': '/onboarding/shop-info',
             'catalog': '/onboarding/catalog'
+        }
+    },
+    'api': {
+        'get':{
+            'shopsByMerchantID': base+'/api/merchant/%b/shops'
         }
     }
 };
