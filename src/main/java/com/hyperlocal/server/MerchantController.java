@@ -41,7 +41,7 @@ public class MerchantController {
    * Merchant object
    */
 
-  @PostMapping("/api/update/merchant/")
+  @PostMapping("/update/merchant/")
   public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
     return updateMerchantDetails(newMerchant).thenApply((result) -> {
@@ -49,7 +49,7 @@ public class MerchantController {
     });
   }
 
-  @PostMapping("/api/insert/merchant")
+  @PostMapping("/insert/merchant")
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
     return insertNewMerchant(newMerchant).thenApply((result) -> {
