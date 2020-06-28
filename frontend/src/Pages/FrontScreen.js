@@ -21,14 +21,17 @@ class FrontScreen extends React.Component {
     const microapps = window.microapps;
     const request = { nonce: 'nonce typically generated server-side' };
     microapps.getIdentity(request).then(response => {
-      const decoded = JSON.parse(atob(response.split('.')[1]));
+      /* response: Concatenation of '.' separated base64 encoded JSON strings,
+       * of which string at index 1 (0-based indexing) is the user identity.
+       *
+       * Line 29: Decoding the base64 string at index 1 and parsing it as JSON
+       */
+      const decoded = JSON.parse(atob(response.split('.')[1])); 
+      decoded["auth"] = true;
       this.setState(decoded);
-      this.setState({
-        "auth": true
-      });
-      console.log('getIdentity response: ', decoded);
+      console.log('GetIdentity response: ', decoded);
     }).catch(error => {
-      console.error('An error occurred: ', error);
+      console.error('An error occurred while fetching identity: ', error);
     });
   }
 

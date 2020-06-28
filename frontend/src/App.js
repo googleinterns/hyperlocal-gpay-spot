@@ -11,24 +11,20 @@ class App extends React.Component {
       "latitude": null,
       "longitude": null
     }
-    this.setLocation = this.setLocation.bind(this)
   }
 
-  setType(type) {
+  setType = (type) => {
     this.setState({
       type: type,
-      latitude: this.state.latitude,
-      longitude: this.state.longitude
     });
   }
 
-  setLocation() {
+  setLocation = () => {
     let microapps = window.microapps;
-    let locationJson;
     microapps.getCurrentLocation().then(response => {
+      let locationJson;
       locationJson = response.data;
       this.setState({
-        type: this.state.type,
         latitude: locationJson.latitude,
         longitude: locationJson.longitude
       });
