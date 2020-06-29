@@ -10,7 +10,7 @@ class ShopDetails extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        pageLoading: true,
+        pageLoading: false,
         shopName: this.props.user.shop.shopName,
         typeOfService: this.props.user.shop.typeOfService,
         addressLine1: this.props.user.shop.addressLine1,
@@ -76,10 +76,10 @@ class ShopDetails extends React.Component {
                           <Form.Label>What do you plan to sell?</Form.Label>
                           <Form.Control value={this.state.typeOfService} onChange={e => this.setState({ typeOfService: e.target.value })} as="select">
                               <option disabled value=""> -- Select product/service -- </option>
-                              <option value="food">Groceries</option>
-                              <option value="garments">Garments</option>
-                              <option value="electronics">Electronics Repair</option>
-                              <option value="others">Others</option>
+                              <option value="Groceries">Groceries</option>
+                              <option value="Garments">Garments</option>
+                              <option value="Electronics">Electronics Repair</option>
+                              <option value="Others">Others</option>
                           </Form.Control>
                       </Form.Group>
                       
