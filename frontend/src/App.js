@@ -41,6 +41,7 @@ class App extends React.Component {
   auth = (idToken) => {
     this.setState((state, props) => {
       let curState = {...state};
+      curState.user.auth = true;
       curState.user.idToken = idToken;
       curState.user.ID = idToken.sub;
       curState.user.name = idToken.given_name;
