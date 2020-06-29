@@ -81,7 +81,8 @@ public class ShopController {
 
     return shopsPromise;
   }
-  
+
+
   // Fetch catalog, shop & merchant details by shopID.
   @GetMapping("/api/shop/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
@@ -115,7 +116,8 @@ public class ShopController {
 
     return shopDetailsPromise;
   }
-  
+
+
   @PostMapping("/api/shop/{shopID}/catalog/update")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID, @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
