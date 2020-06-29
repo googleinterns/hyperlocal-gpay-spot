@@ -14,9 +14,7 @@ class App extends React.Component {
   }
 
   setType = (type) => {
-    this.setState({
-      type: type,
-    });
+    this.setState({type});
   }
 
   setLocation = () => {
@@ -33,6 +31,7 @@ class App extends React.Component {
     });
   }
 
+  
   render() {
     return (
       <>
