@@ -74,6 +74,8 @@ class FrontScreen extends React.Component {
 
   render() {
     return (
+      this.state.pageLoading ?
+      Loading :
       <Container className="p-5 center">
         <Row className="mb-5">
           <Button color="#FD485B" block variant="dark">
