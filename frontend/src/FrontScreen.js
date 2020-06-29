@@ -11,6 +11,7 @@ class FrontScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      pageLoading: true,
       "user": {
         "auth": false
       }
@@ -19,6 +20,10 @@ class FrontScreen extends React.Component {
 
   componentDidMount() {
     this.authenticate();
+  }
+
+  componentDidUpdate(prevProps) {
+    if(this.props.user.auth && !prevProps.user.auth) this.setState({pageLoading: false});
   }
 
   authenticate = async () => {
@@ -53,7 +58,7 @@ class FrontScreen extends React.Component {
     let merchantShops = await axios.get(ROUTES.api.get.shopsByMerchantID.replace('%b', this.props.user.ID));
     if(!merchantShops.data[0])
     {
-        let merchantObj = await axios.post('https://speedy-anthem-217710.an.r.appspot.com/api/insert/merchant', {
+        await axios.post('https://speedy-anthem-217710.an.r.appspot.com/api/insert/merchant', {
             merchantID: this.props.user.ID,
             merchantName: this.props.user.name,
             merchantPhone: "0123456789"

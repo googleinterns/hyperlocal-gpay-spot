@@ -21,6 +21,10 @@ class ShopDetails extends React.Component {
     };
   }
 
+  componentDidUpdate(prevProps) {
+    if(this.props.user.shop && !prevProps.user.shop) this.props.history.push(ROUTES.merchant.onboarding.catalog);
+  }
+
   hideLocationInput = () => {
     this.setState({showLocationInput: false});
     
@@ -52,7 +56,6 @@ class ShopDetails extends React.Component {
           latitude: this.state.latitude,
           longitude: this.state.longitude    
         });
-        return this.props.history.push(ROUTES.merchant.onboarding.catalog);
       }
       else throw new Error(resp.data.error);
     })
