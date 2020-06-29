@@ -82,6 +82,7 @@ public class ShopController {
     return shopsPromise;
   }
 
+
   // Fetch catalog, shop & merchant details by shopID.
   @GetMapping("/api/shop/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
