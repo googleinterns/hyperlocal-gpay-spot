@@ -10,7 +10,7 @@ class Catalog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        pageLoading: true,
+        pageLoading: false,
         showAddForm: false,
         addForm: {
           'serviceName': '',
