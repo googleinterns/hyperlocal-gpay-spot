@@ -88,7 +88,7 @@ class App extends React.Component {
             </Route>
             <Route path="/buyercatalog/:shopid" component={BuyerCatalog} />
 
-            <Route path={ROUTES.merchant.onboarding.shopInfo} setShop={this.setShop} render={(props) => <ShopDetails {...props} user={this.state.user} />} />
+            <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
             <Route path={ROUTES.merchant.onboarding.catalog} render={(props) => <OnboardingCatalog {...props} user={this.state.user} />} />
             <Route path={ROUTES.merchant.dashboard} render={(props) => <MyDashboard {...props} user={this.state.user} />} />
             <Route path={ROUTES.merchant.catalog} render={(props) => <MyCatalog {...props} user={this.state.user} />} />
