@@ -39,21 +39,19 @@ class App extends React.Component {
   }
 
   auth = (idToken) => {
-    this.setState((state, props) => {
-      let curState = {...state};
-      curState.user.auth = true;
-      curState.user.idToken = idToken;
-      curState.user.ID = idToken.sub;
-      curState.user.name = idToken.given_name;
-      return curState;
-    });
+    let user = {
+      auth: true,
+      idToken,
+      ID: idToken.sub,
+      name: idToken.given_name
+    };
+    this.setState({user});
   }
 
   setShop = (shop) => {
-    this.setState((state, props) => {
-      let curState = {...state};
-      curState.user.shop = shop;
-      return curState;
+    this.setState((state) => {
+      let user = {shop, ...state.user}
+      return {user};
     });
   }
 
