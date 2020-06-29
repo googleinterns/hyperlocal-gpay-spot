@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import axios from 'axios';
 import ROUTES from './routes';
 import { withRouter } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 class FrontScreen extends React.Component {
   constructor(props) {
@@ -74,9 +76,9 @@ class FrontScreen extends React.Component {
 
   render() {
     return (
-      this.state.pageLoading ?
-      <Container>Loading</Container> :
-      <Container className="p-5 center">
+      this.state.pageLoading 
+      ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+      : <Container className="p-5 center">
         <Row className="mb-5">
           <Button color="#FD485B" block variant="dark">
             <Link to="/shops/all" className="btn btn-dark box">Avail a Service</Link>
