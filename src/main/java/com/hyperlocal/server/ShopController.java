@@ -86,13 +86,17 @@ public class ShopController {
   }
 
   @GetMapping("/api/shops/multiple")
-  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch() {
+  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(@RequestBody String shopIdListInput) {
+    JsonObject jsonPayload = JsonParser.parseString(shopIdListInput).getAsJsonObject();
+    JsonArray jsonArray = jsonPayload.getAsJsonArray("idlist");
+
     List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
 
     List<Long> shopIDList = new ArrayList<Long>();
-    shopIDList.add(1L);
-    shopIDList.add(2L);
-    shopIDList.add(3L);
+
+    for (JsonElement id: jsonArray){
+      shopIDList.add(id.getAsLong());
+    }
 
     HashMap<Long, Shop> mapShopIdtoShop = new HashMap<Long, Shop>();
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();;
