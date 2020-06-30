@@ -44,6 +44,7 @@ class ViewShops extends React.Component {
       headers: {}
     };
     let elasticSearchResponseJson = await axios(config);
+    console.log(elasticSearchResponseJson);
     let shopIdList = this.getShopIdList(elasticSearchResponseJson);
     await this.updateShopStateParameter(shopIdList);
   }
@@ -80,9 +81,14 @@ class ViewShops extends React.Component {
   }
 
   updateBrowseResults = async () => {
+
+    if (this.state.queryRadius === "") {
+      await this.setState({queryRadius: "3km"});
+    } 
+
     const config = {
       method: 'get',
-      url: `${URL_ELASTIC_BROWSE}?latitude=${this.props.latitude}&longitude=${this.props.longitude}`,
+      url: `${URL_ELASTIC_BROWSE}?queryRadius=${this.state.queryRadius}&latitude=${this.props.latitude}&longitude=${this.props.longitude}`,
       headers: {}
     };
 
@@ -181,4 +187,3 @@ class ViewShops extends React.Component {
 }
 
 export default ViewShops;
-

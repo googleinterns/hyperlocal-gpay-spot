@@ -33,19 +33,6 @@ class FrontScreen extends React.Component {
     const request = { nonce: 'nonce typically generated server-side' };
     const encoded = await microapps.getIdentity(request);
     const decoded = JSON.parse(atob(encoded.split('.')[1]));
-    // const decoded = {
-    //   "iss": "accounts.google.com",
-    //   "email_verified": "true",
-    //   "sub": "2",
-    //   "azp": "1234987819200.apps.googleusercontent.com",
-    //   "email": "jsmith@example.com",
-    //   "aud": "1234987819200.apps.googleusercontent.com",
-    //   "iat": 1353601026,
-    //   "exp": 1353604926,
-    //   "nonce": "0394852-3190485-2490358",
-    //   "hd": "example.com",
-    //   "given_name": "Arvind"
-    // };
     console.log("Identity API response: ", decoded);
     this.setState(decoded);
     this.setState({

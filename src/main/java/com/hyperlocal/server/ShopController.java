@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
 
 import java.io.IOException;
 import java.net.URI;
@@ -48,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ShopController {
 
-  private final PubSubTemplate publisher;
+  private PubSubTemplate publisher;
   private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
   private Connection connection;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
@@ -63,6 +64,7 @@ public class ShopController {
   private static final String PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
+  @Inject
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
@@ -96,9 +98,9 @@ public class ShopController {
 
   @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @GetMapping("/api/browse/elastic")
-    public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String latitude, @RequestParam String longitude) {
-      String queryString = "{\"query\":{\"bool\":{\"must\":{\"match_all\":{}},\"filter\":{\"geo_distance\":{\"distance\":\"3km\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
-      queryString = String.format(queryString, latitude, longitude);
+    public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
+      String queryString = "{\"query\":{\"bool\":{\"must\":{\"match_all\":{}},\"filter\":{\"geo_distance\":{\"distance\":\"%s\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
+      queryString = String.format(queryString, queryRadius, latitude, longitude);
       HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create("http://10.128.0.13:9200/shops/_search/"))
@@ -130,6 +132,7 @@ public class ShopController {
         
       }).exceptionally(ex -> {
         logger.error("Executed exceptionally: getShopsByMerchantID()", ex);
+        ex.printStackTrace();
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
 
@@ -214,19 +217,21 @@ public class ShopController {
         return connection.sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(serviceID));
       });
     }
-    
+    //publish promise not working -check that
     return statusPromise
       .thenCompose((QueryResult result) -> {
         // If successful, commit
         return connection.sendQuery("COMMIT");
-      }).thenApply((QueryResult result) -> {
+      }).thenCompose((QueryResult result) -> {
+        return publishMessage(Long.toString(shopID));
+      }).thenApply((String publishPromise) -> {
         HashMap<String, Object> successMap = new HashMap<String, Object>();
         successMap.put("success", true);
         return successMap;
-      })
-      .exceptionally((ex) -> {
+      }).exceptionally((ex) -> {
         // Else, auto-rollback when connection closes
         logger.error("Executed exceptionally: upsertCatalog()", ex);
+        ex.printStackTrace();
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
 
@@ -242,7 +247,6 @@ public class ShopController {
   public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-
     return insertNewShop(shopDataAsJson).thenApply((queryResult) -> {
       return ((MySQLQueryResult) queryResult).getLastInsertId();
     }).thenApply((shopID) -> {
@@ -251,14 +255,10 @@ public class ShopController {
     }).thenCompose((shopID) -> {
       return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
-      logger.error(String.format("ShopID %s: Could not publish to PubSub. Exited exceptionally!",
-          shopDataAsJson.get("shopID").getAsString()));
+      e.printStackTrace();
       return "";
     }).thenApply((publishPromise) -> {
       return new Shop(shopDataAsJson);
-    }).exceptionally((ex) -> {
-        ex.printStackTrace();
-        return null;
     });
   }
 

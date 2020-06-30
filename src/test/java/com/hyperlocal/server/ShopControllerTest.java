@@ -3,6 +3,8 @@ package com.hyperlocal.server;
 import com.hyperlocal.server.Data.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +29,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.util.concurrent.ListenableFuture;
 
 @SpringBootTest
 
@@ -46,7 +50,7 @@ public class ShopControllerTest {
   private final JsonObject shopJson = JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject();
 
   @Mock
-  PubSubTemplate template;
+  private static PubSubTemplate template;
 
   @Mock
   private static Connection connection;
@@ -149,7 +153,7 @@ public class ShopControllerTest {
 
   @Test
   public void shouldUpsertCatalog() throws Exception {
-
+    
     /* ARRANGE */
     assertThat(controller).isNotNull();
 
@@ -179,7 +183,8 @@ public class ShopControllerTest {
 
     HashMap<String, Object> expectedMap = new HashMap<String, Object>();
     expectedMap.put("success", true);
-    
+        assertThat(controller).isNotNull();
+
     when(connection.sendQuery("BEGIN"))
     .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(INSERT_CATALOG_STATEMENT, addList))
@@ -190,9 +195,13 @@ public class ShopControllerTest {
     .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendQuery("COMMIT"))
     .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
+    when(template.publish("projects/speedy-anthem-217710/topics/testTopic", "1000000000000"))
+    .thenReturn(new AsyncResult<>("DONE"));
 
     /* ACT */
     CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(shopID, new Gson().toJson(payload));
+
+   verify(template).publish("projects/speedy-anthem-217710/topics/testTopic", "1000000000000");
 
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
@@ -202,7 +211,6 @@ public class ShopControllerTest {
     verify(connection).sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
     verify(connection).sendQuery("COMMIT");
   }
-
   
   
 
