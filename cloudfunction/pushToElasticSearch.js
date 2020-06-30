@@ -10,7 +10,7 @@ const axios = require('axios');
 const SHOP_SELECT_STATEMENT = `SELECT MerchantID, ShopID, ShopName, Latitude, Longitude, AddressLine1, TypeOfService FROM Shops WHERE ShopID=?;`;
 const MERCHANT_SELECT_STATEMENT = `SELECT MerchantName, MerchantPhone FROM Merchants WHERE MerchantID=?;`
 const CATALOG_SELECT_STATEMENT = `SELECT ServiceName from Catalog WHERE ShopID = ?;`
-const GCE_URL = 'http://10.128.0.13:9200'
+const ELASTICSEARCH_SERVER_URL = 'http://10.128.0.13:9200'
 const INDEX_NAME = "shops"
 const SOCKET_PATH = "/cloudsql/speedy-anthem-217710:us-central1:hyperlocal";
 
@@ -65,7 +65,7 @@ function pushToElasticsearch(shopDataJson) {
   const shopDataJsonString = JSON.stringify(shopDataJson);
   const config = {
     method: 'put',
-    url: `${GCE_URL}/${INDEX_NAME}/_doc/${shopDataJson["shopid"]}`,
+    url: `${ELASTICSEARCH_SERVER_URL}/${INDEX_NAME}/_doc/${shopDataJson["shopid"]}`,
     headers: {
       'Content-Type': 'application/json'
     },
