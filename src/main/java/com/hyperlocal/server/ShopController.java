@@ -63,7 +63,7 @@ public class ShopController {
 
   // Fetch all shops by merchantID
   @GetMapping("/api/merchant/{merchantID}/shops")
-  public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable Long merchantID) {
+  public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable String merchantID) {
     List<Shop> shopsList = new ArrayList<Shop>();
 
     CompletableFuture<List<Shop>> shopsPromise = connection
