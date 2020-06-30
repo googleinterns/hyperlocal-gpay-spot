@@ -43,11 +43,8 @@ public class ShopController {
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
   private static final String SELECT_SHOP_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `ShopID` = ?;";
   private static final String SELECT_SHOPS_BY_MERCHANT_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `MerchantID` = ?;";
-  private static final String SELECT_SHOPS_BATCH_QUERY = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `ShopID` IN (%s);";
   private static final String SELECT_MERCHANT_STATEMENT = "SELECT `MerchantID`, `MerchantName`, `MerchantPhone` from `Merchants` WHERE `MerchantID` = ?;";
-  private static final String SELECT_MERCHANT_BATCH_QUERY = "SELECT `MerchantID`, `MerchantName`, `MerchantPhone` from `Merchants` WHERE `MerchantID` IN (%s);";
   private static final String SELECT_CATALOG_BY_SHOP_STATEMENT = "SELECT `ServiceID`, `ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL` from `Catalog` WHERE `ShopID` = ?;";
-  private static final String SELECT_CATALOG_BATCH_QUERY = "SELECT `ServiceID`, `ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL` from `Catalog` WHERE `ShopID` IN (%s);";
   private static final String INSERT_CATALOG_STATEMENT = "INSERT INTO `Catalog` (`ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL`) VALUES (?, ?, ?, ?);";
   private static final String UPDATE_CATALOG_STATEMENT = "UPDATE `Catalog` SET `ServiceName` = ?, `ServiceDescription` = ?, `ImageURL` = ? WHERE `ServiceID` = ?;";
   private static final String DELETE_CATALOG_STATEMENT = "DELETE FROM `Catalog` WHERE `ServiceID` = ?;";
@@ -83,72 +80,6 @@ public class ShopController {
         });
 
     return shopsPromise;
-  }
-
-  @GetMapping("/api/shops/multiple")
-  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(@RequestBody String shopIdListInput) {
-    JsonObject jsonPayload = JsonParser.parseString(shopIdListInput).getAsJsonObject();
-    JsonArray jsonArray = jsonPayload.getAsJsonArray("idlist");
-
-    List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
-
-    List<Long> shopIDList = new ArrayList<Long>();
-
-    for (JsonElement id: jsonArray){
-      shopIDList.add(id.getAsLong());
-    }
-
-    HashMap<Long, Shop> mapShopIdtoShop = new HashMap<Long, Shop>();
-    HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();;
-    HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();;
-
-    // Convert ShopIDs to a String separated by Comma
-    String shopIDListAsString = shopIDList.stream().map(Object::toString).collect(Collectors.joining(","));
-
-    System.out.println(shopIDListAsString);
-    return connection.sendPreparedStatement(String.format(SELECT_SHOPS_BATCH_QUERY, shopIDListAsString))
-        .thenApply((QueryResult result) -> {
-          List<String> merchantIDList = new ArrayList<String>();
-          ResultSet allShops = result.getRows();
-          for (RowData shop : allShops) {
-            mapShopIdtoShop.put((Long) shop.get("ShopID"), new Shop(shop));
-            mapShopIdToShopDetails.put((Long) shop.get("ShopID"), new ShopDetails());
-
-            merchantIDList.add((String) shop.get("MerchantID"));
-          }
-          return merchantIDList;
-     
-     
-        }).thenCompose((merchantIDList) -> {
-          String MerchantIDListAsString = merchantIDList.stream().map(Object::toString).collect(Collectors.joining(","));
-          return connection.sendPreparedStatement(String.format(SELECT_MERCHANT_BATCH_QUERY, MerchantIDListAsString));
-        }).thenApply((result) -> {
-          ResultSet allMerchants = result.getRows();
-          for (RowData merchant : allMerchants) {
-            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), new Merchant(merchant));
-          }
-          return allMerchants;
-     
-     
-        }).thenCompose((allMerchants) -> {
-          return connection.sendPreparedStatement(String.format(SELECT_CATALOG_BATCH_QUERY, shopIDListAsString));
-        }).thenApply((catalogQueryResult) -> {
-          ResultSet catalogRecords = catalogQueryResult.getRows();
-          for (RowData serviceRecord : catalogRecords) {
-            Long ShopID = (Long) serviceRecord.get("ShopID");
-            ShopDetails shopDetails = mapShopIdToShopDetails.get(ShopID);
-            Shop shop = mapShopIdtoShop.get(ShopID);
-            shopDetails.setShop(mapShopIdtoShop.get(ShopID));
-            shopDetails.setMerchant(mapMerchantIdToMerchant.get(shop.merchantID));
-            shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
-            mapShopIdToShopDetails.put(ShopID, shopDetails);
-          }
-
-          for (Long ShopId : shopIDList) {
-            shopsList.add(mapShopIdToShopDetails.get(ShopId));
-          }
-          return shopsList;
-        });
   }
 
   // Fetch catalog, shop & merchant details by shopID.
