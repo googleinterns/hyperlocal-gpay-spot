@@ -1,1 +1,20 @@
-body { padding-top: 40px; }
+.fixedBottomBtn {
+    position: fixed;
+    border-radius: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+}
+
+.fa-spinner {
+    animation: spinanim 1s linear infinite;
+}
+
+@keyframes spinanim {
+    to { transform: rotate(360deg); }
+}
+
+
+.pac-container {
+    z-index: 1051 !important;
+}
