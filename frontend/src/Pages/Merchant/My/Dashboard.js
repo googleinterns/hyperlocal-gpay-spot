@@ -1,6 +1,6 @@
 import React from 'react';
 import {Container, Card, Button} from 'react-bootstrap';
-import ROUTES from '../../routes';
+import ROUTES from '../../../routes';
 
 class Dashboard extends React.Component {
   constructor(props) {

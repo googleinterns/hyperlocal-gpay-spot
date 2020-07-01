@@ -52,6 +52,7 @@ public class ShopController {
   private PubSubTemplate publisher;
   private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
   private Connection connection;
+  private Utilities util;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
   private static final String SELECT_SHOP_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `ShopID` = ?;";
@@ -67,6 +68,7 @@ public class ShopController {
   @Inject
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
+    this.util = new Utilities();
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
 

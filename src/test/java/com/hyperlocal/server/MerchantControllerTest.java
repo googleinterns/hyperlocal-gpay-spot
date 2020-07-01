@@ -34,6 +34,9 @@ public class MerchantControllerTest {
   @Mock
   Connection connection;
 
+  @Mock
+  Utilities util;
+
   @InjectMocks
   MerchantController controller = new MerchantController();
 
@@ -42,18 +45,39 @@ public class MerchantControllerTest {
 
   @Test
   public void shouldInsertMerchant() throws Exception {
+    // ARRANGE
     assertThat(controller).isNotNull();
-    assertThat(merchantJson).isNotNull();
+    String merchantID = "10254198765423652158965412365";
+    String merchantName = "John Smith";
+    String merchantPhone = "+91 9999999999";
+    String phoneJWT = "FAKE_PHONE_JWT";
+    
+    JsonObject inputJsonObject = new JsonObject();
+    inputJsonObject.addProperty("merchantID", merchantID);
+    inputJsonObject.addProperty("merchantName", merchantName);
+    inputJsonObject.addProperty("phoneJWT", phoneJWT);
 
-    String InsertQueryParameters[] = new String[] { "4", "Test Merchant", "7867986767" };
+    Merchant expectedOutput = new Merchant(merchantID, merchantName, merchantPhone);
+
+    JsonObject decodedPhoneToken = new JsonObject();
+    decodedPhoneToken.addProperty("phone_number", merchantPhone);
+    decodedPhoneToken.addProperty("phone_number_verified", true);
+
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
-    when(connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
+    when(util.verifyAndDecodePhoneJWT(phoneJWT))
+        .thenReturn(CompletableFuture.completedFuture(decodedPhoneToken.toString()));
+    when(connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(merchantID, merchantName, merchantPhone)))
         .thenReturn(queryResult);
-    CompletableFuture<QueryResult> result = controller.insertNewMerchant(merchantJson);
-    assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
+    
+    // ACT
+    Merchant actualOutput = controller.insertMerchant(inputJsonObject.toString()).get();
+    
+    // ASSERT
+    assertEquals(expectedOutput, actualOutput);
+    verify(util).verifyAndDecodePhoneJWT(phoneJWT);
+    verify(connection).sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(merchantID, merchantName, merchantPhone));
   }
 
   @Test

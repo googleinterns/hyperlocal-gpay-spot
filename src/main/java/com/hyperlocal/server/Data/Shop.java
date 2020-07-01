@@ -53,17 +53,17 @@ public class Shop {
       this.longitude = data.get("longitude").getAsDouble();
     }
 
-    public boolean equals(Object obj)
-    {
+    public boolean equals(Object obj) {
       if(obj == null || !(obj instanceof Shop)) return false;
       Shop shopObj = (Shop) obj;
+      Utilities util = new Utilities();
       return this.shopID.equals(shopObj.shopID) &&
              this.merchantID.equals(shopObj.merchantID) &&
              this.shopName.equals(shopObj.shopName) &&
              this.addressLine1.equals(shopObj.addressLine1) &&
              this.typeOfService.equals(shopObj.typeOfService) &&
-             Utilities.doubleThresholdCompare(this.latitude, shopObj.latitude, 0.0000001) &&
-             Utilities.doubleThresholdCompare(this.longitude, shopObj.longitude, 0.0000001);
+             util.doubleThresholdCompare(this.latitude, shopObj.latitude, 0.0000001) &&
+             util.doubleThresholdCompare(this.longitude, shopObj.longitude, 0.0000001);
     }
 
 }

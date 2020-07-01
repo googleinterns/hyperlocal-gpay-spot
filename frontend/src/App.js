@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import ROUTES from './routes';
-import FrontScreen from './FrontScreen';
+import FrontScreen from './Pages/FrontScreen';
 import NavBar from './NavBar';
 import HomePage from './Pages/HomePage';
 
@@ -10,11 +10,11 @@ import ViewShops from './ViewShops';
 import BuyerCatalog from './BuyerCatalog';
 
 // Merchant Pages
-import ShopDetails from './Pages/Onboarding/ShopDetails';
-import OnboardingCatalog from './Pages/Onboarding/Catalog';
-import MyDashboard from './Pages/My/Dashboard';
-import MyCatalog from './Pages/My/Catalog';
-import MyShopDetails from './Pages/My/ShopDetails';
+import ShopDetails from './Pages/Merchant/Onboarding/ShopDetails';
+import OnboardingCatalog from './Pages/Merchant/Onboarding/Catalog';
+import MyDashboard from './Pages/Merchant/My/Dashboard';
+import MyCatalog from './Pages/Merchant/My/Catalog';
+import MyShopDetails from './Pages/Merchant/My/ShopDetails';
 
 class App extends React.Component {
   constructor(props) {

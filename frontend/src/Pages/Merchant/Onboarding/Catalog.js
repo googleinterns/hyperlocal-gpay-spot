@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import ROUTES from '../../routes';
+import ROUTES from '../../../routes';
 import {Container, Button, Card, Row, Col, Modal, Form } from 'react-bootstrap';
 import { Container as FABContainer, Button as FAButton } from 'react-floating-action-button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -10,7 +10,7 @@ class Catalog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        pageLoading: true,
+        pageLoading: false,
         showAddForm: false,
         addForm: {
           'serviceName': '',
@@ -24,13 +24,13 @@ class Catalog extends React.Component {
             'serviceImageURL': '',  
         },
         catalog : [
+          // {serviceName, serviceDescription, serviceImageURL, (for existing items) serviceID, (local UID) key}  
         ],
         initialCatalog: []
     };
   }
 
   componentDidMount() {
-    return this.resetAndReloadServices();
   }
 
   submitCatalog = () => {
@@ -101,7 +101,7 @@ class Catalog extends React.Component {
 
     if(!itemsToAdd.length && !itemsToEdit.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
 
-    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/shop/"+this.state.shopID+"/catalog/update", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/shop/"+this.props.user.shop.shopID+"/catalog/update", {
       add: itemsToAdd,
       edit: itemsToEdit,
       delete: itemsToDelete
@@ -115,27 +115,6 @@ class Catalog extends React.Component {
     });
     
   }
-
-  resetAndReloadServices = () => {
-    return axios.get("https://speedy-anthem-217710.an.r.appspot.com/api/shop/"+this.props.user.shop.shopID)
-    .then(res => {
-      if(!("catalog" in res.data))
-          throw new Error(res.data.error);
-      let catalog = res.data.catalog;
-        catalog.forEach((item, index) => {
-          item.key = index.toString();
-          item.serviceImageURL = item.imageURL;
-        });
-        this.setState({initialCatalog: catalog, catalog, pageLoading: false});
-        return;
-    })
-    .catch(err => {
-        console.log(err);
-        alert("Whoops, something went wrong. Trying again...");
-        return this.resetAndReloadServices();
-    });
-  }
-
 
   addProduct = () => {
     
@@ -306,7 +285,7 @@ class Catalog extends React.Component {
         block
         disabled={this.state.pageLoading}
         className="fixedBottomBtn">
-        Update
+        Finish
       </Button>
       </>
     );

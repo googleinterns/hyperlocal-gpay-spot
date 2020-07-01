@@ -3,21 +3,26 @@ import axios from 'axios';
 import {Container, Form, Button} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
-import ROUTES from '../../routes';
-import LocationInput from '../../Components/LocationInput';
+import ROUTES from '../../../routes';
+import LocationInput from '../../../Components/LocationInput';
 
 class ShopDetails extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
         pageLoading: false,
-        shopName: this.props.user.shop.shopName,
-        typeOfService: this.props.user.shop.typeOfService,
-        addressLine1: this.props.user.shop.addressLine1,
-        latitude: this.props.user.shop.latitude,
-        longitude: this.props.user.shop.longitude,
+        shopID: null,
+        shopName: '',
+        typeOfService: '',
+        addressLine1: '',
+        latitude: 23.55555,
+        longitude: 85.846925,
         showLocationInput: false
     };
+  }
+
+  componentDidUpdate(prevProps) {
+    if(this.props.user.shop && !prevProps.user.shop) this.props.history.push(ROUTES.merchant.onboarding.catalog);
   }
 
   hideLocationInput = () => {
@@ -31,18 +36,27 @@ class ShopDetails extends React.Component {
 
   submitDetails = () => {
     this.setState({pageLoading: true});
-    axios.post("https://speedy-anthem-217710.an.r.appspot.com/update/shop/", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/insert/shop/", {
       merchantID: this.props.user.ID,
-      shopID: this.props.user.shop.shopID,
       shopName: this.state.shopName,
       typeOfService: this.state.typeOfService,
       addressLine1: this.state.addressLine1,
       latitude: this.state.latitude,
-      longitude: this.state.longitude      
+      longitude: this.state.longitude
     })
     .then(resp => {
       console.log(resp.data);
-      if("shopID" in resp.data) return this.props.history.push(ROUTES.merchant.dashboard);
+      if("shopID" in resp.data)
+      {
+        this.props.setShop({
+          shopID: resp.data.shopID,
+          shopName: this.state.shopName,
+          typeOfService: this.state.typeOfService,
+          addressLine1: this.state.addressLine1,
+          latitude: this.state.latitude,
+          longitude: this.state.longitude    
+        });
+      }
       else throw new Error(resp.data.error);
     })
     .catch(ex => {
@@ -55,7 +69,7 @@ class ShopDetails extends React.Component {
     return (
       <>
         <Container>
-          <h3 className="h3 my-5">Seller Details</h3>
+          <h3 className="h3 my-5">Seller Onboarding</h3>
           {
               this.state.pageLoading 
               ?   <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
@@ -108,7 +122,7 @@ class ShopDetails extends React.Component {
                           block
                           className="fixedBottomBtn"
                           onClick={this.submitDetails}>
-                          Finish
+                          Proceed
                       </Button>
                   </>
           }
