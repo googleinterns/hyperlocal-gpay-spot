@@ -4,7 +4,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import { Link } from "react-router-dom";
 import axios from 'axios';
-import ROUTES from './routes';
+import ROUTES from '../routes';
 import { withRouter } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -47,10 +47,11 @@ class FrontScreen extends React.Component {
     let merchantShops = await axios.get(ROUTES.api.get.shopsByMerchantID.replace('%b', this.props.user.ID));
     if(!merchantShops.data[0])
     {
+        let phoneJWT = await window.microapps.getPhoneNumber();
         await axios.post('https://speedy-anthem-217710.an.r.appspot.com/api/insert/merchant', {
             merchantID: this.props.user.ID,
             merchantName: this.props.user.name,
-            merchantPhone: "0123456789"
+            phoneJWT
         });
         this.props.history.push(ROUTES.merchant.onboarding.shopInfo);
     }
