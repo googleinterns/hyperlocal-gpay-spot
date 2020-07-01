@@ -212,6 +212,82 @@ public class ShopControllerTest {
     verify(connection).sendQuery("COMMIT");
   }
   
+  @Test
+  public void shouldReturnArrayOfShops() throws Exception {
+
+    /* ARRANGE */
+    assertThat(controller).isNotNull();
+
+    HashMap<String, ArrayList<Long>> payLoad = new HashMap<String, ArrayList<Long>>();
+    ArrayList<Long> shopIdList = new ArrayList<Long>();
+    shopIdList.add(1L);
+    shopIdList.add(2L);
+    shopIdList.add(3L);
+
+    payLoad.put("id", shopIdList);
+
+    ArrayList<String> merchantIDList = new ArrayList<String>();
+    merchantIDList.add("1");
+    merchantIDList.add("2");
+    merchantIDList.add("3");
+
+    ArrayList<RowData> shopRecords = new ArrayList<RowData>();
+    for (Long shopID : shopIdList) {
+      RowData shopRecord = new FakeRowData("ShopID", shopID, "MerchantID", Long.toString(shopID), "ShopName",
+          "Arvind Shop", "Latitude", new BigDecimal(23.33), "Longitude", new BigDecimal(23.33), "AddressLine1",
+          "Mumbai", "TypeOfService", "Groceries");
+      shopRecords.add(shopRecord);
+    }
+    ResultSet wrappedShopRecord = new FakeResultSet(shopRecords);
+    QueryResult shopQueryResult = new QueryResult(0L, "Success", wrappedShopRecord);
+
+    ArrayList<RowData> merchantRecords = new ArrayList<RowData>();
+    for (String merchantID : merchantIDList) {
+      RowData merchantRecord = new FakeRowData("MerchantID", merchantID, "MerchantName", "Arvind", "MerchantPhone",
+          "9876543210");
+      merchantRecords.add(merchantRecord);
+    }
+    ResultSet wrappedMerchantRecord = new FakeResultSet(merchantRecords);
+    QueryResult merchantQueryResult = new QueryResult(0L, "Success", wrappedMerchantRecord);
+
+    ArrayList<RowData> CatalogItems = new ArrayList<RowData>();
+    for (Long shopID : shopIdList) {
+      RowData serviceRecord = new FakeRowData("ServiceID", 101L, "ShopID", shopID, "ServiceName", "Apples",
+          "ServiceDescription", "Fresh off the market!", "ImageURL", "#");
+      CatalogItems.add(serviceRecord);
+    }
+    ResultSet serviceRecords = new FakeResultSet(CatalogItems);
+    QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
+
+    List<ShopDetails> expectedShopDetails = new ArrayList<ShopDetails>();
+
+    for (Integer i = 0; i < 3; i++) {
+      Shop shop = new Shop(shopRecords.get(i));
+      Merchant merchant = new Merchant(merchantRecords.get(i));
+      List<CatalogItem> catalogItems = Arrays.asList(new CatalogItem(CatalogItems.get(i)));
+      ShopDetails shopDetails = new ShopDetails(shop, merchant, catalogItems);
+      expectedShopDetails.add(shopDetails);
+    }
+
+    when(connection.sendPreparedStatement(SELECT_SHOPS_BATCH_QUERY, shopIdList))
+        .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
+    when(connection.sendPreparedStatement(SELECT_MERCHANT_BATCH_QUERY, merchantIDList))
+        .thenReturn(CompletableFuture.completedFuture(merchantQueryResult));
+    when(connection.sendPreparedStatement(SELECT_CATALOG_BATCH_QUERY, shopIdList))
+        .thenReturn(CompletableFuture.completedFuture(servicesQueryResult));
+
+    /* ACT */
+
+    CompletableFuture<List<ShopDetails>> actualShopDetailsPromise = controller
+        .getShopsByShopIDBatch(new Gson().toJson(payLoad));
+
+    /* ASSERT */
+
+    assertEquals(expectedShopDetails, actualShopDetailsPromise.get());
+    verify(connection).sendPreparedStatement(SELECT_CATALOG_BATCH_QUERY, shopIdList);
+    verify(connection).sendPreparedStatement(SELECT_MERCHANT_BATCH_QUERY, merchantIDList);
+    verify(connection).sendPreparedStatement(SELECT_SHOPS_BATCH_QUERY, shopIdList);
+  }
   
 
   @Test

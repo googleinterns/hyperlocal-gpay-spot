@@ -115,6 +115,85 @@ public class ShopController {
         });
     }
 
+    @GetMapping("/api/shops/multiple")
+  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(@RequestBody String shopIdListInput) {
+
+    /**
+     *  Parse the ShopIDListInput String and convert it to a List of ShopIDs
+     */
+    JsonObject jsonPayload = JsonParser.parseString(shopIdListInput).getAsJsonObject();
+    JsonArray jsonArray = jsonPayload.getAsJsonArray("id");
+    List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
+    List<Long> shopIDList = new ArrayList<Long>();
+    for (JsonElement id : jsonArray) {
+      shopIDList.add(id.getAsLong());
+    }
+
+    HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
+    HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
+
+
+    String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(shopIDList.size());
+
+    // Fetch All Shops in ShopIDList and store their merchantIDs in a List
+    return connection.sendPreparedStatement(String.format(SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList)
+        .thenApply((QueryResult result) -> {
+          List<String> merchantIDList = new ArrayList<String>();
+          ResultSet allShops = result.getRows();
+          for (RowData shop : allShops) {
+            ShopDetails shopDetails = new ShopDetails();
+            Long ShopID = (Long) shop.get("ShopID");
+            String MerchantID = (String) shop.get("MerchantID");
+            shopDetails.setShop(new Shop(shop));
+            merchantIDList.add(MerchantID);
+            mapShopIdToShopDetails.put(ShopID, shopDetails);
+          }
+          return merchantIDList;
+
+        // Select all Merchant Data for every merchantID in merchantIDList
+        }).thenCompose((merchantIDList) -> {
+          String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
+          return connection.sendPreparedStatement(String.format(SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList);
+        })
+        
+        // Map All merchantIDs to their Merchants and Update ShopDetails with merchant Information
+        .thenApply((result) -> {
+          ResultSet allMerchants = result.getRows();
+          for (RowData merchant : allMerchants) {
+            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), new Merchant(merchant));
+          }
+          for (Long shopID : shopIDList) {
+            if (mapShopIdToShopDetails.containsKey(shopID)) {
+              ShopDetails shopDetails = mapShopIdToShopDetails.get(shopID);
+              String MerchantID = shopDetails.shop.merchantID;
+              shopDetails.setMerchant(mapMerchantIdToMerchant.get(MerchantID));
+              shopDetails.catalog = new ArrayList<CatalogItem>();
+              mapShopIdToShopDetails.put(shopID, shopDetails);
+            }
+          }
+          return allMerchants;
+
+        //Get Catalog for all Shops
+        }).thenCompose((allMerchants) -> {
+          return connection.sendPreparedStatement(String.format(SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList);
+       
+        // Update ShopDetails with CatalogItems
+        }).thenApply((catalogQueryResult) -> {
+          ResultSet catalogRecords = catalogQueryResult.getRows();
+          for (RowData serviceRecord : catalogRecords) {
+            Long ShopID = (Long) serviceRecord.get("ShopID");
+            ShopDetails shopDetails = mapShopIdToShopDetails.get(ShopID);
+            shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
+            mapShopIdToShopDetails.put(ShopID, shopDetails);
+          }
+          for (Long ShopId : shopIDList) {
+            if (mapShopIdToShopDetails.containsKey(ShopId)) {
+              shopsList.add(mapShopIdToShopDetails.get(ShopId));
+            }
+          }
+          return shopsList;
+        });
+  }
 
   @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   // Fetch all shops by merchantID
