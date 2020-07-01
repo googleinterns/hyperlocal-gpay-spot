@@ -57,6 +57,14 @@ public class Utilities {
             });
     }
 
+  public static String getPlaceHolderString(Integer numOfPlaceholders) {
+    StringBuilder result = new StringBuilder();
+    for (Integer i = 0; i < numOfPlaceholders; i++) {
+      result.append("?,");
+    }
+    return result.length() > 0 ? result.substring(0, result.length() - 1) : "";
+  }
+
     public CompletableFuture<String> getResponseBody(String url) {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
