@@ -1,6 +1,6 @@
 CREATE TABLE `Shops` (
   `ShopID` BIGINT NOT NULL,
-  `MerchantID` BIGINT NOT NULL,
+  `MerchantID` VARCHAR(255) NOT NULL,
   `ShopName` VARCHAR(255) NOT NULL,
   `Latitude` DECIMAL(10, 8) NOT NULL,
   `Longitude` DECIMAL(11, 8) NOT NULL,

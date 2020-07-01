@@ -1,6 +1,6 @@
 CREATE TABLE `Merchants` (
-  `MerchantID` BIGINT NOT NULL,
+  `MerchantID` VARCHAR(255) NOT NULL,
   `MerchantName` VARCHAR(255) NOT NULL,  
-  `MerchantPhone` VARCHAR(10) NOT NULL,
+  `MerchantPhone` VARCHAR(20) NOT NULL,
   PRIMARY KEY(`MerchantID`)
 );

@@ -7,13 +7,13 @@ import java.math.BigDecimal;
 
 public class Shop {
     public Long shopID;
-    public Long merchantID;
+    public String merchantID;
     public String shopName, addressLine1, typeOfService;
     public Double latitude, longitude;
     
     public Shop() {
       this.shopID = 1L;
-      this.merchantID = 1L;
+      this.merchantID = "1";
       this.shopName = "Test";
       this.addressLine1 = "TEST";
       this.typeOfService = "TEST";
@@ -21,7 +21,7 @@ public class Shop {
       this.longitude = 32.32;
     }
 
-    public Shop(Long shopID, Long merchantID, String shopName, Double latitude, Double longitude, String addressLine1, String typeOfService)
+    public Shop(Long shopID, String merchantID, String shopName, Double latitude, Double longitude, String addressLine1, String typeOfService)
     {
         this.shopID = shopID;
         this.merchantID = merchantID;
@@ -35,7 +35,7 @@ public class Shop {
     public Shop(RowData data)
     {
         this.shopID = (Long)data.get("ShopID");
-        this.merchantID = (Long)data.get("MerchantID");
+        this.merchantID = (String)data.get("MerchantID");
         this.shopName = (String)data.get("ShopName");
         this.latitude = ((BigDecimal)data.get("Latitude")).doubleValue();
         this.longitude = ((BigDecimal)data.get("Longitude")).doubleValue();
@@ -45,7 +45,7 @@ public class Shop {
 
     public Shop(JsonObject data) {
       this.shopID = data.get("shopID").getAsLong();
-      this.merchantID = data.get("merchantID").getAsLong();
+      this.merchantID = data.get("merchantID").getAsString();
       this.shopName = data.get("shopName").getAsString();
       this.addressLine1 = data.get("addressLine1").getAsString();
       this.typeOfService = data.get("typeOfService").getAsString();
