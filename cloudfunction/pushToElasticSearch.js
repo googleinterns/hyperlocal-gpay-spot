@@ -60,7 +60,7 @@ function createElasticSearchJson(shopData, merchantData, catalogItems) {
   return shopDataJson;
 }
 
-function pushToElasticsearch(shopDataJson) {
+async function pushToElasticsearch(shopDataJson) {
 
   const shopDataJsonString = JSON.stringify(shopDataJson);
   const config = {
@@ -88,5 +88,5 @@ exports.elasticsearch = async (event, context) => {
   const merchantData = await getMerchantDataByMerchantID(shopData[0].MerchantID);
   const catalogItems = await getCatalogByShopID(shopID);
   shopDataJson = createElasticSearchJson(shopData[0], merchantData[0], catalogItems);
-  pushToElasticsearch(shopDataJson);
+  await pushToElasticsearch(shopDataJson);
 };
