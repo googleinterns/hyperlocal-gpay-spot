@@ -3,18 +3,26 @@ import { Button } from 'react-bootstrap';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import { Link } from "react-router-dom";
-
+import axios from 'axios';
+import ROUTES from '../routes';
+import { withRouter } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 class FrontScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      "auth": false
+      pageLoading: true
     }
   }
 
   componentDidMount() {
     this.authenticate();
+  }
+
+  componentDidUpdate(prevProps) {
+    if(this.props.user.auth && !prevProps.user.auth) this.setState({pageLoading: false});
   }
 
   authenticate() {
@@ -27,34 +35,50 @@ class FrontScreen extends React.Component {
        * Line 29: Decoding the base64 string at index 1 and parsing it as JSON
        */
       const decoded = JSON.parse(atob(response.split('.')[1])); 
-      decoded["auth"] = true;
-      this.setState(decoded);
       console.log('GetIdentity response: ', decoded);
+      this.props.auth(decoded);
     }).catch(error => {
       console.error('An error occurred while fetching identity: ', error);
     });
   }
 
-  render() {
-    if (this.state.auth === false) {
-      return <><p>Screen is Loading. Please authenticate</p></>;
-    } else {
-      return (
-        <Container className="p-5 center">
-          <Row className="mb-5">
-            <Button color="#FD485B" block variant="dark">
-              <Link to="/shops/all" className="btn btn-dark box">Avail a Service</Link>
-            </Button>
-          </Row>
-          <Row>
-            <Button variant="dark" block>
-              <Link to="/shops/all" className="btn btn-dark box">Provide a Service</Link>
-            </Button>
-          </Row>
-        </Container>
-      );
+  setAsMerchant = async () => {
+    this.setState({pageLoading: true});
+    let merchantShops = await axios.get(ROUTES.api.get.shopsByMerchantID.replace('%b', this.props.user.ID));
+    if(!merchantShops.data[0])
+    {
+        await axios.post(ROUTES.api.post.insertMerchant, {
+            merchantID: this.props.user.ID,
+            merchantName: this.props.user.name,
+            merchantPhone: "0123456789" // TODO: Implement Phone Number API
+        });
+        this.props.history.push(ROUTES.merchant.onboarding.shopInfo);
     }
+    else 
+    {
+      this.props.setShop(merchantShops.data[0]);
+      this.props.history.push(ROUTES.merchant.dashboard);
+    }
+  }
+
+  render() {
+    return (
+      this.state.pageLoading 
+      ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+      : <Container className="p-5 center">
+        <Row className="mb-5">
+          <Button color="#FD485B" block variant="dark">
+            <Link to="/shops/all" className="btn btn-dark box">Avail a Service</Link>
+          </Button>
+        </Row>
+        <Row>
+          <Button onClick={this.setAsMerchant} variant="dark" block>
+            <span className="btn btn-dark box">Provide a Service</span>
+          </Button>
+        </Row>
+      </Container>
+    );
   }
 }
 
-export default FrontScreen;
+export default withRouter(FrontScreen);
