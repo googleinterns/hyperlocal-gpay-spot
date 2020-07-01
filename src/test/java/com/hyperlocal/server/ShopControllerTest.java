@@ -32,7 +32,7 @@ import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 
 public class ShopControllerTest {
 
-  private final Shop shop = new Shop(3L, 4L, "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
+  private final Shop shop = new Shop(3L, "4", "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
   private final String SHOP_DATA_AS_STRING = new Gson().toJson(shop);
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
@@ -62,11 +62,11 @@ public class ShopControllerTest {
 
     /* ARRANGE */
     assertThat(controller).isNotNull();
-    Long merchantID = 1000000000000L;
+    String merchantID = "1000000000000";
 
     RowData shopRecord = new FakeRowData(
       "ShopID", 1L, 
-      "MerchantID", 1000000000000L, 
+      "MerchantID", "1000000000000", 
       "ShopName", "Arvind Shop", 
       "Latitude", new BigDecimal(23.33), 
       "Longitude", new BigDecimal(23.33), 
@@ -97,7 +97,7 @@ public class ShopControllerTest {
 
     Long shopID = 1000000000000L;
 
-    Long merchantID = 2000000000000L;
+    String merchantID = "2000000000000";
     RowData shopRecord = new FakeRowData(
       "ShopID", shopID, 
       "MerchantID", merchantID, 
