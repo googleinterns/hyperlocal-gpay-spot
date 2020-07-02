@@ -86,6 +86,12 @@ class ViewShops extends React.Component {
     }
   }
 
+  componentDidMount() {
+    if (this.props.latitude !== null || (this.props.longitude !== null)) {
+      this.updateBrowseResults();
+    }
+  }
+
   render() {
     if (this.props.latitude == null || this.props.longitude == null) {
       return (
