@@ -22,7 +22,9 @@ class FrontScreen extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if(this.props.user.auth && !prevProps.user.auth) this.setState({pageLoading: false});
+    if(this.props.user.auth && !prevProps.user.auth) {
+      this.setState({pageLoading: false});
+    }
   }
 
   authenticate() {
