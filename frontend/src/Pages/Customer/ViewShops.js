@@ -2,8 +2,8 @@ import axios from 'axios';
 import React from 'react';
 import { Col, Button, Card, Container, Form, ListGroup } from 'react-bootstrap';
 import { Link } from "react-router-dom";
-import './App.css';
-import LocationInput from './Pages/LocationInput';
+import '../../App.css';
+import LocationInput from '../LocationInput';
 
 const SEARCH_QUERY_URL = "https://speedy-anthem-217710.an.r.appspot.com/api/query/elastic";
 const BROWSE_QUERY_URL = "https://speedy-anthem-217710.an.r.appspot.com/api/browse/elastic";
@@ -16,29 +16,36 @@ class ViewShops extends React.Component {
       shops: [],
       searchQuery: "",
       queryRadius: "",
-      latitude: null,
-      longitude: null,
       showModal: true
     }
   }
 
   search = async () => {
+
+    //Empty query implies browse intent
     if (this.state.searchQuery === "") {
       this.updateBrowseResults();
       return;
     }
+
+    // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
       this.setState({ queryRadius: "3km" });
     }
 
     const config = {
       method: 'get',
-      url: `${SEARCH_QUERY_URL}?query=${this.state.searchQuery}&queryRadius=${this.state.queryRadius}&latitude=${this.props.latitude}&longitude=${this.props.longitude}`,
-      headers: {}
+      url: `${SEARCH_QUERY_URL}`,
+      headers: {},
+      params: {
+        query: this.state.searchQuery,
+        queryRadius: this.state.queryRadius,
+        latitude: this.props.latitude,
+        longitude: this.props.longitude
+      }
     };
 
     const shopDetailsList = (await axios(config)).data;
-    console.log(shopDetailsList);
 
     this.setState({
       "shops": shopDetailsList
@@ -46,16 +53,24 @@ class ViewShops extends React.Component {
   }
 
   updateBrowseResults = async () => {
+
+    // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
-      await this.setState({ queryRadius: "3km" });
+      this.setState({ queryRadius: "3km" });
     }
+
     const config = {
       method: 'get',
-      url: `${BROWSE_QUERY_URL}?queryRadius=${this.state.queryRadius}&latitude=${this.props.latitude}&longitude=${this.props.longitude}`,
-      headers: {}
+      url: `${BROWSE_QUERY_URL}`,
+      headers: {},
+      params: {
+        queryRadius: this.state.queryRadius,
+        latitude: this.props.latitude,
+        longitude: this.props.longitude
+      }
     };
     const shopDetailsList = (await axios(config)).data;
-    
+
     this.setState({
       "shops": shopDetailsList
     })
