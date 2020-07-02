@@ -1,1 +1,7 @@
-body { padding-top: 40px; }
+.fa-spinner {
+    animation: spinanim 1s linear infinite;
+}
+
+@keyframes spinanim {
+    to { transform: rotate(360deg); }
+}
