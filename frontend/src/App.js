@@ -69,7 +69,7 @@ class App extends React.Component {
             <Route path="/" exact>
               <FrontScreen auth={this.auth} user={this.state.user} setShop={this.setShop} />
             </Route>
-            <Route path="/shops/all">
+            <Route path={ROUTES.customer.shopsList}>
               <ViewShops setLocation={this.setLocation} latitude={this.state.latitude} longitude={this.state.longitude} />
             </Route>
             <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />

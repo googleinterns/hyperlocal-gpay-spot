@@ -4,9 +4,7 @@ import { Col, Button, Card, Container, Form, ListGroup } from 'react-bootstrap';
 import { Link } from "react-router-dom";
 import '../../App.css';
 import LocationInput from '../LocationInput';
-
-const SEARCH_QUERY_URL = "https://speedy-anthem-217710.an.r.appspot.com/api/query/elastic";
-const BROWSE_QUERY_URL = "https://speedy-anthem-217710.an.r.appspot.com/api/browse/elastic";
+import ROUTES from '../../routes';
 
 class ViewShops extends React.Component {
 
@@ -35,7 +33,7 @@ class ViewShops extends React.Component {
 
     const config = {
       method: 'get',
-      url: `${SEARCH_QUERY_URL}`,
+      url: ROUTES.api.get.index.search,
       headers: {},
       params: {
         query: this.state.searchQuery,
@@ -61,7 +59,7 @@ class ViewShops extends React.Component {
 
     const config = {
       method: 'get',
-      url: `${BROWSE_QUERY_URL}`,
+      url: ROUTES.api.get.index.browse,
       headers: {},
       params: {
         queryRadius: this.state.queryRadius,
@@ -144,7 +142,7 @@ class ViewShops extends React.Component {
                         <Button variant="info">
                           <Link
                             to={{
-                              pathname: "/buyercatalog/" + shop["shop"]["shopID"],
+                              pathname: ROUTES.customer.catalog + shop["shop"]["shopID"],
                             }} className="btn btn-info box">
                             View Catalog
                           </Link>
