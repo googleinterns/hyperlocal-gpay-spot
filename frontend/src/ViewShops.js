@@ -36,13 +36,19 @@ search = async () => {
       return;
     }
 
+    let searchRadius = this.state.queryRadius;
+    // If no radius supplied
+    if (this.state.queryRadius === "") {
+      searchRadius = "3km";
+    }
+
     const config = {
       method: 'get',
       url: URL_ELASTIC_QUERY,
       headers: {},
       params: {
         query: this.state.searchQuery,
-        queryRadius: this.state.queryRadius === "" ? "3km": this.state.queryRadius,
+        queryRadius: searchRadius,
         latitude: this.props.latitude,
         longitude: this.props.longitude
       }
@@ -58,13 +64,19 @@ search = async () => {
   }
 
   updateBrowseResults = async () => {
+
+    let searchRadius = this.state.queryRadius;
+    // If no radius supplied
+    if (this.state.queryRadius === "") {
+      searchRadius = "3km";
+    }
     
     const config = {
       method: 'get',
       url: URL_ELASTIC_BROWSE,
       headers: {},
       params: {
-        queryRadius: this.state.queryRadius === "" ? "3km": this.state.queryRadius,
+        queryRadius: searchRadius,
         latitude: this.props.latitude,
         longitude: this.props.longitude
       }

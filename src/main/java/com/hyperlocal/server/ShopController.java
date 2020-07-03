@@ -31,6 +31,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -92,6 +96,17 @@ public class ShopController {
         .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
         .setHeader("Content-Type","application/json")
         .build();
+
+        MultiMatchQueryBuilder myq = QueryBuilders
+            .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO");
+        GeoDistanceQueryBuilder geoq = QueryBuilders.geoDistanceQuery("pin.location")
+            .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
+
+        BoolQueryBuilder q = QueryBuilders.boolQuery()
+          .must(myq)
+            .filter(geoq);
+
+        System.out.println(q.toString());
 
         List<Long> shopIDList = new ArrayList<Long>();
 
