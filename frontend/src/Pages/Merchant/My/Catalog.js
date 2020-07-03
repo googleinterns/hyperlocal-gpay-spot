@@ -126,7 +126,8 @@ class Catalog extends React.Component {
           item.key = index.toString();
           item.serviceImageURL = item.imageURL;
         });
-        this.setState({initialCatalog: catalog, catalog, pageLoading: false});
+        let initialCatalog = JSON.parse(JSON.stringify(catalog)); // Deep clone
+        this.setState({initialCatalog, catalog, pageLoading: false});
         return;
     })
     .catch(err => {
