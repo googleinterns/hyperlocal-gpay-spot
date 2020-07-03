@@ -191,7 +191,7 @@ class Catalog extends React.Component {
                     <h6>
                       {product.serviceName}
                       <button
-                        className="pull-right"
+                        className="float-right"
                         onClick={e => {e.preventDefault(); this.deleteProduct(product.key)}}
                         style={{
                           marginRight: '10px',
