@@ -221,13 +221,10 @@ public class ShopControllerTest {
     /* ARRANGE */
     assertThat(controller).isNotNull();
 
-    HashMap<String, ArrayList<Long>> payLoad = new HashMap<String, ArrayList<Long>>();
     ArrayList<Long> shopIdList = new ArrayList<Long>();
     shopIdList.add(1L);
     shopIdList.add(2L);
     shopIdList.add(3L);
-
-    payLoad.put("id", shopIdList);
 
     ArrayList<String> merchantIDList = new ArrayList<String>();
     merchantIDList.add("1");
@@ -282,7 +279,7 @@ public class ShopControllerTest {
     /* ACT */
 
     CompletableFuture<List<ShopDetails>> actualShopDetailsPromise = controller
-        .getShopsByShopIDBatch(new Gson().toJson(payLoad));
+        .getShopsByShopIDBatch(shopIdList);
 
     /* ASSERT */
 

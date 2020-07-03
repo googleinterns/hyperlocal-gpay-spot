@@ -28,77 +28,67 @@ class ViewShops extends React.Component {
     }
   }
 
-  search = async () => {
+search = async () => {
+
+    //Empty query implies browse intent
     if (this.state.searchQuery === "") {
       this.updateBrowseResults();
       return;
     }
 
+    // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
       this.setState({ queryRadius: "3km" });
     }
 
     const config = {
       method: 'get',
-      url: `${URL_ELASTIC_QUERY}?query=${this.state.searchQuery}&queryRadius=${this.state.queryRadius}&latitude=${this.props.latitude}&longitude=${this.props.longitude}`,
-      headers: {}
+      url: URL_ELASTIC_QUERY,
+      headers: {},
+      params: {
+        query: this.state.searchQuery,
+        queryRadius: this.state.queryRadius,
+        latitude: this.props.latitude,
+        longitude: this.props.longitude
+      }
     };
-    let elasticSearchResponseJson = await axios(config);
-    console.log(elasticSearchResponseJson);
-    let shopIdList = this.getShopIdList(elasticSearchResponseJson);
-    await this.updateShopStateParameter(shopIdList);
-  }
 
-  getShopIdList = (response) => {
-    let ElasticSearchResponseJson = response.data;
-    const shopItems = ElasticSearchResponseJson["hits"]["hits"];
-    let shopIdList = [];
-    shopItems.forEach(shopItem => {
-      shopIdList.push(shopItem["_id"]);
-    });
-    return shopIdList;
-  }
-
-  getCompleteShopData = async (shopId) => {
+    const shopDetailsList = (await axios(config)).data;
+    console.log(shopDetailsList);
     this.setState({
-      shops: []
-    });
-    let value = await axios.get(URL_SHOP + shopId)
-      .then((shopData) => {
-        return shopData.data;
-      });
-    return value;
-  }
+      "shops": shopDetailsList
+    })
 
-  updateShopStateParameter = async (shopIdList) => {
-    shopIdList.forEach(async (shopId) => {
-      this.getCompleteShopData(shopId).then((completeShopData) => {
-        this.setState({
-          shops: this.state.shops.concat([completeShopData])
-        })
-      });
-    });
+    console.log(this.state);
   }
 
   updateBrowseResults = async () => {
 
+    // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
-      await this.setState({queryRadius: "3km"});
-    } 
+      this.setState({ queryRadius: "3km" });
+    }
 
     const config = {
       method: 'get',
-      url: `${URL_ELASTIC_BROWSE}?queryRadius=${this.state.queryRadius}&latitude=${this.props.latitude}&longitude=${this.props.longitude}`,
-      headers: {}
+      url: URL_ELASTIC_BROWSE,
+      headers: {},
+      params: {
+        queryRadius: this.state.queryRadius,
+        latitude: this.props.latitude,
+        longitude: this.props.longitude
+      }
     };
+    const shopDetailsList = (await axios(config)).data;
 
-    axios(config)
-      .then((response) => {
-        return this.getShopIdList(response);
-      }).then(async (shopIdList) => {
-        this.updateShopStateParameter(shopIdList);
-      });
+    console.log(shopDetailsList);
+    this.setState({
+      "shops": shopDetailsList
+    })
+
+    console.log(this.state);
   }
+
 
   onHide = () => {
     this.setState({
@@ -108,6 +98,12 @@ class ViewShops extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
+      this.updateBrowseResults();
+    }
+  }
+
+  componentDidMount() {
+    if (this.props.latitude !== null || (this.props.longitude !== null)) {
       this.updateBrowseResults();
     }
   }

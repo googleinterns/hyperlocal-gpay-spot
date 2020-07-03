@@ -82,61 +82,69 @@ public class ShopController {
 
   @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @GetMapping("/api/query/elastic")
-    public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String query, @RequestParam String queryRadius, 
+    public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String query, @RequestParam String queryRadius, 
     @RequestParam String latitude, @RequestParam String longitude) {
       String queryString = "{\"query\":{\"bool\":{\"must\":{\"multi_match\":{\"query\":\"%s\",\"fields\":[\"shopname\",\"typeofservice\",\"merchantname\",\"catalogitems\"],\"fuzziness\":\"AUTO\"}},\"filter\":{\"geo_distance\":{\"distance\":\"%s\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
       queryString = String.format(queryString, query, queryRadius, latitude, longitude);
-      HttpClient client = HttpClient.newHttpClient();
+ HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create("http://10.128.0.13:9200/shops/_search/"))
+        .uri(URI.create("http://10.128.0.13:9200/shops/_search?filter_path=hits.hits._id"))
         .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
-        .setHeader​("Content-Type","application/json")
+        .setHeader("Content-Type","application/json")
         .build();
 
-      return client.sendAsync(request, BodyHandlers.ofString()).
+        List<Long> shopIDList = new ArrayList<Long>();
+
+        return client.sendAsync(request, BodyHandlers.ofString()).
         thenApply(HttpResponse::body)
         .thenApply((responseString) -> {
-          return responseString;
+          System.out.println(responseString);
+          JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
+          JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
+          for (JsonElement id: idListJson) {
+            shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
+          }
+          return shopIDList;
+        }).thenCompose((shopList) -> {
+          return getShopsByShopIDBatch(shopList);
         });
     }
 
 
   @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @GetMapping("/api/browse/elastic")
-    public CompletableFuture<String> getDataFromElasticSearch(@RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
+    public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
       String queryString = "{\"query\":{\"bool\":{\"must\":{\"match_all\":{}},\"filter\":{\"geo_distance\":{\"distance\":\"%s\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
       queryString = String.format(queryString, queryRadius, latitude, longitude);
       HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create("http://10.128.0.13:9200/shops/_search/"))
+        .uri(URI.create("http://10.128.0.13:9200/shops/_search?filter_path=hits.hits._id"))
         .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
-        .setHeader​("Content-Type","application/json")
+        .setHeader("Content-Type","application/json")
         .build();
 
-      return client.sendAsync(request, BodyHandlers.ofString()).
+        List<Long> shopIDList = new ArrayList<Long>();
+
+        return client.sendAsync(request, BodyHandlers.ofString()).
         thenApply(HttpResponse::body)
         .thenApply((responseString) -> {
-          return responseString;
+          System.out.println(responseString);
+          JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
+          JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
+          for (JsonElement id: idListJson) {
+            shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
+          }
+          return shopIDList;
+        }).thenCompose((shopList) -> {
+          return getShopsByShopIDBatch(shopList);
         });
     }
 
-    @GetMapping("/api/shops/multiple")
-  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(@RequestBody String shopIdListInput) {
-
-    /**
-     *  Parse the ShopIDListInput String and convert it to a List of ShopIDs
-     */
-    JsonObject jsonPayload = JsonParser.parseString(shopIdListInput).getAsJsonObject();
-    JsonArray jsonArray = jsonPayload.getAsJsonArray("id");
-    List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
-    List<Long> shopIDList = new ArrayList<Long>();
-    for (JsonElement id : jsonArray) {
-      shopIDList.add(id.getAsLong());
-    }
+  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(List<Long> shopIDList) {
 
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
     HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
-
+    List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
 
     String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(shopIDList.size());
 
