@@ -73,6 +73,14 @@ class ViewShops extends React.Component {
       "shops": shopDetailsList
     })
   }
+  
+  searchBoxUpdateHandler = (e) => {
+    this.setState({ searchQuery: e.target.value }, () => {
+      if (this.state.searchQuery === "") {
+        this.updateBrowseResults();
+      }
+    })
+  }
 
   onHide = () => {
     this.setState({
@@ -106,13 +114,7 @@ class ViewShops extends React.Component {
                 <Form.Control
                   placeholder="Search Nearby"
                   autoComplete="off"
-                  onChange={e => {
-                    this.setState({ searchQuery: e.target.value }, () => {
-                      if (this.state.searchQuery === "") {
-                        this.updateBrowseResults();
-                      }
-                    })
-                  }}
+                  onChange={this.searchBoxUpdateHandler}
                 />
               </Col>
               <Col xs={3}>
