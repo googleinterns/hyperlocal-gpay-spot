@@ -38,7 +38,7 @@ search = async () => {
 
     // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
-      this.setState({ queryRadius: "3km" });
+      await this.setState({ queryRadius: "3km" });
     }
 
     const config = {
@@ -66,7 +66,7 @@ search = async () => {
 
     // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
-      this.setState({ queryRadius: "3km" });
+      await this.setState({ queryRadius: "3km" });
     }
 
     const config = {
