@@ -60,7 +60,8 @@ search = async () => {
     const shopDetailsList = (await axios(config)).data;
     console.log(shopDetailsList);
     this.setState({
-      "shops": shopDetailsList
+      "shops": shopDetailsList,
+      pageLoading: false
     })
 
     console.log(this.state);
@@ -89,7 +90,8 @@ search = async () => {
 
     console.log(shopDetailsList);
     this.setState({
-      "shops": shopDetailsList
+      "shops": shopDetailsList,
+      pageLoading: false
     })
 
     console.log(this.state);
@@ -105,14 +107,12 @@ search = async () => {
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
       this.updateBrowseResults();
-      this.setState({pageLoading: false});
     }
   }
 
   componentDidMount() {
     if (this.props.latitude !== null || (this.props.longitude !== null)) {
       this.updateBrowseResults();
-      this.setState({pageLoading: false});
     }
   }
 
