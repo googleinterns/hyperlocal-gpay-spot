@@ -6,6 +6,7 @@ import NavBar from './NavBar';
 
 // Customer Pages
 import ViewShops from './Pages/Customer/ViewShops';
+import BuyerCatalog from './Pages/Customer/BuyerCatalog';
 
 // Merchant Pages
 import ShopDetails from './Pages/Merchant/Onboarding/ShopDetails';
@@ -72,6 +73,7 @@ class App extends React.Component {
             <Route path={ROUTES.customer.shopsList}>
               <ViewShops setLocation={this.setLocation} latitude={this.state.latitude} longitude={this.state.longitude} />
             </Route>
+            <Route path={ROUTES.customer.catalog} component={BuyerCatalog} />
             <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
             <Route path={ROUTES.merchant.dashboard} render={(props) => <MyDashboard {...props} user={this.state.user} />} />
           </Switch>
