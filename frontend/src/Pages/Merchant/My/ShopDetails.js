@@ -42,7 +42,10 @@ class ShopDetails extends React.Component {
     })
     .then(resp => {
       console.log(resp.data);
-      if("shopID" in resp.data) return this.props.history.push(ROUTES.merchant.dashboard);
+      if("shopID" in resp.data) {
+        this.props.setShop(resp.data);
+        return this.props.history.push(ROUTES.merchant.dashboard);
+      }
       else throw new Error(resp.data.error);
     })
     .catch(ex => {
