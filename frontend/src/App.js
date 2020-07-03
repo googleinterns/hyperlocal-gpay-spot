@@ -4,6 +4,9 @@ import ROUTES from './routes';
 import FrontScreen from './Pages/FrontScreen';
 import NavBar from './NavBar';
 
+// Customer Pages
+import ViewShops from './Pages/Customer/ViewShops';
+
 // Merchant Pages
 import ShopDetails from './Pages/Merchant/Onboarding/ShopDetails';
 import MyDashboard from './Pages/Merchant/My/Dashboard';
@@ -23,7 +26,7 @@ class App extends React.Component {
   }
 
   setType = (type) => {
-    this.setState({type});
+    this.setState({ type });
   }
 
   auth = (idToken) => {
@@ -33,13 +36,13 @@ class App extends React.Component {
       ID: idToken.sub,
       name: idToken.given_name
     };
-    this.setState({user});
+    this.setState({ user });
   }
 
   setShop = (shop) => {
     this.setState((state) => {
-      let user = {shop, ...state.user}
-      return {user};
+      let user = { shop, ...state.user }
+      return { user };
     });
   }
 
@@ -65,6 +68,9 @@ class App extends React.Component {
           <Switch>
             <Route path="/" exact>
               <FrontScreen auth={this.auth} user={this.state.user} setShop={this.setShop} />
+            </Route>
+            <Route path={ROUTES.customer.shopsList}>
+              <ViewShops setLocation={this.setLocation} latitude={this.state.latitude} longitude={this.state.longitude} />
             </Route>
             <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
             <Route path={ROUTES.merchant.dashboard} render={(props) => <MyDashboard {...props} user={this.state.user} />} />
