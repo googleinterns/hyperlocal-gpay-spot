@@ -70,7 +70,7 @@ class FrontScreen extends React.Component {
       : <Container className="p-5 center">
         <Row className="mb-5">
           <Button color="#FD485B" block variant="dark">
-            <Link to="/shops/all" className="btn btn-dark box">Avail a Service</Link>
+            <Link to={ROUTES.customer.shopsList} className="btn btn-dark box">Avail a Service</Link>
           </Button>
         </Row>
         <Row>

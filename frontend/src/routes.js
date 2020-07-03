@@ -12,11 +12,19 @@ const ROUTES = {
     },
     'api': {
         'get':{
-            'shopsByMerchantID': base+'/api/merchant/%b/shops'
+            'shopsByMerchantID': base+'/api/merchant/%b/shops',
+            'index': {
+              'search': base+'/api/query/elastic',
+              'browse': base+'/api/browse/elastic'
+            }
         },
         'post':{
             'insertMerchant': base+'/api/insert/merchant'
         }
+    },
+    'customer': {
+      'catalog': '/buyercatalog/',
+      'shopsList': '/shops/all'
     }
 };
 
