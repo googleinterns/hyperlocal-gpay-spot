@@ -57,12 +57,20 @@ search = async () => {
       }
     };
 
-    const shopDetailsList = (await axios(config)).data;
-    console.log(shopDetailsList);
-    this.setState({
-      "shops": shopDetailsList,
-      pageLoading: false
-    })
+    try {
+      const shopDetailsList = (await axios(config)).data;
+      console.log(shopDetailsList);
+      this.setState({
+        "shops": shopDetailsList,
+        pageLoading: false
+      })
+    }catch(error) {
+      this.setState({
+        "shops": [],
+        searchQuery: "",
+        pageLoading: false
+      })
+    }
 
     console.log(this.state);
   }
@@ -86,13 +94,19 @@ search = async () => {
         longitude: this.props.longitude
       }
     };
-    const shopDetailsList = (await axios(config)).data;
-
-    console.log(shopDetailsList);
-    this.setState({
-      "shops": shopDetailsList,
-      pageLoading: false
-    })
+    try {
+      const shopDetailsList = (await axios(config)).data;
+      console.log(shopDetailsList);
+      this.setState({
+        "shops": shopDetailsList,
+        pageLoading: false
+      })
+    }catch(error) {
+      this.setState({
+        "shops": [],
+        pageLoading: false
+      })
+    }
 
     console.log(this.state);
   }
