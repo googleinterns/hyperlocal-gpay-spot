@@ -31,7 +31,7 @@ class ShopDetails extends React.Component {
 
   submitDetails = () => {
     this.setState({pageLoading: true});
-    axios.post("https://speedy-anthem-217710.an.r.appspot.com/update/shop/", {
+    axios.post("https://speedy-anthem-217710.an.r.appspot.com/api/update/shop/", {
       merchantID: this.props.user.ID,
       shopID: this.props.user.shop.shopID,
       shopName: this.state.shopName,
