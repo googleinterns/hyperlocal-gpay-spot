@@ -108,6 +108,14 @@ public class ShopController {
 
         System.out.println(q.toString());
 
+        QueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("user", "kimchy")
+                                                .fuzziness(Fuzziness.AUTO)
+                                                .prefixLength(3)
+                                                .maxExpansions(10);
+
+                          System.out.println(matchQueryBuilder.toString());
+
+
         List<Long> shopIDList = new ArrayList<Long>();
 
         return client.sendAsync(request, BodyHandlers.ofString()).
