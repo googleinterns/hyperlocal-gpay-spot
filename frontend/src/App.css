@@ -14,7 +14,7 @@
   to { transform: rotate(360deg); }
 }
 
-
+/* Maps API Suggestions Container */
 .pac-container {
   z-index: 1051 !important;
 }

@@ -50,7 +50,7 @@ class App extends React.Component {
 
   setShop = (shop) => {
     this.setState((state) => {
-      let user = {shop, ...state.user}
+      let user = {...state.user, shop: {...shop}};
       return {user};
     });
   }
