@@ -36,18 +36,13 @@ search = async () => {
       return;
     }
 
-    // Use a default radius if no radius specified
-    if (this.state.queryRadius === "") {
-      await this.setState({ queryRadius: "3km" });
-    }
-
     const config = {
       method: 'get',
       url: URL_ELASTIC_QUERY,
       headers: {},
       params: {
         query: this.state.searchQuery,
-        queryRadius: this.state.queryRadius,
+        queryRadius: this.state.queryRadius === "" ? "3km": this.state.queryRadius,
         latitude: this.props.latitude,
         longitude: this.props.longitude
       }
@@ -63,18 +58,13 @@ search = async () => {
   }
 
   updateBrowseResults = async () => {
-
-    // Use a default radius if no radius specified
-    if (this.state.queryRadius === "") {
-      await this.setState({ queryRadius: "3km" });
-    }
-
+    
     const config = {
       method: 'get',
       url: URL_ELASTIC_BROWSE,
       headers: {},
       params: {
-        queryRadius: this.state.queryRadius,
+        queryRadius: this.state.queryRadius === "" ? "3km": this.state.queryRadius,
         latitude: this.props.latitude,
         longitude: this.props.longitude
       }
