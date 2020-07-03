@@ -3,7 +3,7 @@ import React from 'react';
 import { Col, Button, Card, Container, Form, ListGroup } from 'react-bootstrap';
 import { Link } from "react-router-dom";
 import '../../App.css';
-import LocationInput from '../LocationInput';
+import LocationInput from '../../Components/LocationInput';
 import ROUTES from '../../routes';
 
 class ViewShops extends React.Component {
