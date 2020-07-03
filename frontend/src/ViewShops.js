@@ -9,6 +9,8 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import { Link } from "react-router-dom";
 import './App.css';
 import LocationInput from './Components/LocationInput';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 let URL_ELASTIC_QUERY = "https://speedy-anthem-217710.an.r.appspot.com/api/query/elastic";
 let URL_ELASTIC_BROWSE = "https://speedy-anthem-217710.an.r.appspot.com/api/browse/elastic";
@@ -20,6 +22,7 @@ class ViewShops extends React.Component {
     super(props);
     this.state = {
       shops: [],
+      pageLoading: true,
       searchQuery: "",
       queryRadius: "",
       latitude: null,
@@ -29,7 +32,7 @@ class ViewShops extends React.Component {
   }
 
 search = async () => {
-
+    this.setState({pageLoading: true});
     //Empty query implies browse intent
     if (this.state.searchQuery === "") {
       this.updateBrowseResults();
@@ -65,6 +68,7 @@ search = async () => {
 
   updateBrowseResults = async () => {
 
+    this.setState({pageLoading: true});
     let searchRadius = this.state.queryRadius;
     // If no radius supplied
     if (this.state.queryRadius === "") {
@@ -101,12 +105,14 @@ search = async () => {
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
       this.updateBrowseResults();
+      this.setState({pageLoading: false});
     }
   }
 
   componentDidMount() {
     if (this.props.latitude !== null || (this.props.longitude !== null)) {
       this.updateBrowseResults();
+      this.setState({pageLoading: false});
     }
   }
 
@@ -117,7 +123,9 @@ search = async () => {
       );
     } else {
       return (
-        <Container className="mt-1 p-3">
+        this.state.pageLoading 
+        ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+        :<Container className="mt-1 p-3">
           <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
             <Form.Row className="align-items-center">
               <Col xs={7}>
