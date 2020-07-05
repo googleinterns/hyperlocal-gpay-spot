@@ -62,12 +62,14 @@ search = async () => {
       console.log(shopDetailsList);
       this.setState({
         "shops": shopDetailsList,
+        queryRadius: "",
         pageLoading: false
       })
     }catch(error) {
       this.setState({
         "shops": [],
         searchQuery: "",
+        queryRadius: "",
         pageLoading: false
       })
     }
@@ -99,11 +101,13 @@ search = async () => {
       console.log(shopDetailsList);
       this.setState({
         "shops": shopDetailsList,
+        queryRadius: "",
         pageLoading: false
       })
     }catch(error) {
       this.setState({
         "shops": [],
+        queryRadius: "",
         pageLoading: false
       })
     }

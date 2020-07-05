@@ -35,6 +35,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,32 +89,25 @@ public class ShopController {
   @GetMapping("/api/query/elastic")
     public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String query, @RequestParam String queryRadius, 
     @RequestParam String latitude, @RequestParam String longitude) {
-      String queryString = "{\"query\":{\"bool\":{\"must\":{\"multi_match\":{\"query\":\"%s\",\"fields\":[\"shopname\",\"typeofservice\",\"merchantname\",\"catalogitems\"],\"fuzziness\":\"AUTO\"}},\"filter\":{\"geo_distance\":{\"distance\":\"%s\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
-      queryString = String.format(queryString, query, queryRadius, latitude, longitude);
+
+            MultiMatchQueryBuilder matchQuery = QueryBuilders
+        .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO");
+    GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
+        .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
+
+    BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery()
+      .must(matchQuery)
+        .filter(filterOnDistance);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
+
  HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create("http://10.128.0.13:9200/shops/_search?filter_path=hits.hits._id"))
-        .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
+        .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
         .setHeader("Content-Type","application/json")
         .build();
-
-        MultiMatchQueryBuilder myq = QueryBuilders
-            .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO");
-        GeoDistanceQueryBuilder geoq = QueryBuilders.geoDistanceQuery("pin.location")
-            .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
-
-        BoolQueryBuilder q = QueryBuilders.boolQuery()
-          .must(myq)
-            .filter(geoq);
-
-        System.out.println(q.toString());
-
-        // QueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("user", "kimchy")
-        //                                         .fuzziness(Fuzziness.AUTO)
-        //                                         .prefixLength(3)
-        //                                         .maxExpansions(10);
-
-        //                   System.out.println(matchQueryBuilder.toString());
 
 
         List<Long> shopIDList = new ArrayList<Long>();
@@ -121,7 +115,6 @@ public class ShopController {
         return client.sendAsync(request, BodyHandlers.ofString()).
         thenApply(HttpResponse::body)
         .thenApply((responseString) -> {
-          System.out.println(responseString);
           JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
           JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
           for (JsonElement id: idListJson) {
@@ -137,12 +130,19 @@ public class ShopController {
   @CrossOrigin(origins = {"http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com", "https://microapps.google.com"})
   @GetMapping("/api/browse/elastic")
     public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
-      String queryString = "{\"query\":{\"bool\":{\"must\":{\"match_all\":{}},\"filter\":{\"geo_distance\":{\"distance\":\"%s\",\"pin.location\":{\"lat\":%s,\"lon\":%s}}}}}}";
-      queryString = String.format(queryString, queryRadius, latitude, longitude);
+    
+      GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
+          .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
+      BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
+          .filter(filterOnDistance);
+      SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+      searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
+      System.out.println(boolMatchQueryWithDistanceFilter.toString());
+
       HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create("http://10.128.0.13:9200/shops/_search?filter_path=hits.hits._id"))
-        .method("GET", HttpRequest.BodyPublishers.ofString(queryString))
+        .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
         .setHeader("Content-Type","application/json")
         .build();
 
@@ -151,7 +151,6 @@ public class ShopController {
         return client.sendAsync(request, BodyHandlers.ofString()).
         thenApply(HttpResponse::body)
         .thenApply((responseString) -> {
-          System.out.println(responseString);
           JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
           JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
           for (JsonElement id: idListJson) {
