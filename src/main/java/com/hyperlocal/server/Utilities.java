@@ -1,24 +1,20 @@
 package com.hyperlocal.server;
-import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 
-import org.jose4j.jws.JsonWebSignature;
-import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwa.AlgorithmConstraints.ConstraintType;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.VerificationJwkSelector;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jws.JsonWebSignature;
 
 
 public class Utilities {
