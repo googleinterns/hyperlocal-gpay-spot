@@ -169,7 +169,6 @@ public class ShopController {
         .sendPreparedStatement(String.format(SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList)
         .thenCompose((QueryResult result) -> {
           List<String> merchantIDList = new ArrayList<String>();
-
           ResultSet allShops = result.getRows();
           for (RowData shop : allShops) {
             ShopDetails shopDetails = new ShopDetails();
@@ -190,7 +189,6 @@ public class ShopController {
         // Information
         .thenCompose((result) -> {
           ResultSet allMerchants = result.getRows();
-
           for (RowData merchant : allMerchants) {
             mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), new Merchant(merchant));
           }
@@ -203,7 +201,6 @@ public class ShopController {
               mapShopIdToShopDetails.put(shopID, shopDetails);
             }
           }
-
           // Get Catalog for all Shops
           return connection.sendPreparedStatement(
               String.format(SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList);
