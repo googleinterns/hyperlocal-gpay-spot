@@ -16,14 +16,15 @@ const ROUTES = {
             'index': {
               'search': base+'/api/query/elastic',
               'browse': base+'/api/browse/elastic'
-            }
+            },
+            'shopByShopID': base + 'api/shop/%b'
         },
         'post':{
             'insertMerchant': base+'/api/insert/merchant'
         }
     },
     'customer': {
-      'catalog': '/buyercatalog/',
+      'catalog': '/buyercatalog/:shopid',
       'shopsList': '/shops/all'
     }
 };

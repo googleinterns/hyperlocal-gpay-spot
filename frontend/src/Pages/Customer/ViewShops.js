@@ -26,9 +26,11 @@ class ViewShops extends React.Component {
       return;
     }
 
+    let searchRadius = this.state.queryRadius;
+
     // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
-      this.setState({ queryRadius: "3km" });
+      searchRadius = "3km";
     }
 
     const config = {
@@ -37,7 +39,7 @@ class ViewShops extends React.Component {
       headers: {},
       params: {
         query: this.state.searchQuery,
-        queryRadius: this.state.queryRadius,
+        queryRadius: searchRadius,
         latitude: this.props.latitude,
         longitude: this.props.longitude
       }
@@ -52,9 +54,11 @@ class ViewShops extends React.Component {
 
   updateBrowseResults = async () => {
 
+    let searchRadius = this.state.queryRadius;
+
     // Use a default radius if no radius specified
     if (this.state.queryRadius === "") {
-      this.setState({ queryRadius: "3km" });
+      searchRadius = "3km";
     }
 
     const config = {
@@ -62,7 +66,7 @@ class ViewShops extends React.Component {
       url: ROUTES.api.get.index.browse,
       headers: {},
       params: {
-        queryRadius: this.state.queryRadius,
+        queryRadius: searchRadius,
         latitude: this.props.latitude,
         longitude: this.props.longitude
       }
