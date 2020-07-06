@@ -75,34 +75,37 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
   }
 
-  /*
-   * To-do server-side checks: - Access control - Data validation - Remove Cross
-   * Origin annotations
-   */
-
+  // API for performing text search 
   @GetMapping("/api/query/elastic")
   public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String query,
       @RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
 
+    List<Long> shopIDList = new ArrayList<Long>();
+
+    // Create a match query for text Match
     MultiMatchQueryBuilder matchQuery = QueryBuilders
         .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO");
+
+    // GeoDistance query for filtering everything in a radius
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
         .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
 
+    // Boolean query to ensure condition of both Matchquery and Geodistance query
+    // holds
     BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(matchQuery)
         .filter(filterOnDistance);
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
+    // Create a search request with the Boolean query
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
 
+    // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(SEARCH_INDEX_URL))
+    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(SEARCH_INDEX_URL))
         .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
         .setHeader("Content-Type", "application/json").build();
 
-    List<Long> shopIDList = new ArrayList<Long>();
-
+    // Send request to search Index asynchronously and parse response to get ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
         .thenApply((responseString) -> {
           JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
@@ -111,31 +114,35 @@ public class ShopController {
             shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
           }
           return shopIDList;
+        
+        // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to the shopIDs
         }).thenCompose((shopList) -> {
           return getShopsByShopIDBatch(shopList);
         });
   }
 
+  // API for browsing in a certain radius
   @GetMapping("/api/browse/elastic")
   public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String queryRadius,
       @RequestParam String latitude, @RequestParam String longitude) {
 
+    // Prepare query for search Index
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
         .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
     BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
         .filter(filterOnDistance);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
-    System.out.println(boolMatchQueryWithDistanceFilter.toString());
 
+    // Create HTTP Request
     HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(SEARCH_INDEX_URL))
+    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(SEARCH_INDEX_URL))
         .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
         .setHeader("Content-Type", "application/json").build();
 
     List<Long> shopIDList = new ArrayList<Long>();
 
+    // Send the request and get list of ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
         .thenApply((responseString) -> {
           JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
@@ -144,6 +151,8 @@ public class ShopController {
             shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
           }
           return shopIDList;
+      
+        // Get List of ShopDetails for the list of ShopIDs via Batch Query
         }).thenCompose((shopList) -> {
           return getShopsByShopIDBatch(shopList);
         });
@@ -324,7 +333,7 @@ public class ShopController {
         return connection.sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(serviceID));
       });
     }
-    
+
     return statusPromise.thenCompose((QueryResult result) -> {
       // If successful, commit
       return connection.sendQuery("COMMIT");
