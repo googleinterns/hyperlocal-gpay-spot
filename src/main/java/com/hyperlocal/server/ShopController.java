@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import javax.inject.Inject;
-
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
@@ -56,7 +54,6 @@ public class ShopController {
 
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
-  @Inject
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);

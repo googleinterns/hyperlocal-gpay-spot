@@ -37,19 +37,6 @@ public class ShopControllerTest {
 
   private final Shop shop = new Shop(3L, "4", "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
   private final String SHOP_DATA_AS_STRING = new Gson().toJson(shop);
-  private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
-  private static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
-  private static final String SELECT_SHOP_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `ShopID` = ?;";
-  private static final String SELECT_SHOPS_BY_MERCHANT_STATEMENT = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `MerchantID` = ?;";
-  private static final String SELECT_SHOPS_BATCH_QUERY = "SELECT `ShopID`, `MerchantID`, `ShopName`, `Latitude`, `Longitude`, `AddressLine1`, `TypeOfService` from `Shops` WHERE `ShopID` IN (?,?,?);";
-  private static final String SELECT_MERCHANT_BATCH_QUERY = "SELECT `MerchantID`, `MerchantName`, `MerchantPhone` from `Merchants` WHERE `MerchantID` IN (?,?,?);";
-  private static final String SELECT_CATALOG_BATCH_QUERY = "SELECT `ServiceID`, `ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL` from `Catalog` WHERE `ShopID` IN (?,?,?);";
-  private static final String SELECT_MERCHANT_STATEMENT = "SELECT `MerchantID`, `MerchantName`, `MerchantPhone` from `Merchants` WHERE `MerchantID` = ?;";
-  private static final String SELECT_CATALOG_BY_SHOP_STATEMENT = "SELECT `ServiceID`, `ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL` from `Catalog` WHERE `ShopID` = ?;";
-  private static final String INSERT_CATALOG_STATEMENT = "INSERT INTO `Catalog` (`ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL`) VALUES (?, ?, ?, ?);";
-  private static final String UPDATE_CATALOG_STATEMENT = "UPDATE `Catalog` SET `ServiceName` = ?, `ServiceDescription` = ?, `ImageURL` = ? WHERE `ServiceID` = ?;";
-  private static final String DELETE_CATALOG_STATEMENT = "DELETE FROM `Catalog` WHERE `ServiceID` = ?;";
-  private static final String PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
   private final JsonObject shopJson = JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject();
 
   @Mock
@@ -83,7 +70,7 @@ public class ShopControllerTest {
     ResultSet shopRecords = new FakeResultSet(shopRecord);
     QueryResult shopsQueryResult = new QueryResult(0L, "Success", shopRecords);
     CompletableFuture<QueryResult> queryResultPromise = CompletableFuture.completedFuture(shopsQueryResult);
-    when(connection.sendPreparedStatement(SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
+    when(connection.sendPreparedStatement(Constants.SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
         .thenReturn(queryResultPromise);
     List<Shop> expectedList = new ArrayList<Shop>();
     expectedList.add(new Shop(shopRecord));
@@ -93,7 +80,7 @@ public class ShopControllerTest {
 
     /* ASSERT */
     assertEquals(expectedList, actualListPromise.get());
-    verify(connection).sendPreparedStatement(SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID));
+    verify(connection).sendPreparedStatement(Constants.SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID));
   }
 
   @Test
@@ -137,11 +124,11 @@ public class ShopControllerTest {
     ShopDetails expectedShopDetails = new ShopDetails(new Shop(shopRecord), new Merchant(merchantRecord),
         new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
 
-    when(connection.sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
+    when(connection.sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
         .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
-    when(connection.sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
+    when(connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
         .thenReturn(CompletableFuture.completedFuture(merchantQueryResult));
-    when(connection.sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID)))
+    when(connection.sendPreparedStatement(Constants.SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID)))
         .thenReturn(CompletableFuture.completedFuture(servicesQueryResult));
 
     /* ACT */
@@ -149,9 +136,9 @@ public class ShopControllerTest {
 
     /* ASSERT */
     assertEquals(expectedShopDetails, actualShopDetailsPromise.get());
-    verify(connection).sendPreparedStatement(SELECT_SHOP_STATEMENT, Arrays.asList(shopID));
-    verify(connection).sendPreparedStatement(SELECT_MERCHANT_STATEMENT, Arrays.asList(merchantID));
-    verify(connection).sendPreparedStatement(SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
+    verify(connection).sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID));
+    verify(connection).sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT, Arrays.asList(merchantID));
+    verify(connection).sendPreparedStatement(Constants.SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
   }
 
   @Test
@@ -188,14 +175,14 @@ public class ShopControllerTest {
     expectedMap.put("success", true);
 
     when(connection.sendQuery("BEGIN")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(INSERT_CATALOG_STATEMENT, addList))
+    when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, addList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(UPDATE_CATALOG_STATEMENT, editList))
+    when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
+    when(connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendQuery("COMMIT")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(template.publish(PUBSUB_URL, "1000000000000"))
+    when(template.publish(Constants.PUBSUB_URL, "1000000000000"))
         .thenReturn(new AsyncResult<>("DONE"));
 
     /* ACT */
@@ -205,11 +192,11 @@ public class ShopControllerTest {
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
     verify(connection).sendQuery("BEGIN");
-    verify(connection).sendPreparedStatement(INSERT_CATALOG_STATEMENT, addList);
-    verify(connection).sendPreparedStatement(UPDATE_CATALOG_STATEMENT, editList);
-    verify(connection).sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
+    verify(connection).sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, addList);
+    verify(connection).sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList);
+    verify(connection).sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
     verify(connection).sendQuery("COMMIT");
-    verify(template).publish(PUBSUB_URL, "1000000000000");
+    verify(template).publish(Constants.PUBSUB_URL, "1000000000000");
   }
 
   @Test
@@ -279,11 +266,19 @@ public class ShopControllerTest {
       expectedShopDetails.add(shopDetails);
     }
 
-    when(connection.sendPreparedStatement(SELECT_SHOPS_BATCH_QUERY, shopIdList))
+
+    String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(3);
+    String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
+
+
+    when(connection.sendPreparedStatement(
+      String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList))
         .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
-    when(connection.sendPreparedStatement(SELECT_MERCHANT_BATCH_QUERY, merchantIDList))
+    when(connection.sendPreparedStatement(
+      String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList))
         .thenReturn(CompletableFuture.completedFuture(merchantQueryResult));
-    when(connection.sendPreparedStatement(SELECT_CATALOG_BATCH_QUERY, shopIdList))
+    when(connection.sendPreparedStatement(
+      String.format(Constants.SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList))
         .thenReturn(CompletableFuture.completedFuture(servicesQueryResult));
 
     /* ACT */
@@ -293,9 +288,9 @@ public class ShopControllerTest {
     /* ASSERT */
 
     assertEquals(expectedShopDetails, actualShopDetailsPromise.get());
-    verify(connection).sendPreparedStatement(SELECT_CATALOG_BATCH_QUERY, shopIdList);
-    verify(connection).sendPreparedStatement(SELECT_MERCHANT_BATCH_QUERY, merchantIDList);
-    verify(connection).sendPreparedStatement(SELECT_SHOPS_BATCH_QUERY, shopIdList);
+    verify(connection).sendPreparedStatement(Constants.SELECT_CATALOG_BATCH_QUERY, shopIdList);
+    verify(connection).sendPreparedStatement(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantIDList);
+    verify(connection).sendPreparedStatement(Constants.SELECT_SHOPS_BATCH_QUERY, shopIdList);
   }
 
   @Test
@@ -307,11 +302,11 @@ public class ShopControllerTest {
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
-    when(connection.sendPreparedStatement(SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
         .thenReturn(queryResult);
     CompletableFuture<QueryResult> result = controller.insertNewShop(shopJson);
     assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
+    verify(connection).sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 
   @Test
@@ -323,10 +318,10 @@ public class ShopControllerTest {
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
-    when(connection.sendPreparedStatement(SHOP_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
         .thenReturn(queryResult);
     CompletableFuture<QueryResult> result = controller.updateShopDetails(shopJson);
     assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(SHOP_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters));
+    verify(connection).sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters));
   }
 }
