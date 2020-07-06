@@ -20,13 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MerchantController {
 
-  private static final String DATABASE_URL = "jdbc:mysql:///hyperlocal?socketFactory=com.google.cloud.sql.mysql.SocketFactory&cloudSqlInstance=speedy-anthem-217710:us-central1:hyperlocal";;
   private Connection connection;
-  private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
-  private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
 
   public MerchantController() {
-    connection = MySQLConnectionBuilder.createConnectionPool(DATABASE_URL);
+    connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
 
   /*
@@ -61,13 +58,13 @@ public class MerchantController {
   public CompletableFuture<QueryResult> updateMerchantDetails(JsonObject merchantDetails) {
     String UpdateQueryParameters[] = new String[] { merchantDetails.get("merchantName").getAsString(),
         merchantDetails.get("merchantPhone").getAsString(), merchantDetails.get("merchantID").getAsString() };
-    return connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
+    return connection.sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
   }
 
   /* Calls database and inserts a new Merchant record */
   public CompletableFuture<QueryResult> insertNewMerchant(JsonObject merchantDetails) {
     String InsertQueryParameters[] = new String[] { merchantDetails.get("merchantID").getAsString(),
         merchantDetails.get("merchantName").getAsString(), merchantDetails.get("merchantPhone").getAsString() };
-    return connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
+    return connection.sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 }

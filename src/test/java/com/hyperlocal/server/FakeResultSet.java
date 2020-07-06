@@ -17,6 +17,10 @@ public class FakeResultSet implements ResultSet {
             this.list.add(item);
     }
 
+    public FakeResultSet(ArrayList<RowData> list) {
+      this.list = list;
+    }
+
     public RowData get(int index) {
         return list.get(index);
     }
