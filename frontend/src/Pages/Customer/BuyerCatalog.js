@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Row, Col, Button, Container, Jumbotron, Card, Image, ListGroup } from 'react-bootstrap';
 import ROUTES from '../../routes';
 
-const CALL_BUTTON_IMAGE_URL = "https://secure.webtoolhub.com/static/resources/icons/set112/56bb7adb.png";
+const CALL_BUTTON_IMAGE_URL = "/images/call.png";
 
 class BuyerCatalog extends React.Component {
   constructor(props) {
