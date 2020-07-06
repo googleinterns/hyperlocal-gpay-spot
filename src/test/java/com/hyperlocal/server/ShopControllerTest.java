@@ -49,6 +49,7 @@ public class ShopControllerTest {
   private static final String INSERT_CATALOG_STATEMENT = "INSERT INTO `Catalog` (`ShopID`, `ServiceName`, `ServiceDescription`, `ImageURL`) VALUES (?, ?, ?, ?);";
   private static final String UPDATE_CATALOG_STATEMENT = "UPDATE `Catalog` SET `ServiceName` = ?, `ServiceDescription` = ?, `ImageURL` = ? WHERE `ServiceID` = ?;";
   private static final String DELETE_CATALOG_STATEMENT = "DELETE FROM `Catalog` WHERE `ServiceID` = ?;";
+  private static final String PUBSUB_URL = "projects/speedy-anthem-217710/topics/testTopic";
   private final JsonObject shopJson = JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject();
 
   @Mock
@@ -70,9 +71,15 @@ public class ShopControllerTest {
     assertThat(controller).isNotNull();
     String merchantID = "1000000000000";
 
-    RowData shopRecord = new FakeRowData("ShopID", 1L, "MerchantID", "1000000000000", "ShopName", "Arvind Shop",
-        "Latitude", new BigDecimal(23.33), "Longitude", new BigDecimal(23.33), "AddressLine1", "Mumbai",
-        "TypeOfService", "Groceries");
+    RowData shopRecord = new FakeRowData(
+      "ShopID", 1L,
+      "MerchantID", "1000000000000", 
+      "ShopName", "Arvind Shop",
+      "Latitude", new BigDecimal(23.33), 
+      "Longitude", new BigDecimal(23.33), 
+      "AddressLine1", "Mumbai",
+      "TypeOfService", "Groceries"
+    );
     ResultSet shopRecords = new FakeResultSet(shopRecord);
     QueryResult shopsQueryResult = new QueryResult(0L, "Success", shopRecords);
     CompletableFuture<QueryResult> queryResultPromise = CompletableFuture.completedFuture(shopsQueryResult);
@@ -98,18 +105,32 @@ public class ShopControllerTest {
     Long shopID = 1000000000000L;
 
     String merchantID = "2000000000000";
-    RowData shopRecord = new FakeRowData("ShopID", shopID, "MerchantID", merchantID, "ShopName", "Arvind Shop",
-        "Latitude", new BigDecimal(23.33), "Longitude", new BigDecimal(23.33), "AddressLine1", "Mumbai",
-        "TypeOfService", "Groceries");
+    RowData shopRecord = new FakeRowData(
+      "ShopID", shopID, 
+      "MerchantID", merchantID, 
+      "ShopName", "Arvind Shop",
+      "Latitude", new BigDecimal(23.33), 
+      "Longitude", new BigDecimal(23.33), 
+      "AddressLine1", "Mumbai",
+      "TypeOfService", "Groceries"
+    );
     ResultSet wrappedShopRecord = new FakeResultSet(shopRecord);
     QueryResult shopQueryResult = new QueryResult(0L, "Success", wrappedShopRecord);
-    RowData merchantRecord = new FakeRowData("MerchantID", merchantID, "MerchantName", "Arvind", "MerchantPhone",
-        "9876543210");
+    RowData merchantRecord = new FakeRowData(
+      "MerchantID", merchantID, 
+      "MerchantName", "Arvind", 
+      "MerchantPhone", "9876543210"
+    );
     ResultSet wrappedMerchantRecord = new FakeResultSet(merchantRecord);
     QueryResult merchantQueryResult = new QueryResult(0L, "Success", wrappedMerchantRecord);
 
-    RowData serviceRecord = new FakeRowData("ServiceID", 101L, "ShopID", shopID, "ServiceName", "Apples",
-        "ServiceDescription", "Fresh off the market!", "ImageURL", "#");
+    RowData serviceRecord = new FakeRowData(
+      "ServiceID", 101L, 
+      "ShopID", shopID, 
+      "ServiceName", "Apples",
+      "ServiceDescription", "Fresh off the market!", 
+      "ImageURL", "#"
+    );
     ResultSet serviceRecords = new FakeResultSet(serviceRecord);
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
@@ -174,14 +195,12 @@ public class ShopControllerTest {
     when(connection.sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendQuery("COMMIT")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(template.publish("projects/speedy-anthem-217710/topics/testTopic", "1000000000000"))
+    when(template.publish(PUBSUB_URL, "1000000000000"))
         .thenReturn(new AsyncResult<>("DONE"));
 
     /* ACT */
     CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(shopID,
         new Gson().toJson(payload));
-
-    verify(template).publish("projects/speedy-anthem-217710/topics/testTopic", "1000000000000");
 
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
@@ -190,6 +209,7 @@ public class ShopControllerTest {
     verify(connection).sendPreparedStatement(UPDATE_CATALOG_STATEMENT, editList);
     verify(connection).sendPreparedStatement(DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
     verify(connection).sendQuery("COMMIT");
+    verify(template).publish(PUBSUB_URL, "1000000000000");
   }
 
   @Test
@@ -210,9 +230,15 @@ public class ShopControllerTest {
 
     ArrayList<RowData> shopRecords = new ArrayList<RowData>();
     for (Long shopID : shopIdList) {
-      RowData shopRecord = new FakeRowData("ShopID", shopID, "MerchantID", Long.toString(shopID), "ShopName",
-          "Arvind Shop", "Latitude", new BigDecimal(23.33), "Longitude", new BigDecimal(23.33), "AddressLine1",
-          "Mumbai", "TypeOfService", "Groceries");
+      RowData shopRecord = new FakeRowData(
+        "ShopID", shopID, 
+        "MerchantID", Long.toString(shopID), 
+        "ShopName", "Arvind Shop", 
+        "Latitude", new BigDecimal(23.33), 
+        "Longitude", new BigDecimal(23.33), 
+        "AddressLine1", "Mumbai", 
+        "TypeOfService", "Groceries"
+      );
       shopRecords.add(shopRecord);
     }
     ResultSet wrappedShopRecord = new FakeResultSet(shopRecords);
@@ -220,8 +246,10 @@ public class ShopControllerTest {
 
     ArrayList<RowData> merchantRecords = new ArrayList<RowData>();
     for (String merchantID : merchantIDList) {
-      RowData merchantRecord = new FakeRowData("MerchantID", merchantID, "MerchantName", "Arvind", "MerchantPhone",
-          "9876543210");
+      RowData merchantRecord = new FakeRowData(
+        "MerchantID", merchantID, 
+        "MerchantName", "Arvind", 
+        "MerchantPhone", "9876543210");
       merchantRecords.add(merchantRecord);
     }
     ResultSet wrappedMerchantRecord = new FakeResultSet(merchantRecords);
@@ -229,8 +257,13 @@ public class ShopControllerTest {
 
     ArrayList<RowData> CatalogItems = new ArrayList<RowData>();
     for (Long shopID : shopIdList) {
-      RowData serviceRecord = new FakeRowData("ServiceID", 101L, "ShopID", shopID, "ServiceName", "Apples",
-          "ServiceDescription", "Fresh off the market!", "ImageURL", "#");
+      RowData serviceRecord = new FakeRowData(
+        "ServiceID", 101L, 
+        "ShopID", shopID, 
+        "ServiceName", "Apples",
+        "ServiceDescription", "Fresh off the market!", 
+        "ImageURL", "#")
+      ;
       CatalogItems.add(serviceRecord);
     }
     ResultSet serviceRecords = new FakeResultSet(CatalogItems);
