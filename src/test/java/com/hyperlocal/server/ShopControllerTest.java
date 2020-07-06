@@ -174,7 +174,8 @@ public class ShopControllerTest {
     HashMap<String, Object> expectedMap = new HashMap<String, Object>();
     expectedMap.put("success", true);
 
-    when(connection.sendQuery("BEGIN")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
+    when(connection.sendQuery("BEGIN"))
+        .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, addList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList))
