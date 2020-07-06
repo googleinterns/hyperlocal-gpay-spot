@@ -106,16 +106,14 @@ public class ShopController {
 
     // Send request to search Index asynchronously and parse response to get ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
-        .thenApply((responseString) -> {
+        .thenCompose((responseString) -> {
           JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
           JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
           for (JsonElement id : idListJson) {
             shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
           }
-          return shopIDList;
         
-        // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to the shopIDs
-        }).thenCompose((shopList) -> {
+          // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to the shopIDs
           return getShopsByShopIDBatch(shopList);
         });
   }
@@ -141,18 +139,16 @@ public class ShopController {
 
     List<Long> shopIDList = new ArrayList<Long>();
 
-    // Send the request and get list of ShopIDs
+    // Send request to search Index asynchronously and parse response to get ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
-        .thenApply((responseString) -> {
+        .thenCompose((responseString) -> {
           JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
           JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
           for (JsonElement id : idListJson) {
             shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
           }
-          return shopIDList;
-      
-        // Get List of ShopDetails for the list of ShopIDs via Batch Query
-        }).thenCompose((shopList) -> {
+        
+          // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to the shopIDs
           return getShopsByShopIDBatch(shopList);
         });
   }
@@ -168,8 +164,9 @@ public class ShopController {
     // Fetch All Shops in ShopIDList and store their merchantIDs in a List
     return connection
         .sendPreparedStatement(String.format(SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList)
-        .thenApply((QueryResult result) -> {
+        .thenCompose((QueryResult result) -> {
           List<String> merchantIDList = new ArrayList<String>();
+          
           ResultSet allShops = result.getRows();
           for (RowData shop : allShops) {
             ShopDetails shopDetails = new ShopDetails();
@@ -179,10 +176,8 @@ public class ShopController {
             merchantIDList.add(MerchantID);
             mapShopIdToShopDetails.put(ShopID, shopDetails);
           }
-          return merchantIDList;
 
           // Select all Merchant Data for every merchantID in merchantIDList
-        }).thenCompose((merchantIDList) -> {
           String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
           return connection.sendPreparedStatement(
               String.format(SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList);
@@ -190,8 +185,9 @@ public class ShopController {
 
         // Map All merchantIDs to their Merchants and Update ShopDetails with merchant
         // Information
-        .thenApply((result) -> {
+        .thenCompose((result) -> {
           ResultSet allMerchants = result.getRows();
+          
           for (RowData merchant : allMerchants) {
             mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), new Merchant(merchant));
           }
@@ -204,10 +200,8 @@ public class ShopController {
               mapShopIdToShopDetails.put(shopID, shopDetails);
             }
           }
-          return allMerchants;
-
+          
           // Get Catalog for all Shops
-        }).thenCompose((allMerchants) -> {
           return connection.sendPreparedStatement(
               String.format(SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList);
 
