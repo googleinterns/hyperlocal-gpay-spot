@@ -90,8 +90,7 @@ public class ShopController {
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
         .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
 
-    // Boolean query to ensure condition of both Matchquery and Geodistance query
-    // holds
+    // Boolean query to ensure condition of both Matchquery and Geodistance query holds
     BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(matchQuery)
         .filter(filterOnDistance);
 
