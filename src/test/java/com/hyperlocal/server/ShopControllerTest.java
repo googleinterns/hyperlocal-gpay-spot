@@ -267,10 +267,8 @@ public class ShopControllerTest {
       expectedShopDetails.add(shopDetails);
     }
 
-
     String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(3);
-    String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
-
+    String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(3);
 
     when(connection.sendPreparedStatement(
       String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList))
@@ -289,9 +287,12 @@ public class ShopControllerTest {
     /* ASSERT */
 
     assertEquals(expectedShopDetails, actualShopDetailsPromise.get());
-    verify(connection).sendPreparedStatement(Constants.SELECT_CATALOG_BATCH_QUERY, shopIdList);
-    verify(connection).sendPreparedStatement(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantIDList);
-    verify(connection).sendPreparedStatement(Constants.SELECT_SHOPS_BATCH_QUERY, shopIdList);
+    verify(connection).sendPreparedStatement(
+      String.format(Constants.SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList);
+    verify(connection).sendPreparedStatement(
+      String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList);
+    verify(connection).sendPreparedStatement(
+      String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList);
   }
 
   @Test
