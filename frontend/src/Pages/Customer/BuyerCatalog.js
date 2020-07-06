@@ -22,8 +22,9 @@ class BuyerCatalog extends React.Component {
     const shopID = this.state.shopID;
     axios.get(ROUTES.api.get.shopByShopID.replace("%b", shopID))
       .then((response) => {
-        response.data["shopFetched"] = true;
-        this.setState(response.data);
+        let shopDetails = response.data;
+        shopDetails["shopFetched"] = true;
+        this.setState(shopDetails);
       });
   }
 
