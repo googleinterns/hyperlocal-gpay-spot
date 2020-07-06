@@ -29,7 +29,6 @@ class BuyerCatalog extends React.Component {
 
   render() {
     if (this.state.shopFetched === false) {
-      this.getShopDetails();
       return (
         <Container className="p-0 ">
           <Jumbotron>
