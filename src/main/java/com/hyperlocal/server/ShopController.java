@@ -245,7 +245,6 @@ public class ShopController {
 
         }).exceptionally(ex -> {
           logger.error("Executed exceptionally: getShopsByMerchantID()", ex);
-          ex.printStackTrace();
           throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
         });
 
@@ -345,7 +344,6 @@ public class ShopController {
     }).exceptionally((ex) -> {
       // Else, auto-rollback when connection closes
       logger.error("Executed exceptionally: upsertCatalog()", ex);
-      ex.printStackTrace();
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
     });
 
@@ -367,7 +365,6 @@ public class ShopController {
     }).thenCompose((shopID) -> {
       return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
-      e.printStackTrace();
       return "";
     }).thenApply((publishPromise) -> {
       return new Shop(shopDataAsJson);

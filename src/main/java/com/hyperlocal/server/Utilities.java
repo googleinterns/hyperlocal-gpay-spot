@@ -18,6 +18,7 @@ public class Utilities {
         return Math.abs(numA-numB) < threshold;
     }
 
+    // Create a ?,?,? placeholder with numOfPlaceholders '?' to use in SQL prepared statements
     public static String getPlaceHolderString(Integer numOfPlaceholders) {
       StringBuilder result = new StringBuilder();
       for (Integer i = 0; i < numOfPlaceholders; i++) {
