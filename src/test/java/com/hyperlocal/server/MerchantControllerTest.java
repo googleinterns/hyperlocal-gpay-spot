@@ -28,8 +28,6 @@ public class MerchantControllerTest {
   Merchant merchant = new Merchant("4", "Test Merchant", "7867986767");
   private final String MERCHANT_DATA_AS_STRING = new Gson().toJson(merchant);
   private JsonObject merchantJson = JsonParser.parseString(MERCHANT_DATA_AS_STRING).getAsJsonObject();
-  private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
-  private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
 
   @Mock
   Connection connection;
@@ -49,11 +47,11 @@ public class MerchantControllerTest {
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
-    when(connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
         .thenReturn(queryResult);
     CompletableFuture<QueryResult> result = controller.insertNewMerchant(merchantJson);
     assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
+    verify(connection).sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
   }
 
   @Test
@@ -65,10 +63,10 @@ public class MerchantControllerTest {
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
 
-    when(connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
         .thenReturn(queryResult);
     CompletableFuture<QueryResult> result = controller.updateMerchantDetails(merchantJson);
     assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters));
+    verify(connection).sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters));
   }
 }
