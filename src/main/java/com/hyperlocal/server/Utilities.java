@@ -19,11 +19,14 @@ public class Utilities {
     }
 
     // Create a ?,?,? placeholder with numOfPlaceholders '?' to use in SQL prepared statements
-    public static String getPlaceHolderString(Integer numOfPlaceholders) {
-      StringBuilder result = new StringBuilder();
-      for (Integer i = 0; i < numOfPlaceholders; i++) {
-        result.append("?,");
+    public static String getPlaceHolderString(Integer numOfPlaceholders) {      
+      if (numOfPlaceholders == 0) {
+          return "";
       }
-      return result.length() > 0 ? result.substring(0, result.length() - 1) : "";
+      StringBuilder result = new StringBuilder("?");
+      for (Integer i = 0; i < numOfPlaceholders-1; i++) {
+        result.append(",?");
+      }
+      return result.toString();
     }
 }
