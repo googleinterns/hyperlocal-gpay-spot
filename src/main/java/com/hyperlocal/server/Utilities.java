@@ -17,4 +17,12 @@ public class Utilities {
     {
         return Math.abs(numA-numB) < threshold;
     }
+
+    public static String getPlaceHolderString(Integer numOfPlaceholders) {
+      StringBuilder result = new StringBuilder();
+      for (Integer i = 0; i < numOfPlaceholders; i++) {
+        result.append("?,");
+      }
+      return result.length() > 0 ? result.substring(0, result.length() - 1) : "";
+    }
 }
