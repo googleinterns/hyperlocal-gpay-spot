@@ -10,7 +10,7 @@ class NavBar extends React.Component {
 
   render() {
     return (
-        <Navbar fixed="top" collapseOnSelect expand="lg" bg="dark" variant="dark">
+        <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
             <Navbar.Brand href="#home">Microapp</Navbar.Brand>
             <Navbar.Toggle aria-controls="responsive-navbar-nav" />
             <Navbar.Collapse id="responsive-navbar-nav">
