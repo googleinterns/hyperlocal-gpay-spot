@@ -3,5 +3,5 @@ steps:
   entrypoint: mvn
   args: ['test']
 - name: maven:3-jdk-11
-  entrypoint: mvn
+  entrypoint: mvn 
   args: ['package','appengine:deploy', '-Dapp.deploy.projectId=speedy-anthem-217710']
