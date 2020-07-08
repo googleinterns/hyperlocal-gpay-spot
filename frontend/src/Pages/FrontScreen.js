@@ -14,9 +14,6 @@ class FrontScreen extends React.Component {
     super(props);
     this.state = {
       pageLoading: true,
-      "user": {
-        "auth": false
-      }
     }
   }
 
@@ -43,9 +40,6 @@ class FrontScreen extends React.Component {
       const decoded = JSON.parse(atob(response.split('.')[1])); 
       console.log('GetIdentity response: ', decoded);
       this.props.auth(decoded);
-      this.setState({
-        "auth": true
-      });
     }).catch(error => {
       console.error('An error occurred while fetching identity: ', error);
     });
