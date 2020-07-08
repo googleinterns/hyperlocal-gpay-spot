@@ -66,6 +66,7 @@ class App extends React.Component {
             <Route path={ROUTES.customer.shopsList}>
               <ViewShops setLocation={this.setLocation} latitude={this.state.latitude} longitude={this.state.longitude} />
             </Route>
+            {/* /buydercatalog/:shopid */}
             <Route path={ROUTES.customer.catalog} component={BuyerCatalog} />
             <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
             <Route path={ROUTES.merchant.dashboard} render={(props) => <MyDashboard {...props} user={this.state.user} />} />

@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import '../../App.css';
 import LocationInput from '../../Components/LocationInput';
 import ROUTES from '../../routes';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 class ViewShops extends React.Component {
 
@@ -12,6 +14,7 @@ class ViewShops extends React.Component {
     super(props);
     this.state = {
       shops: [],
+      pageLoading: true,
       searchQuery: "",
       queryRadius: "",
       showModal: true
@@ -19,6 +22,8 @@ class ViewShops extends React.Component {
   }
 
   search = async () => {
+
+    this.setState({ pageLoading: true });
 
     //Empty query implies browse intent
     if (this.state.searchQuery === "") {
@@ -45,15 +50,30 @@ class ViewShops extends React.Component {
       }
     };
 
-    const shopDetailsList = (await axios(config)).data;
+    let shopDetailsList = [];
 
-    this.setState({
-      "shops": shopDetailsList
-    })
+    try {
+      const shopDetailsList = (await axios(config)).data;
+      console.log(shopDetailsList);
+      this.setState({
+        "shops": shopDetailsList,
+        queryRadius: "",
+        pageLoading: false
+      })
+    }catch(error) {
+      this.setState({
+        "shops": [],
+        searchQuery: "",
+        queryRadius: "",
+        pageLoading: false
+      })
+    }
+
   }
 
   updateBrowseResults = async () => {
 
+    this.setState({pageLoading: true});
     let searchRadius = this.state.queryRadius;
 
     // Use a default radius if no radius specified
@@ -71,13 +91,25 @@ class ViewShops extends React.Component {
         longitude: this.props.longitude
       }
     };
-    const shopDetailsList = (await axios(config)).data;
+    let shopDetailsList = [];
 
-    this.setState({
-      "shops": shopDetailsList
-    })
+    try {
+      const shopDetailsList = (await axios(config)).data;
+      console.log(shopDetailsList);
+      this.setState({
+        "shops": shopDetailsList,
+        queryRadius: "",
+        pageLoading: false
+      })
+    }catch(error) {
+      this.setState({
+        "shops": [],
+        queryRadius: "",
+        pageLoading: false
+      })
+    }
   }
-  
+
   searchBoxUpdateHandler = (e) => {
     this.setState({ searchQuery: e.target.value }, () => {
       if (this.state.searchQuery === "") {
@@ -111,7 +143,9 @@ class ViewShops extends React.Component {
       );
     } else {
       return (
-        <Container className="mt-1 p-3">
+        this.state.pageLoading 
+        ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+        : <Container className="mt-1 p-3">
           <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
             <Form.Row className="align-items-center">
               <Col xs={7}>
@@ -154,7 +188,7 @@ class ViewShops extends React.Component {
                         <Button variant="info">
                           <Link
                             to={{
-                              pathname: ROUTES.customer.catalog + shop["shop"]["shopID"],
+                              pathname: ROUTES.customer.catalog.replace(':shopid', shop["shop"]["shopID"]),
                             }} className="btn btn-info box">
                             View Catalog
                           </Link>
