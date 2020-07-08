@@ -10,14 +10,13 @@ const ROUTES = {
             'catalog': '/onboarding/catalog'
         }
     },
-    'api': {
+    'v1': {
         'get':{
-            'shopsByMerchantID': base+'/api/merchant/%b/shops',
+            'shopsByMerchantID': base+'/api/merchants/%b/shops',
             'index': {
-              'search': base+'/api/query/elastic',
-              'browse': base+'/api/browse/elastic'
+              'search': base+'/v1/shops/'
             },
-            'shopByShopID': base + '/api/shop/%b'
+            'shopByShopID': base + '/v1/shops/%b'
         },
         'post':{
             'insertMerchant': base+'/api/insert/merchant'
