@@ -42,22 +42,15 @@ class App extends React.Component {
 
   setShop = (shop) => {
     this.setState((state) => {
-      let user = { shop, ...state.user }
+      let user = { ...state.user, shop }
       return { user };
     });
   }
 
-  setLocation = () => {
-    let microapps = window.microapps;
-    microapps.getCurrentLocation().then(response => {
-      let locationJson;
-      locationJson = response.data;
-      this.setState({
-        latitude: locationJson.latitude,
-        longitude: locationJson.longitude
-      });
-    }).catch(error => {
-      console.error('Error while getting Location: ', error);
+  setLocation = ({latitude, longitude}) => {
+    this.setState({
+      latitude,
+      longitude
     });
   }
 
