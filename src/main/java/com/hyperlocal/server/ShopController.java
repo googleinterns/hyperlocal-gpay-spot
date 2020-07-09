@@ -124,7 +124,7 @@ public class ShopController {
     List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
 
     // if empty shopIDList then return empty shopsList
-    if (shopIDList.size() == 0) {
+    if (shopIDList.isEmpty()) {
       return CompletableFuture.completedFuture(shopsList);
     }
 
