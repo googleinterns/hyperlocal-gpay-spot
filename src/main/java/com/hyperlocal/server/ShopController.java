@@ -31,9 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
-import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
@@ -51,7 +49,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class ShopController {
 
   private PubSubTemplate publisher;
-
+  
   private Connection connection;
 
   private static final Logger logger = LogManager.getLogger(ShopController.class);
@@ -62,32 +60,24 @@ public class ShopController {
   }
 
   // API for performing text search
-  @GetMapping("/v1/shops")
-  public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(
-      @RequestParam(value = "query", required = false, defaultValue = "") String query,
-      @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
-      @RequestParam String latitude, @RequestParam String longitude) {
+  @GetMapping("/api/query/elastic")
+  public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String query,
+      @RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
 
     List<Long> shopIDList = new ArrayList<Long>();
+
+    // Create a match query for text Match
+    MultiMatchQueryBuilder matchQuery = QueryBuilders
+        .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO");
 
     // GeoDistance query for filtering everything in a radius
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
         .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
 
     // Boolean query to ensure condition of both Matchquery and Geodistance query
-    BoolQueryBuilder boolMatchQueryWithDistanceFilter;
-
-    // Create a match query for text Match
-    if (query.equals("")) {
-      System.out.println("Empty query string found");
-      boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
-          .filter(filterOnDistance);
-    } else {
-      boolMatchQueryWithDistanceFilter = QueryBuilders
-          .boolQuery().must(QueryBuilders
-              .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO"))
-          .filter(filterOnDistance);
-    }
+    // holds
+    BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(matchQuery)
+        .filter(filterOnDistance);
 
     // Create a search request with the Boolean query
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -114,6 +104,42 @@ public class ShopController {
         });
   }
 
+  // API for browsing in a certain radius
+  @GetMapping("/api/browse/elastic")
+  public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String queryRadius,
+      @RequestParam String latitude, @RequestParam String longitude) {
+
+    // Prepare query for search Index
+    GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
+        .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
+    BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
+        .filter(filterOnDistance);
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
+
+    // Create HTTP Request
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(Constants.SEARCH_INDEX_URL))
+        .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
+        .setHeader("Content-Type", "application/json").build();
+
+    List<Long> shopIDList = new ArrayList<Long>();
+
+    // Send request to search Index asynchronously and parse response to get ShopIDs
+    return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
+        .thenCompose((responseString) -> {
+          JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
+          JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
+          for (JsonElement id : idListJson) {
+            shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
+          }
+
+          // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
+          // the shopIDs
+          return getShopsByShopIDBatch(shopIDList);
+        });
+  }
+
   public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(List<Long> shopIDList) {
 
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
@@ -124,8 +150,7 @@ public class ShopController {
 
     // Fetch All Shops in ShopIDList and store their merchantIDs in a List
     return connection
-        .sendPreparedStatement(String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder),
-            shopIDList)
+        .sendPreparedStatement(String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList)
         .thenCompose((QueryResult result) -> {
           List<String> merchantIDList = new ArrayList<String>();
           ResultSet allShops = result.getRows();
@@ -141,8 +166,7 @@ public class ShopController {
           // Select all Merchant Data for every merchantID in merchantIDList
           String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
           return connection.sendPreparedStatement(
-              String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder),
-              merchantIDList);
+              String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList);
         })
 
         // Map All merchantIDs to their Merchants and Update ShopDetails with merchant
