@@ -47,10 +47,10 @@ class FrontScreen extends React.Component {
 
   setAsMerchant = async () => {
     this.setState({pageLoading: true});
-    let merchantShops = await axios.get(ROUTES.vi.get.shopsByMerchantID.replace('%b', this.props.user.ID));
+    let merchantShops = await axios.get(ROUTES.api.get.shopsByMerchantID.replace('%b', this.props.user.ID));
     if(!merchantShops.data[0])
     {
-        await axios.post(ROUTES.vi.post.insertMerchant, {
+        await axios.post(ROUTES.api.post.insertMerchant, {
             merchantID: this.props.user.ID,
             merchantName: this.props.user.name,
             merchantPhone: "0123456789" // TODO: Implement Phone Number API

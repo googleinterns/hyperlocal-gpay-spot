@@ -39,7 +39,7 @@ class ViewShops extends React.Component {
 
     const config = {
       method: 'get',
-      url: ROUTES.v1.get.index.search,
+      url: ROUTES.api.get.index.search,
       headers: {},
       params: requestParams
     };
