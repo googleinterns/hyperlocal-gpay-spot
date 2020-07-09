@@ -50,14 +50,24 @@ class ViewShops extends React.Component {
       }
     };
 
-    const axiosResponse = await axios(config);
-    const shopDetailsList = axiosResponse.data;
+    let shopDetailsList = [];
 
-    this.setState({
-      "shops": shopDetailsList,
-      queryRadius: "",
-      pageLoading: false
-    })
+    try {
+      const shopDetailsList = (await axios(config)).data;
+      console.log(shopDetailsList);
+      this.setState({
+        "shops": shopDetailsList,
+        queryRadius: "",
+        pageLoading: false
+      })
+    }catch(error) {
+      this.setState({
+        "shops": [],
+        searchQuery: "",
+        queryRadius: "",
+        pageLoading: false
+      })
+    }
 
   }
 
@@ -81,14 +91,23 @@ class ViewShops extends React.Component {
         longitude: this.props.longitude
       }
     };
-    const axiosResponse = await axios(config);
-    const shopDetailsList = axiosResponse.data;
+    let shopDetailsList = [];
 
-    this.setState({
-      "shops": shopDetailsList,
-      queryRadius: "",
-      pageLoading: false
-    })
+    try {
+      const shopDetailsList = (await axios(config)).data;
+      console.log(shopDetailsList);
+      this.setState({
+        "shops": shopDetailsList,
+        queryRadius: "",
+        pageLoading: false
+      })
+    }catch(error) {
+      this.setState({
+        "shops": [],
+        queryRadius: "",
+        pageLoading: false
+      })
+    }
   }
 
   searchBoxUpdateHandler = (e) => {
