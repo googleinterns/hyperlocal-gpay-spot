@@ -60,7 +60,7 @@ public class ShopController {
 
   // API for performing search and browse queries
   @GetMapping("/v1/shops")
-  public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(
+  public CompletableFuture<List<ShopDetails>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
       @RequestParam String latitude, 
