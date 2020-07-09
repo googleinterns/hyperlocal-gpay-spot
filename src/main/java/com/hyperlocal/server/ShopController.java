@@ -80,7 +80,6 @@ public class ShopController {
     // default: If no input string provided, browse query (i.e match all) 
     // else match on input text
     if (query.equals("")) {
-      System.out.println("Empty query string found");
       boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
           .filter(filterOnDistance);
     } else {
