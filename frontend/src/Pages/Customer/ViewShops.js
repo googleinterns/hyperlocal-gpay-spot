@@ -25,23 +25,29 @@ class ViewShops extends React.Component {
 
     this.setState({ pageLoading: true });
 
-    let requestParams = {};
-    requestParams.latitude = this.props.latitude;
-    requestParams.longitude = this.props.longitude;
-
-    if (this.state.searchQuery !== "") {
-      requestParams.query = this.state.searchQuery;
+    //Empty query implies browse intent
+    if (this.state.searchQuery === "") {
+      this.updateBrowseResults();
+      return;
     }
 
-    if (this.state.queryRadius !== "") {
-      requestParams.queryRadius = this.state.queryRadius;
+    let searchRadius = this.state.queryRadius;
+
+    // Use a default radius if no radius specified
+    if (this.state.queryRadius === "") {
+      searchRadius = "3km";
     }
 
     const config = {
       method: 'get',
       url: ROUTES.api.get.index.search,
       headers: {},
-      params: requestParams
+      params: {
+        query: this.state.searchQuery,
+        queryRadius: searchRadius,
+        latitude: this.props.latitude,
+        longitude: this.props.longitude
+      }
     };
 
     const axiosResponse = await axios(config);
@@ -55,9 +61,41 @@ class ViewShops extends React.Component {
 
   }
 
+  updateBrowseResults = async () => {
+
+    this.setState({pageLoading: true});
+    let searchRadius = this.state.queryRadius;
+
+    // Use a default radius if no radius specified
+    if (this.state.queryRadius === "") {
+      searchRadius = "3km";
+    }
+
+    const config = {
+      method: 'get',
+      url: ROUTES.api.get.index.browse,
+      headers: {},
+      params: {
+        queryRadius: searchRadius,
+        latitude: this.props.latitude,
+        longitude: this.props.longitude
+      }
+    };
+    const axiosResponse = await axios(config);
+    const shopDetailsList = axiosResponse.data;
+
+    this.setState({
+      "shops": shopDetailsList,
+      queryRadius: "",
+      pageLoading: false
+    })
+  }
+
   searchBoxUpdateHandler = (e) => {
     this.setState({ searchQuery: e.target.value }, () => {
-      this.search();
+      if (this.state.searchQuery === "") {
+        this.updateBrowseResults();
+      }
     })
   }
 
@@ -69,13 +107,13 @@ class ViewShops extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
-      this.search();
+      this.updateBrowseResults();
     }
   }
 
   componentDidMount() {
     if (this.props.latitude !== null || (this.props.longitude !== null)) {
-      this.search();
+      this.updateBrowseResults();
     }
   }
 
