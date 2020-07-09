@@ -141,7 +141,7 @@ public class ShopController {
             ShopDetails shopDetails = new ShopDetails();
             Long ShopID = (Long) shop.get("ShopID");
             String MerchantID = (String) shop.get("MerchantID");
-            shopDetails.setShop(new Shop(shop));
+            shopDetails.setShop(Shop.create(shop));
             merchantIDList.add(MerchantID);
             mapShopIdToShopDetails.put(ShopID, shopDetails);
           }
@@ -158,12 +158,12 @@ public class ShopController {
         .thenCompose((result) -> {
           ResultSet allMerchants = result.getRows();
           for (RowData merchant : allMerchants) {
-            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), new Merchant(merchant));
+            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), Merchant.create(merchant));
           }
           for (Long shopID : shopIDList) {
             if (mapShopIdToShopDetails.containsKey(shopID)) {
               ShopDetails shopDetails = mapShopIdToShopDetails.get(shopID);
-              String MerchantID = shopDetails.shop.merchantID;
+              String MerchantID = shopDetails.shop.merchantID();
               shopDetails.setMerchant(mapMerchantIdToMerchant.get(MerchantID));
               shopDetails.catalog = new ArrayList<CatalogItem>();
               mapShopIdToShopDetails.put(shopID, shopDetails);
@@ -202,7 +202,7 @@ public class ShopController {
         .thenApply((QueryResult shopQueryResult) -> {
           ResultSet shopRecords = shopQueryResult.getRows();
           for (RowData shopRecord : shopRecords)
-            shopsList.add(new Shop(shopRecord));
+            shopsList.add(Shop.create(shopRecord));
           return shopsList;
 
         }).exceptionally(ex -> {
@@ -227,17 +227,17 @@ public class ShopController {
           if (wrappedShopRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
           RowData shopRecord = wrappedShopRecord.get(0);
-          shopDetails.setShop(new Shop(shopRecord));
+          shopDetails.setShop(Shop.create(shopRecord));
 
           // Get Merchant Details:
           return connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT,
-              Arrays.asList(shopDetails.shop.merchantID));
+              Arrays.asList(shopDetails.shop.merchantID()));
         }).thenCompose((QueryResult merchantQueryResult) -> {
           ResultSet wrappedMerchantRecord = merchantQueryResult.getRows();
           if (wrappedMerchantRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong. No merchant found for the shop.");
-          shopDetails.setMerchant(new Merchant(wrappedMerchantRecord.get(0)));
+          shopDetails.setMerchant(Merchant.create(wrappedMerchantRecord.get(0)));
 
           // Get Catalog Details:
           return connection.sendPreparedStatement(Constants.SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
@@ -329,7 +329,7 @@ public class ShopController {
     }).exceptionally(e -> {
       return "";
     }).thenApply((publishPromise) -> {
-      return new Shop(shopDataAsJson);
+      return Shop.create(shopDataAsJson);
     });
   }
 
@@ -350,7 +350,7 @@ public class ShopController {
           shopDataAsJson.get("shopID").getAsString()));
       return "";
     }).thenApply((publishPromise) -> {
-      return new Shop(shopDataAsJson);
+      return Shop.create(shopDataAsJson);
     });
   }
 

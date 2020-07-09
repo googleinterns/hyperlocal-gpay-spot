@@ -42,7 +42,7 @@ public class MerchantController {
   public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
     return updateMerchantDetails(newMerchant).thenApply((result) -> {
-      return new Merchant(newMerchant);
+      return Merchant.create(newMerchant);
     });
   }
 
@@ -50,7 +50,7 @@ public class MerchantController {
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
     JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
     return insertNewMerchant(newMerchant).thenApply((result) -> {
-      return new Merchant(newMerchant);
+      return Merchant.create(newMerchant);
     });
   }
 

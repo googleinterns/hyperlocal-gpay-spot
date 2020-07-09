@@ -25,7 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 public class MerchantControllerTest {
 
-  Merchant merchant = new Merchant("4", "Test Merchant", "7867986767");
+  Merchant merchant = Merchant.create("4", "Test Merchant", "7867986767");
   private final String MERCHANT_DATA_AS_STRING = new Gson().toJson(merchant);
   private JsonObject merchantJson = JsonParser.parseString(MERCHANT_DATA_AS_STRING).getAsJsonObject();
 
