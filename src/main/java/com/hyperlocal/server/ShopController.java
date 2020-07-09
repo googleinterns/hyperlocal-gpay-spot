@@ -63,7 +63,8 @@ public class ShopController {
   public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
-      @RequestParam String latitude, @RequestParam String longitude) {
+      @RequestParam String latitude, 
+      @RequestParam String longitude) {
 
     List<Long> shopIDList = new ArrayList<Long>();
 
