@@ -35,7 +35,7 @@ import org.springframework.scheduling.annotation.AsyncResult;
 
 public class ShopControllerTest {
 
-  private final Shop shop = new Shop(3L, "4", "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
+  private final Shop shop = Shop.create(3L, "4", "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
   private final String SHOP_DATA_AS_STRING = new Gson().toJson(shop);
   private final JsonObject shopJson = JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject();
 
@@ -73,7 +73,7 @@ public class ShopControllerTest {
     when(connection.sendPreparedStatement(Constants.SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
         .thenReturn(queryResultPromise);
     List<Shop> expectedList = new ArrayList<Shop>();
-    expectedList.add(new Shop(shopRecord));
+    expectedList.add(Shop.create(shopRecord));
 
     /* ACT */
     CompletableFuture<List<Shop>> actualListPromise = controller.getShopsByMerchantID(merchantID);
@@ -121,7 +121,7 @@ public class ShopControllerTest {
     ResultSet serviceRecords = new FakeResultSet(serviceRecord);
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
-    ShopDetails expectedShopDetails = new ShopDetails(new Shop(shopRecord), Merchant.create(merchantRecord),
+    ShopDetails expectedShopDetails = new ShopDetails(Shop.create(shopRecord), Merchant.create(merchantRecord),
         new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
 
     when(connection.sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
@@ -260,7 +260,7 @@ public class ShopControllerTest {
     List<ShopDetails> expectedShopDetails = new ArrayList<ShopDetails>();
 
     for (Integer i = 0; i < 3; i++) {
-      Shop shop = new Shop(shopRecords.get(i));
+      Shop shop = Shop.create(shopRecords.get(i));
       Merchant merchant = Merchant.create(merchantRecords.get(i));
       List<CatalogItem> catalogItems = Arrays.asList(new CatalogItem(CatalogItems.get(i)));
       ShopDetails shopDetails = new ShopDetails(shop, merchant, catalogItems);
