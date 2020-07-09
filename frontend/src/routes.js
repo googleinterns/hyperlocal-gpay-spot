@@ -12,14 +12,14 @@ const ROUTES = {
     },
     'v1': {
         'get':{
-            'shopsByMerchantID': base+'/v1/merchants/%b/shops',
+            'shopsByMerchantID': base+'/api/merchants/%b/shops',
             'index': {
               'search': base+'/v1/shops/'
             },
             'shopByShopID': base + '/v1/shops/%b'
         },
         'post':{
-            'insertMerchant': base+'/v1/insert/merchant'
+            'insertMerchant': base+'/api/insert/merchant'
         }
     },
     'customer': {
