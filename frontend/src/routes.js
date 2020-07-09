@@ -17,7 +17,7 @@ const ROUTES = {
               'search': base+'/api/query/elastic',
               'browse': base+'/api/browse/elastic'
             },
-            'shopByShopID': base + '/api/shop/%b'
+            'shopByShopID': base + 'api/shop/%b'
         },
         'post':{
             'insertMerchant': base+'/api/insert/merchant'

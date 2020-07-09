@@ -13,15 +13,11 @@ class FrontScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      pageLoading: true,
-      "user": {
-        "auth": false
-      }
+      pageLoading: true
     }
   }
 
   componentDidMount() {
-    if(this.props.user.auth) this.setState({pageLoading: false});
     this.authenticate();
   }
 
@@ -31,21 +27,18 @@ class FrontScreen extends React.Component {
     }
   }
 
-  authenticate = async() => {
+  authenticate() {
     const microapps = window.microapps;
     const request = { nonce: 'nonce typically generated server-side' };
     microapps.getIdentity(request).then(response => {
       /* response: Concatenation of '.' separated base64 encoded JSON strings,
        * of which string at index 1 (0-based indexing) is the user identity.
        *
-       * Line below: Decoding the base64 string at index 1 and parsing it as JSON
+       * Line 29: Decoding the base64 string at index 1 and parsing it as JSON
        */
       const decoded = JSON.parse(atob(response.split('.')[1])); 
       console.log('GetIdentity response: ', decoded);
       this.props.auth(decoded);
-      this.setState({
-        "auth": true
-      });
     }).catch(error => {
       console.error('An error occurred while fetching identity: ', error);
     });
