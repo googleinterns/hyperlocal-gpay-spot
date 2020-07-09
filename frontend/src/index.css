@@ -32,6 +32,11 @@ code {
   max-width: min-content;
 }
 
+.location {
+  width: 100%;
+  height: 100%;
+}
+
 .center {
   margin: 0;
   position: absolute;
