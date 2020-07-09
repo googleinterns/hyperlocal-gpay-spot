@@ -1,3 +1,10 @@
+.fixedBottomBtn {
+    position: fixed;
+    border-radius: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+  }
 .fa-spinner {
     animation: spinanim 1s linear infinite;
 }
