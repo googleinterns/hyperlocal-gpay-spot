@@ -58,7 +58,7 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
 
-  // API for performing text search
+  // API for performing search and browse queries
   @GetMapping("/v1/shops")
   public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
@@ -71,10 +71,13 @@ public class ShopController {
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
         .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
 
-    // Boolean query to ensure condition of both Matchquery and Geodistance query
+    // Boolean query to hold conditions of both Matchquery and Geodistance query
     BoolQueryBuilder boolMatchQueryWithDistanceFilter;
 
-    // Create a match query for text Match
+    // Create a match query
+
+    // default: If no input string provided, browse query (i.e match all) 
+    // else match on input text
     if (query.equals("")) {
       System.out.println("Empty query string found");
       boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
@@ -99,6 +102,7 @@ public class ShopController {
     // Send request to search Index asynchronously and parse response to get ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
         .thenCompose((responseString) -> {
+          // Empty {} is returned by search Index if nothing matches
           if (!responseString.equals("{}")) {
             JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
             JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
@@ -108,6 +112,7 @@ public class ShopController {
           }
           // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
           // the shopIDs
+          // If nothing matches then shopIDList is empty
           return getShopsByShopIDBatch(shopIDList);
         });
   }
@@ -118,6 +123,7 @@ public class ShopController {
     HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
     List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
 
+    // if empty shopIDList then return empty shopsList
     if (shopIDList.size() == 0) {
       return CompletableFuture.completedFuture(shopsList);
     }

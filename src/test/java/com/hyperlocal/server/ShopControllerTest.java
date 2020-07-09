@@ -158,11 +158,11 @@ public class ShopControllerTest {
     createCommand.put("imageURL", createList.get(3));
     payload.put("create", new HashMap[] { createCommand });
     HashMap<String, Object> updateCommand = new HashMap<String, Object>();
-    List<Object> editList = Arrays.asList("Apples", "Lorem ipsum", "#", 9000000000L);
-    updateCommand.put("serviceName", editList.get(0));
-    updateCommand.put("serviceDescription", editList.get(1));
-    updateCommand.put("imageURL", editList.get(2));
-    updateCommand.put("serviceID", editList.get(3));
+    List<Object> updateList = Arrays.asList("Apples", "Lorem ipsum", "#", 9000000000L);
+    updateCommand.put("serviceName", updateList.get(0));
+    updateCommand.put("serviceDescription", updateList.get(1));
+    updateCommand.put("imageURL", updateList.get(2));
+    updateCommand.put("serviceID", updateList.get(3));
     payload.put("update", new HashMap[] { updateCommand });
     HashMap<String, Object> deleteCommand = new HashMap<String, Object>();
     Long deleteServiceID = 9000000000L;
@@ -178,7 +178,7 @@ public class ShopControllerTest {
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList))
+    when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
@@ -194,7 +194,7 @@ public class ShopControllerTest {
     assertEquals(expectedMap, actualMapPromise.get());
     verify(connection).sendQuery("BEGIN");
     verify(connection).sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList);
-    verify(connection).sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList);
+    verify(connection).sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList);
     verify(connection).sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
     verify(connection).sendQuery("COMMIT");
     verify(template).publish(Constants.PUBSUB_URL, "1000000000000");
