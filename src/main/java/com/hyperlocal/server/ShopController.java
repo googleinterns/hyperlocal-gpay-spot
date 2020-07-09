@@ -31,6 +31,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
+import org.elasticsearch.index.query.MatchAllQueryBuilder;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
@@ -99,13 +102,12 @@ public class ShopController {
     // Send request to search Index asynchronously and parse response to get ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
         .thenCompose((responseString) -> {
-          if (!responseString.equals("{}")) {
-            JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
-            JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
-            for (JsonElement id : idListJson) {
-              shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
-            }
+          JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
+          JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
+          for (JsonElement id : idListJson) {
+            shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
           }
+
           // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
           // the shopIDs
           return getShopsByShopIDBatch(shopIDList);
@@ -117,10 +119,6 @@ public class ShopController {
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
     HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
     List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
-
-    if (shopIDList.size() == 0) {
-      return CompletableFuture.completedFuture(shopsList);
-    }
 
     String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(shopIDList.size());
 
