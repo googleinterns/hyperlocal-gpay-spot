@@ -31,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
-import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
@@ -49,7 +48,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class ShopController {
 
   private PubSubTemplate publisher;
-  
+
   private Connection connection;
 
   private static final Logger logger = LogManager.getLogger(ShopController.class);
@@ -59,25 +58,36 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
 
-  // API for performing text search
-  @GetMapping("/api/query/elastic")
-  public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String query,
-      @RequestParam String queryRadius, @RequestParam String latitude, @RequestParam String longitude) {
+  // API for performing search and browse queries
+  @GetMapping("/v1/shops")
+  public CompletableFuture<List<ShopDetails>> getDataFromSearchIndex(
+      @RequestParam(value = "query", required = false, defaultValue = "") String query,
+      @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
+      @RequestParam String latitude, 
+      @RequestParam String longitude) {
 
     List<Long> shopIDList = new ArrayList<Long>();
-
-    // Create a match query for text Match
-    MultiMatchQueryBuilder matchQuery = QueryBuilders
-        .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO");
 
     // GeoDistance query for filtering everything in a radius
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
         .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
 
-    // Boolean query to ensure condition of both Matchquery and Geodistance query
-    // holds
-    BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(matchQuery)
-        .filter(filterOnDistance);
+    // Boolean query to hold conditions of both Matchquery and Geodistance query
+    BoolQueryBuilder boolMatchQueryWithDistanceFilter;
+
+    // Create a match query
+
+    // default: If no input string provided, browse query (i.e match all) 
+    // else match on input text
+    if (query.equals("")) {
+      boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
+          .filter(filterOnDistance);
+    } else {
+      boolMatchQueryWithDistanceFilter = QueryBuilders
+          .boolQuery().must(QueryBuilders
+              .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO"))
+          .filter(filterOnDistance);
+    }
 
     // Create a search request with the Boolean query
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -92,50 +102,17 @@ public class ShopController {
     // Send request to search Index asynchronously and parse response to get ShopIDs
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
         .thenCompose((responseString) -> {
-          JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
-          JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
-          for (JsonElement id : idListJson) {
-            shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
+          // Empty {} is returned by search Index if nothing matches
+          if (!responseString.equals("{}")) {
+            JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
+            JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
+            for (JsonElement id : idListJson) {
+              shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
+            }
           }
-
           // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
           // the shopIDs
-          return getShopsByShopIDBatch(shopIDList);
-        });
-  }
-
-  // API for browsing in a certain radius
-  @GetMapping("/api/browse/elastic")
-  public CompletableFuture<List<ShopDetails>> getDataFromElasticSearch(@RequestParam String queryRadius,
-      @RequestParam String latitude, @RequestParam String longitude) {
-
-    // Prepare query for search Index
-    GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
-        .point(Double.parseDouble(latitude), Double.parseDouble(longitude)).distance(queryRadius);
-    BoolQueryBuilder boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
-        .filter(filterOnDistance);
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
-
-    // Create HTTP Request
-    HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(Constants.SEARCH_INDEX_URL))
-        .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
-        .setHeader("Content-Type", "application/json").build();
-
-    List<Long> shopIDList = new ArrayList<Long>();
-
-    // Send request to search Index asynchronously and parse response to get ShopIDs
-    return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
-        .thenCompose((responseString) -> {
-          JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
-          JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
-          for (JsonElement id : idListJson) {
-            shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
-          }
-
-          // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
-          // the shopIDs
+          // If nothing matches then shopIDList is empty
           return getShopsByShopIDBatch(shopIDList);
         });
   }
@@ -146,11 +123,17 @@ public class ShopController {
     HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
     List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
 
+    // if empty shopIDList then return empty shopsList
+    if (shopIDList.isEmpty()) {
+      return CompletableFuture.completedFuture(shopsList);
+    }
+
     String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(shopIDList.size());
 
     // Fetch All Shops in ShopIDList and store their merchantIDs in a List
     return connection
-        .sendPreparedStatement(String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList)
+        .sendPreparedStatement(String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder),
+            shopIDList)
         .thenCompose((QueryResult result) -> {
           List<String> merchantIDList = new ArrayList<String>();
           ResultSet allShops = result.getRows();
@@ -166,7 +149,8 @@ public class ShopController {
           // Select all Merchant Data for every merchantID in merchantIDList
           String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
           return connection.sendPreparedStatement(
-              String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList);
+              String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder),
+              merchantIDList);
         })
 
         // Map All merchantIDs to their Merchants and Update ShopDetails with merchant
@@ -230,7 +214,7 @@ public class ShopController {
   }
 
   // Fetch catalog, shop & merchant details by shopID.
-  @GetMapping("/api/shop/{shopID}")
+  @GetMapping("/v1/shops/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
     ShopDetails shopDetails = new ShopDetails();
@@ -268,44 +252,44 @@ public class ShopController {
     return shopDetailsPromise;
   }
 
-  @PostMapping("/api/shop/{shopID}/catalog/update")
+  @PostMapping("/v1/shops/{shopID}/catalog:batchUpdate")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID,
       @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
-    JsonArray addCommands = commands.getAsJsonArray("add");
-    JsonArray editCommands = commands.getAsJsonArray("edit");
-    JsonArray delCommands = commands.getAsJsonArray("delete");
+    JsonArray createCommands = commands.getAsJsonArray("create");
+    JsonArray updateCommands = commands.getAsJsonArray("update");
+    JsonArray deleteCommands = commands.getAsJsonArray("delete");
     CompletableFuture<QueryResult> statusPromise = connection.sendQuery("BEGIN");
 
-    // Process add commands
-    for (JsonElement addCommandRaw : addCommands) {
+    // Process create commands
+    for (JsonElement createCommandRaw : createCommands) {
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        JsonObject addCommand = addCommandRaw.getAsJsonObject();
-        String serviceName = addCommand.get("serviceName").getAsString();
-        String serviceDescription = addCommand.get("serviceDescription").getAsString();
-        String imageURL = addCommand.get("imageURL").getAsString();
+        JsonObject createCommand = createCommandRaw.getAsJsonObject();
+        String serviceName = createCommand.get("serviceName").getAsString();
+        String serviceDescription = createCommand.get("serviceDescription").getAsString();
+        String imageURL = createCommand.get("imageURL").getAsString();
         return connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT,
             Arrays.asList(shopID, serviceName, serviceDescription, imageURL));
       });
     }
 
-    // Process edit commands
-    for (JsonElement editCommandRaw : editCommands) {
+    // Process update commands
+    for (JsonElement updateCommandRaw : updateCommands) {
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        JsonObject editCommand = editCommandRaw.getAsJsonObject();
-        Long serviceID = editCommand.get("serviceID").getAsLong();
-        String serviceName = editCommand.get("serviceName").getAsString();
-        String serviceDescription = editCommand.get("serviceDescription").getAsString();
-        String imageURL = editCommand.get("imageURL").getAsString();
+        JsonObject updateCommand = updateCommandRaw.getAsJsonObject();
+        Long serviceID = updateCommand.get("serviceID").getAsLong();
+        String serviceName = updateCommand.get("serviceName").getAsString();
+        String serviceDescription = updateCommand.get("serviceDescription").getAsString();
+        String imageURL = updateCommand.get("imageURL").getAsString();
         return connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT,
             Arrays.asList(serviceName, serviceDescription, imageURL, serviceID));
       });
     }
 
     // Process delete commands
-    for (JsonElement delCommandRaw : delCommands) {
+    for (JsonElement deleteCommandRaw : deleteCommands) {
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        Long serviceID = delCommandRaw.getAsJsonObject().get("serviceID").getAsLong();
+        Long serviceID = deleteCommandRaw.getAsJsonObject().get("serviceID").getAsLong();
         return connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(serviceID));
       });
     }

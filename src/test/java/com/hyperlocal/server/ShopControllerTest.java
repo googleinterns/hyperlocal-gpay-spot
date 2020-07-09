@@ -151,19 +151,19 @@ public class ShopControllerTest {
     Long shopID = 1000000000000L;
     HashMap<String, Object> payload = new HashMap<String, Object>();
 
-    HashMap<String, Object> addCommand = new HashMap<String, Object>();
-    List<Object> addList = Arrays.asList(shopID, "Mango", "Lorem ipsum", "#");
-    addCommand.put("serviceName", addList.get(1));
-    addCommand.put("serviceDescription", addList.get(2));
-    addCommand.put("imageURL", addList.get(3));
-    payload.put("add", new HashMap[] { addCommand });
-    HashMap<String, Object> editCommand = new HashMap<String, Object>();
-    List<Object> editList = Arrays.asList("Apples", "Lorem ipsum", "#", 9000000000L);
-    editCommand.put("serviceName", editList.get(0));
-    editCommand.put("serviceDescription", editList.get(1));
-    editCommand.put("imageURL", editList.get(2));
-    editCommand.put("serviceID", editList.get(3));
-    payload.put("edit", new HashMap[] { editCommand });
+    HashMap<String, Object> createCommand = new HashMap<String, Object>();
+    List<Object> createList = Arrays.asList(shopID, "Mango", "Lorem ipsum", "#");
+    createCommand.put("serviceName", createList.get(1));
+    createCommand.put("serviceDescription", createList.get(2));
+    createCommand.put("imageURL", createList.get(3));
+    payload.put("create", new HashMap[] { createCommand });
+    HashMap<String, Object> updateCommand = new HashMap<String, Object>();
+    List<Object> updateList = Arrays.asList("Apples", "Lorem ipsum", "#", 9000000000L);
+    updateCommand.put("serviceName", updateList.get(0));
+    updateCommand.put("serviceDescription", updateList.get(1));
+    updateCommand.put("imageURL", updateList.get(2));
+    updateCommand.put("serviceID", updateList.get(3));
+    payload.put("update", new HashMap[] { updateCommand });
     HashMap<String, Object> deleteCommand = new HashMap<String, Object>();
     Long deleteServiceID = 9000000000L;
     deleteCommand.put("serviceID", deleteServiceID);
@@ -176,9 +176,9 @@ public class ShopControllerTest {
 
     when(connection.sendQuery("BEGIN"))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, addList))
+    when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList))
+    when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
@@ -193,8 +193,8 @@ public class ShopControllerTest {
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
     verify(connection).sendQuery("BEGIN");
-    verify(connection).sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, addList);
-    verify(connection).sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, editList);
+    verify(connection).sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList);
+    verify(connection).sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList);
     verify(connection).sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
     verify(connection).sendQuery("COMMIT");
     verify(template).publish(Constants.PUBSUB_URL, "1000000000000");
