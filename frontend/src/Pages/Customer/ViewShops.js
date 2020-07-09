@@ -49,6 +49,7 @@ class ViewShops extends React.Component {
 
     this.setState({
       "shops": shopDetailsList,
+      searchQuery: "",
       queryRadius: "",
       pageLoading: false
     })
@@ -56,9 +57,7 @@ class ViewShops extends React.Component {
   }
 
   searchBoxUpdateHandler = (e) => {
-    this.setState({ searchQuery: e.target.value }, () => {
-      this.search();
-    })
+    this.setState({ searchQuery: e.target.value });
   }
 
   onHide = () => {
