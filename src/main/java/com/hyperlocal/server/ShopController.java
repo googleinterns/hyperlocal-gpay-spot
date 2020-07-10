@@ -192,7 +192,7 @@ public class ShopController {
   }
 
   // Fetch all shops by merchantID
-  @GetMapping("/api/merchant/{merchantID}/shops")
+  @GetMapping("/v1/merchant/{merchantID}/shops")
   public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable String merchantID) {
     List<Shop> shopsList = new ArrayList<Shop>();
 
@@ -315,10 +315,11 @@ public class ShopController {
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
 
-  @PostMapping("/api/insert/shop")
-  public @ResponseBody CompletableFuture<Shop> insertShop(@RequestBody String shopDetailsString)
+  @PostMapping("/api/v1/merchants/{merchantID}/shops")
+  public @ResponseBody CompletableFuture<Shop> insertShop(@PathVariable String merchantID, @RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
+    shopDataAsJson.addProperty("merchantID", merchantID);
     return insertNewShop(shopDataAsJson).thenApply((queryResult) -> {
       return ((MySQLQueryResult) queryResult).getLastInsertId();
     }).thenApply((shopID) -> {
@@ -337,10 +338,11 @@ public class ShopController {
    * Expects: All shop details (including the ShopID of the shop to be Updated)
    */
 
-  @PostMapping("/api/update/shop/")
-  public CompletableFuture<Shop> updateShop(@RequestBody String shopDetailsString) {
+  @PutMapping("/api/v1/merchants/{merchantID}/shops/{shopID}")
+  public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID, @RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-
+    shopDataAsJson.addProperty("shopID", shopID);
+    shopDataAsJson.addProperty("merchantID", merchantID);
     return updateShopDetails(shopDataAsJson).thenApply((QueryResult queryResult) -> {
       return shopDataAsJson.get("shopID").getAsString();
     }).thenCompose((shopID) -> {
