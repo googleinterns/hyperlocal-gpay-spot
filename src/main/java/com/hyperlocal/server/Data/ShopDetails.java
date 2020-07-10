@@ -33,7 +33,6 @@ public class ShopDetails {
     public void setShop(Shop shop)
     {
         this.shop = shop;
-        System.out.println("Done assigning: " + shop.toString());
     }
 
     public void setMerchant(Merchant merchant)

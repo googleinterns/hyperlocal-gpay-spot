@@ -58,7 +58,6 @@ public class ShopController {
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
-    connection.sendPreparedStatement("Select * from Shops;");
   }
   
   // API for performing search and browse queries
