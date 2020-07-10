@@ -41,7 +41,6 @@ class ShopDetails extends React.Component {
 
   render() {
     return (
-      <>
         <Container>
           <h3 className="h3 my-5">Seller Onboarding</h3>
           {
@@ -50,7 +49,6 @@ class ShopDetails extends React.Component {
               :   <ShopDetailsInput submit="Proceed" setShopDetails={this.setShopDetails} />
           }
         </Container>
-        </>
     );
   }
 }
