@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.github.jasync.sql.db.Connection;
+import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.RowData;
@@ -297,33 +298,88 @@ public class ShopControllerTest {
 
   @Test
   public void shouldInsertShop() throws Exception {
+    // ARRANGE
     assertThat(controller).isNotNull();
-    assertThat(shopJson).isNotNull();
+    String merchantID = "1020304050";
+    Long shopID = 302010L;
+    String shopName = "Test shop";
+    String typeOfService = "Groceries";
+    double latitude = 10.50432;
+    double longitude = 32.261579;
+    String addressLine1 = "Navi Mumbai, Mumbai, India";
+    List<Object> queryParams = Arrays.asList(
+      shopName,
+      typeOfService,
+      Double.toString(latitude),
+      Double.toString(longitude),
+      addressLine1,
+      merchantID
+    );
+    QueryResult queryResult = new MySQLQueryResult(1L, "SUCCESS", shopID, 0, 0, resultSet);
+    CompletableFuture<QueryResult> queryResultPromise = CompletableFuture
+        .completedFuture(queryResult);
+    when(connection.sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, queryParams))
+        .thenReturn(queryResultPromise);
+    when(template.publish(Constants.PUBSUB_URL, Long.toString(shopID)))
+        .thenReturn(new AsyncResult<>("DONE"));
 
-    String InsertQueryParameters[] = new String[] { "Test Shop", "Test", "43.424234", "43.4242444", "S-124", "4" };
-    CompletableFuture<QueryResult> queryResult = CompletableFuture
-        .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
+    JsonObject newShopDetails = new JsonObject();
+    newShopDetails.addProperty("shopName", shopName);
+    newShopDetails.addProperty("typeOfService", typeOfService);
+    newShopDetails.addProperty("latitude", latitude);
+    newShopDetails.addProperty("longitude", longitude);
+    newShopDetails.addProperty("addressLine1", addressLine1);
+    Shop expectedOutput = new Shop(shopID, merchantID, shopName, latitude, longitude, addressLine1, typeOfService);
 
-    when(connection.sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
-        .thenReturn(queryResult);
-    CompletableFuture<QueryResult> result = controller.insertNewShop(shopJson);
-    assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
+    // ACT
+    Shop actualOutput = controller.insertShop(merchantID, new Gson().toJson(newShopDetails)).get();
+
+    // ASSERT
+    assertEquals(expectedOutput, actualOutput);
+    verify(connection).sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, queryParams);
+    verify(template).publish(Constants.PUBSUB_URL, Long.toString(shopID));
   }
 
   @Test
   public void shouldUpdateShop() throws Exception {
+    // ARRANGE
     assertThat(controller).isNotNull();
-    assertThat(shopJson).isNotNull();
-
-    String updateQueryParameters[] = new String[] { "Test Shop", "Test", "43.424234", "43.4242444", "S-124", "3" };
+    String merchantID = "1020304050";
+    Long shopID = 302010L;
+    String shopName = "Test shop";
+    String typeOfService = "Groceries";
+    double latitude = 10.50432;
+    double longitude = 32.261579;
+    String addressLine1 = "Navi Mumbai, Mumbai, India";
+    List<Object> queryParams = Arrays.asList(
+      shopName,
+      typeOfService,
+      Double.toString(latitude),
+      Double.toString(longitude),
+      addressLine1,
+      shopID
+    );
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
-
-    when(connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams))
         .thenReturn(queryResult);
-    CompletableFuture<QueryResult> result = controller.updateShopDetails(shopJson);
-    assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters));
+    when(template.publish(Constants.PUBSUB_URL, Long.toString(shopID)))
+        .thenReturn(new AsyncResult<>("DONE"));
+
+    JsonObject newShopDetails = new JsonObject();
+    newShopDetails.addProperty("shopName", shopName);
+    newShopDetails.addProperty("typeOfService", typeOfService);
+    newShopDetails.addProperty("latitude", latitude);
+    newShopDetails.addProperty("longitude", longitude);
+    newShopDetails.addProperty("addressLine1", addressLine1);
+    Shop expectedOutput = new Shop(shopID, merchantID, shopName, latitude, longitude, addressLine1, typeOfService);
+
+    // ACT
+    Shop actualOutput = controller.updateShop(merchantID, shopID, new Gson().toJson(newShopDetails)).get();
+
+    // ASSERT
+    assertEquals(expectedOutput, actualOutput);
+    verify(connection).sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams);
+    verify(template).publish(Constants.PUBSUB_URL, Long.toString(shopID));
   }
 }

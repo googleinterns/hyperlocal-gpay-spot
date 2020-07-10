@@ -14,6 +14,9 @@ import com.google.gson.JsonParser;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
 
 // Rest Controller for Merchants
 
@@ -38,33 +41,33 @@ public class MerchantController {
    * Merchant object
    */
 
-  @PostMapping("/update/merchant/")
-  public CompletableFuture<Merchant> updateMerchant(@RequestBody String postInputString) {
-    JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
-    return updateMerchantDetails(newMerchant).thenApply((result) -> {
-      return new Merchant(newMerchant);
+  @PutMapping("/v1/merchants/{merchantID}")
+  public CompletableFuture<Merchant> updateMerchant(@PathVariable String merchantID, @RequestBody String postInputString) {
+    // TODO: Rewrite method with ID JWT & phone JWT verification
+    JsonObject merchantJson = JsonParser.parseString(postInputString).getAsJsonObject();
+    String merchantName = merchantJson.get("merchantName").getAsString();
+    String merchantPhone = merchantJson.get("merchantPhone").getAsString();
+    return connection
+    .sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(merchantName, merchantPhone, merchantID))
+    .thenApply((resp) -> {
+      return new Merchant(merchantID, merchantName, merchantPhone);
     });
   }
 
-  @PostMapping("/insert/merchant")
+  @PostMapping("/v1/merchants")
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
-    JsonObject newMerchant = JsonParser.parseString(postInputString).getAsJsonObject();
-    return insertNewMerchant(newMerchant).thenApply((result) -> {
-      return new Merchant(newMerchant);
+    // TODO: Rewrite method with ID JWT & phone JWT verification
+    JsonObject merchantJson = JsonParser.parseString(postInputString).getAsJsonObject();
+    List<Object> queryParams = Arrays.asList(
+      merchantJson.get("merchantID").getAsString(), 
+      merchantJson.get("merchantName").getAsString(), 
+      merchantJson.get("merchantPhone").getAsString()
+    );
+    return connection
+    .sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, queryParams)
+    .thenApply((resp) -> {
+      return new Merchant(merchantJson);
     });
   }
 
-  /* Helper function to call database and update it */
-  public CompletableFuture<QueryResult> updateMerchantDetails(JsonObject merchantDetails) {
-    String UpdateQueryParameters[] = new String[] { merchantDetails.get("merchantName").getAsString(),
-        merchantDetails.get("merchantPhone").getAsString(), merchantDetails.get("merchantID").getAsString() };
-    return connection.sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(UpdateQueryParameters));
-  }
-
-  /* Calls database and inserts a new Merchant record */
-  public CompletableFuture<QueryResult> insertNewMerchant(JsonObject merchantDetails) {
-    String InsertQueryParameters[] = new String[] { merchantDetails.get("merchantID").getAsString(),
-        merchantDetails.get("merchantName").getAsString(), merchantDetails.get("merchantPhone").getAsString() };
-    return connection.sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
-  }
 }
