@@ -315,7 +315,7 @@ public class ShopController {
    * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
    */
 
-  @PostMapping("/api/v1/merchants/{merchantID}/shops")
+  @PostMapping("/v1/merchants/{merchantID}/shops")
   public @ResponseBody CompletableFuture<Shop> insertShop(@PathVariable String merchantID, @RequestBody String shopDetailsString)
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
@@ -338,7 +338,7 @@ public class ShopController {
    * Expects: All shop details (including the ShopID of the shop to be Updated)
    */
 
-  @PutMapping("/api/v1/merchants/{merchantID}/shops/{shopID}")
+  @PutMapping("/v1/merchants/{merchantID}/shops/{shopID}")
   public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID, @RequestBody String shopDetailsString) {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
     shopDataAsJson.addProperty("shopID", shopID);
