@@ -53,7 +53,6 @@ public class ShopController {
   private Connection connection;
 
   private static final Logger logger = LogManager.getLogger(ShopController.class);
-  Utilities util;
 
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
@@ -65,7 +64,8 @@ public class ShopController {
   public CompletableFuture<List<ShopDetails>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
-      @RequestParam String latitude, @RequestParam String longitude) {
+      @RequestParam String latitude, 
+      @RequestParam String longitude) {
 
     List<Long> shopIDList = new ArrayList<Long>();
 
