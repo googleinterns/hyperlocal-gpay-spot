@@ -19,7 +19,8 @@ const ROUTES = {
             'shopByShopID': base + '/v1/shops/%b'
         },
         'post':{
-            'insertMerchant': base+'/v1/merchants'
+            'insertMerchant': base+'/v1/merchants',
+            'insertShop': base+'/v1/merchants/:merchantID/shops'
         }
     },
     'customer': {
