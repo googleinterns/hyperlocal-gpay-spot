@@ -56,6 +56,14 @@ public class ShopController {
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
+    System.out.println("Connection made");
+    System.out.println(connection.toString());
+    connection.sendPreparedStatement("Select * from Shops;");
+  }
+
+  @GetMapping("/all") 
+  public CompletableFuture<QueryResult> getAll() {
+    return connection.sendPreparedStatement("Select * from Shops;");
   }
 
   // API for performing search and browse queries
@@ -218,6 +226,7 @@ public class ShopController {
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
     ShopDetails shopDetails = new ShopDetails();
+    System.out.println("shopDetails Created");
 
     CompletableFuture<ShopDetails> shopDetailsPromise = connection
         // Get Shop details:
@@ -227,7 +236,9 @@ public class ShopController {
           if (wrappedShopRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
           RowData shopRecord = wrappedShopRecord.get(0);
+          System.out.println(Shop.create(shopRecord).toString());
           shopDetails.setShop(Shop.create(shopRecord));
+          System.out.println("Shop set");
 
           // Get Merchant Details:
           return connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT,
@@ -237,6 +248,7 @@ public class ShopController {
           if (wrappedMerchantRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong. No merchant found for the shop.");
+            System.out.println("Merchant: " + Merchant.create(wrappedMerchantRecord.get(0)).toString());
           shopDetails.setMerchant(Merchant.create(wrappedMerchantRecord.get(0)));
 
           // Get Catalog Details:
@@ -245,6 +257,10 @@ public class ShopController {
           ResultSet catalogRecords = catalogQueryResult.getRows();
           for (RowData serviceRecord : catalogRecords)
             shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
+            System.out.println("Catalog added \n");
+            System.out.println(shopDetails.shop.toString());
+            System.out.println(shopDetails.merchant.toString());
+            System.out.println(shopDetails.catalog.toString());
           return shopDetails;
 
         });
@@ -329,6 +345,10 @@ public class ShopController {
     }).exceptionally(e -> {
       return "";
     }).thenApply((publishPromise) -> {
+      System.out.println("Published to pubSub");
+      Shop s = Shop.create(shopDataAsJson);
+      System.out.println("Dummy shop created");
+      System.out.println(s.toString());
       return Shop.create(shopDataAsJson);
     });
   }

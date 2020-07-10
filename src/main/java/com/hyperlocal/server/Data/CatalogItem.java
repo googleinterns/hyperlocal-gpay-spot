@@ -1,13 +1,16 @@
 package com.hyperlocal.server.Data;
 
 import com.github.jasync.sql.db.RowData;
+import com.google.auto.value.AutoValue;
 
 public class CatalogItem {
-    public Long serviceID;
+    public  Long serviceID;
     public transient Long shopID;
-    public String serviceName, serviceDescription, imageURL;
+    public  String serviceName;
+    public  String serviceDescription;
+    public  String imageURL;
     
-    public CatalogItem(RowData data)
+    public CatalogItem (RowData data)
     {
         this.serviceID = (Long)data.get("ServiceID");
         this.shopID = (Long)data.get("ShopID");
