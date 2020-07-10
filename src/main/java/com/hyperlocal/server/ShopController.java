@@ -227,6 +227,7 @@ public class ShopController {
           if (wrappedShopRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
           RowData shopRecord = wrappedShopRecord.get(0);
+          System.out.println(shopRecord.toString());
           shopDetails.setShop(new Shop(shopRecord));
 
           // Get Merchant Details:
@@ -237,6 +238,8 @@ public class ShopController {
           if (wrappedMerchantRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong. No merchant found for the shop.");
+                          System.out.println(wrappedMerchantRecord.get(0).toString());
+
           shopDetails.setMerchant(new Merchant(wrappedMerchantRecord.get(0)));
 
           // Get Catalog Details:
@@ -247,6 +250,9 @@ public class ShopController {
             shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
           return shopDetails;
 
+        }).exceptionally((e) -> {
+          e.printStackTrace();
+          return shopDetails;
         });
 
     return shopDetailsPromise;
