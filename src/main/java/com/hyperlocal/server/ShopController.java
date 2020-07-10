@@ -193,7 +193,7 @@ public class ShopController {
   }
 
   // Fetch all shops by merchantID
-  @GetMapping("/v1/merchant/{merchantID}/shops")
+  @GetMapping("/v1/merchants/{merchantID}/shops")
   public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable String merchantID) {
     List<Shop> shopsList = new ArrayList<Shop>();
 
