@@ -26,6 +26,7 @@ import com.hyperlocal.server.Data.CatalogItem;
 import com.hyperlocal.server.Data.Merchant;
 import com.hyperlocal.server.Data.Shop;
 import com.hyperlocal.server.Data.ShopDetails;
+import com.hyperlocal.server.Utilities;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,6 +53,7 @@ public class ShopController {
   private Connection connection;
 
   private static final Logger logger = LogManager.getLogger(ShopController.class);
+  Utilities util;
 
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
@@ -187,7 +189,7 @@ public class ShopController {
           for (RowData serviceRecord : catalogRecords) {
             Long ShopID = (Long) serviceRecord.get("ShopID");
             ShopDetails shopDetails = mapShopIdToShopDetails.get(ShopID);
-            shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
+            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
             mapShopIdToShopDetails.put(ShopID, shopDetails);
           }
           for (Long ShopId : shopIDList) {
@@ -256,13 +258,16 @@ public class ShopController {
         }).thenApply((QueryResult catalogQueryResult) -> {
           ResultSet catalogRecords = catalogQueryResult.getRows();
           for (RowData serviceRecord : catalogRecords)
-            shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
+            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
             System.out.println("Catalog added \n");
             System.out.println(shopDetails.shop.toString());
             System.out.println(shopDetails.merchant.toString());
             System.out.println(shopDetails.catalog.toString());
           return shopDetails;
 
+        }).exceptionally((e) -> {
+          e.printStackTrace();
+          return shopDetails;
         });
 
     return shopDetailsPromise;
@@ -370,6 +375,9 @@ public class ShopController {
           shopDataAsJson.get("shopID").getAsString()));
       return "";
     }).thenApply((publishPromise) -> {
+      return Shop.create(shopDataAsJson);
+    }).exceptionally((e) -> {
+      e.printStackTrace();
       return Shop.create(shopDataAsJson);
     });
   }

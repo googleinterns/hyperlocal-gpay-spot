@@ -122,7 +122,7 @@ public class ShopControllerTest {
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
     ShopDetails expectedShopDetails = new ShopDetails(Shop.create(shopRecord), Merchant.create(merchantRecord),
-        new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
+        new ArrayList<CatalogItem>(Arrays.asList(CatalogItem.create(serviceRecord))));
 
     when(connection.sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
         .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
@@ -262,7 +262,7 @@ public class ShopControllerTest {
     for (Integer i = 0; i < 3; i++) {
       Shop shop = Shop.create(shopRecords.get(i));
       Merchant merchant = Merchant.create(merchantRecords.get(i));
-      List<CatalogItem> catalogItems = Arrays.asList(new CatalogItem(CatalogItems.get(i)));
+      List<CatalogItem> catalogItems = Arrays.asList(CatalogItem.create(CatalogItems.get(i)));
       ShopDetails shopDetails = new ShopDetails(shop, merchant, catalogItems);
       expectedShopDetails.add(shopDetails);
     }

@@ -1,32 +1,26 @@
 package com.hyperlocal.server.Data;
 
+import java.io.Serializable;
+
 import com.github.jasync.sql.db.RowData;
 import com.google.auto.value.AutoValue;
 
-public class CatalogItem {
-    public  Long serviceID;
-    public transient Long shopID;
-    public  String serviceName;
-    public  String serviceDescription;
-    public  String imageURL;
+@AutoValue
+public abstract class CatalogItem implements Serializable {
+    public  abstract Long serviceID();
+    public  abstract Long shopID();
+    public  abstract String serviceName();
+    public  abstract String serviceDescription();
+    public  abstract String imageURL();
     
-    public CatalogItem (RowData data)
+    public static CatalogItem create(RowData data)
     {
-        this.serviceID = (Long)data.get("ServiceID");
-        this.shopID = (Long)data.get("ShopID");
-        this.serviceName = (String)data.get("ServiceName");
-        this.serviceDescription = (String)data.get("ServiceDescription");
-        this.imageURL = (String)data.get("ImageURL");
-    }
-
-    public boolean equals(Object obj)
-    {
-      if(obj == null || !(obj instanceof CatalogItem)) return false;
-      CatalogItem serviceObj = (CatalogItem) obj;
-      return this.serviceID.equals(serviceObj.serviceID) &&
-             this.shopID.equals(serviceObj.shopID) &&
-             this.serviceName.equals(serviceObj.serviceName) &&
-             this.serviceDescription.equals(serviceObj.serviceDescription) &&
-             this.imageURL.equals(serviceObj.imageURL);
+        return new AutoValue_CatalogItem(
+            (Long)data.get("ServiceID"),
+            (Long)data.get("ShopID"),
+            (String)data.get("ServiceName"),
+            (String)data.get("ServiceDescription"),
+            (String)data.get("ImageURL")
+        );
     }
 }

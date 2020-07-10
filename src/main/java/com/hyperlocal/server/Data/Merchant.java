@@ -1,11 +1,13 @@
 package com.hyperlocal.server.Data;
 
+import java.io.Serializable;
+
 import com.github.jasync.sql.db.RowData;
 import com.google.gson.JsonObject;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
-public abstract class Merchant {
+public abstract class Merchant implements Serializable {
   public abstract String merchantID();
   public abstract String merchantName();
   public abstract String merchantPhone();

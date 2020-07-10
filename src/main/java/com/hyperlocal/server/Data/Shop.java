@@ -1,14 +1,20 @@
 package com.hyperlocal.server.Data;
 
-import com.hyperlocal.server.Utilities;
-import com.github.jasync.sql.db.RowData;
-import com.google.gson.JsonObject;
-import com.google.auto.value.AutoValue;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
+import com.github.jasync.sql.db.RowData;
+import com.google.auto.value.AutoValue;
+import com.google.gson.JsonObject;
+
 @AutoValue
-public abstract class Shop {
-    public abstract Long shopID();
+public abstract class Shop implements Serializable{
+    /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+
+  public abstract Long shopID();
     public abstract String merchantID();
     public abstract String shopName();
     public abstract String addressLine1();
