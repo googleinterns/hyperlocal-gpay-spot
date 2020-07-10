@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
@@ -58,12 +60,10 @@ public class ShopController {
   public ShopController(PubSubTemplate pubSubTemplate) {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
-    System.out.println("Connection made");
-    System.out.println(connection.toString());
     connection.sendPreparedStatement("Select * from Shops;");
   }
 
-  @GetMapping("/all") 
+  @GetMapping("/all")
   public CompletableFuture<QueryResult> getAll() {
     return connection.sendPreparedStatement("Select * from Shops;");
   }
@@ -73,8 +73,7 @@ public class ShopController {
   public CompletableFuture<List<ShopDetails>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
-      @RequestParam String latitude, 
-      @RequestParam String longitude) {
+      @RequestParam String latitude, @RequestParam String longitude) {
 
     List<Long> shopIDList = new ArrayList<Long>();
 
@@ -87,7 +86,7 @@ public class ShopController {
 
     // Create a match query
 
-    // default: If no input string provided, browse query (i.e match all) 
+    // default: If no input string provided, browse query (i.e match all)
     // else match on input text
     if (query.equals("")) {
       boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
@@ -228,7 +227,6 @@ public class ShopController {
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
     ShopDetails shopDetails = new ShopDetails();
-    System.out.println("shopDetails Created");
 
     CompletableFuture<ShopDetails> shopDetailsPromise = connection
         // Get Shop details:
@@ -238,9 +236,7 @@ public class ShopController {
           if (wrappedShopRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
           RowData shopRecord = wrappedShopRecord.get(0);
-          System.out.println(Shop.create(shopRecord).toString());
           shopDetails.setShop(Shop.create(shopRecord));
-          System.out.println("Shop set");
 
           // Get Merchant Details:
           return connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT,
@@ -250,7 +246,6 @@ public class ShopController {
           if (wrappedMerchantRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong. No merchant found for the shop.");
-            System.out.println("Merchant: " + Merchant.create(wrappedMerchantRecord.get(0)).toString());
           shopDetails.setMerchant(Merchant.create(wrappedMerchantRecord.get(0)));
 
           // Get Catalog Details:
@@ -259,14 +254,6 @@ public class ShopController {
           ResultSet catalogRecords = catalogQueryResult.getRows();
           for (RowData serviceRecord : catalogRecords)
             shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
-            System.out.println("Catalog added \n");
-            System.out.println(shopDetails.shop.toString());
-            System.out.println(shopDetails.merchant.toString());
-            System.out.println(shopDetails.catalog.toString());
-          return shopDetails;
-
-        }).exceptionally((e) -> {
-          e.printStackTrace();
           return shopDetails;
         });
 
@@ -350,10 +337,6 @@ public class ShopController {
     }).exceptionally(e -> {
       return "";
     }).thenApply((publishPromise) -> {
-      System.out.println("Published to pubSub");
-      Shop s = Shop.create(shopDataAsJson);
-      System.out.println("Dummy shop created");
-      System.out.println(s.toString());
       return Shop.create(shopDataAsJson);
     });
   }

@@ -3,6 +3,7 @@ package com.hyperlocal.server.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.jasync.sql.db.RowData;
 import com.google.auto.value.AutoValue;
 import com.google.gson.JsonObject;
@@ -15,12 +16,12 @@ public abstract class Shop implements Serializable{
   private static final long serialVersionUID = 1L;
 
   public abstract Long shopID();
-    public abstract String merchantID();
-    public abstract String shopName();
-    public abstract String addressLine1();
-    public abstract String typeOfService();
-    public abstract Double latitude();
-    public abstract Double longitude();
+    @JsonProperty public abstract String merchantID();
+    @JsonProperty public abstract String shopName();
+    @JsonProperty public abstract String addressLine1();
+    @JsonProperty public abstract String typeOfService();
+    @JsonProperty public abstract Double latitude();
+    @JsonProperty public abstract Double longitude();
     
     public static Shop create() {
       return new AutoValue_Shop(

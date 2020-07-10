@@ -2,15 +2,16 @@ package com.hyperlocal.server.Data;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.jasync.sql.db.RowData;
 import com.google.gson.JsonObject;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class Merchant implements Serializable {
-  public abstract String merchantID();
-  public abstract String merchantName();
-  public abstract String merchantPhone();
+  @JsonProperty public abstract String merchantID();
+  @JsonProperty public abstract String merchantName();
+  @JsonProperty public abstract String merchantPhone();
 
   public static Merchant create() {
     return new AutoValue_Merchant(null, null, null);

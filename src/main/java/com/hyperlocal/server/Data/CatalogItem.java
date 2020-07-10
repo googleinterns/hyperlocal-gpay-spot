@@ -2,16 +2,17 @@ package com.hyperlocal.server.Data;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.jasync.sql.db.RowData;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class CatalogItem implements Serializable {
-    public  abstract Long serviceID();
-    public  abstract Long shopID();
-    public  abstract String serviceName();
-    public  abstract String serviceDescription();
-    public  abstract String imageURL();
+    @JsonProperty public abstract Long serviceID();
+    @JsonProperty public abstract Long shopID();
+    @JsonProperty public abstract String serviceName();
+    @JsonProperty public abstract String serviceDescription();
+    @JsonProperty public abstract String imageURL();
     
     public static CatalogItem create(RowData data)
     {
