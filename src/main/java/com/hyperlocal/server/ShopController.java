@@ -320,14 +320,12 @@ public class ShopController {
       throws InterruptedException, ExecutionException {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
     shopDataAsJson.addProperty("merchantID", merchantID);
-    return insertNewShop(shopDataAsJson).thenApply((queryResult) -> {
-      return ((MySQLQueryResult) queryResult).getLastInsertId();
-    }).thenApply((shopID) -> {
+    return insertNewShop(shopDataAsJson).thenCompose((queryResult) -> {
+      long shopID = ((MySQLQueryResult) queryResult).getLastInsertId();
       shopDataAsJson.addProperty("shopID", shopID);
-      return shopID;
-    }).thenCompose((shopID) -> {
       return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
+      // TODO: Handle errors
       return "";
     }).thenApply((publishPromise) -> {
       return new Shop(shopDataAsJson);
@@ -343,13 +341,12 @@ public class ShopController {
     JsonObject shopDataAsJson = JsonParser.parseString(shopDetailsString).getAsJsonObject();
     shopDataAsJson.addProperty("shopID", shopID);
     shopDataAsJson.addProperty("merchantID", merchantID);
-    return updateShopDetails(shopDataAsJson).thenApply((QueryResult queryResult) -> {
-      return shopDataAsJson.get("shopID").getAsString();
-    }).thenCompose((shopID) -> {
-      return publishMessage(shopID);
+    return updateShopDetails(shopDataAsJson).thenCompose((QueryResult queryResult) -> {
+      return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
-      logger.error(String.format("ShopID %s: Could not publish to PubSub. Exited exceptionally!",
-          shopDataAsJson.get("shopID").getAsString()));
+      logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
+      shopDataAsJson.get("shopID").getAsString()));
+      // TODO: Handle errors
       return "";
     }).thenApply((publishPromise) -> {
       return new Shop(shopDataAsJson);
