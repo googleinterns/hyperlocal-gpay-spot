@@ -73,32 +73,26 @@ class ViewShops extends React.Component {
   // Calculate distance to a Shop from user's current coordinates using Haversine formula
   getDistanceToShop = (shop) => {
     const EARTH_RADIUS_IN_KM = 6371;
-    
-    // latitude and longitude of both points (User's current Coordinates and Shop's coordinates in degrees)
-    const firstPointLatitude = shop["shop"]["latitude"];
-    const firstPointLongitude = shop["shop"]["longitude"];
-    const secondPointLatitude = this.props.latitude;
-    const secondPointLongitude = this.props.longitude;
 
-    const firstPointLatitudeInRadian = this.convertDegreeToRadians(firstPointLatitude);
-    const secondPointLatitudeInRadian = this.convertDegreeToRadians(secondPointLatitude);
+    // latitude and longitude of both points (User's current Coordinates and Shop's coordinates in radian)
+    const firstPointLatitudeInRadians = this.convertDegreeToRadians(shop["shop"]["latitude"]);
+    const firstPointLongitudeInRadians = this.convertDegreeToRadians(shop["shop"]["longitude"]);
+    const secondPointLatitudeInRadians = this.convertDegreeToRadians(this.props.latitude);
+    const secondPointLongitudeInRadians = this.convertDegreeToRadians(this.props.longitude);
 
-    const deltaLatitude = Math.abs(secondPointLatitude - firstPointLatitude);
-    const deltaLongitude = Math.abs(secondPointLongitude - firstPointLongitude);
-
-    const deltaLatitudeInRadian = this.convertDegreeToRadians(deltaLatitude);
-    const deltaLongitudeInRadian = this.convertDegreeToRadians(deltaLongitude);
+    const deltaLatitudeInRadians = Math.abs(secondPointLatitudeInRadians - firstPointLatitudeInRadians);
+    const deltaLongitudeInRadians = Math.abs(secondPointLongitudeInRadians - firstPointLongitudeInRadians);
 
     // Haversine formula
-    const centralAngleInRadian = 2 * Math.asin(
-      Math.sqrt(Math.sin(deltaLatitudeInRadian / 2) * Math.sin(deltaLatitudeInRadian / 2)
-        + Math.cos(firstPointLatitudeInRadian) * Math.cos(secondPointLatitudeInRadian)
-        * Math.sin(deltaLongitudeInRadian / 2) * Math.sin(deltaLongitudeInRadian / 2)
+    const centralAngleInRadians = 2 * Math.asin(
+      Math.sqrt(Math.sin(deltaLatitudeInRadians / 2) * Math.sin(deltaLatitudeInRadians / 2)
+        + Math.cos(firstPointLatitudeInRadians) * Math.cos(secondPointLatitudeInRadians)
+        * Math.sin(deltaLongitudeInRadians / 2) * Math.sin(deltaLongitudeInRadians / 2)
       )
     );
 
     // distance = radius * angle subtended
-    return (centralAngleInRadian * EARTH_RADIUS_IN_KM).toFixed(2);
+    return (centralAngleInRadians * EARTH_RADIUS_IN_KM).toFixed(2);
   }
 
   componentDidUpdate(prevProps) {
