@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 @AutoValue
 public abstract class Shop implements Serializable{
 
-  public abstract Long shopID();
+    @JsonProperty public abstract Long shopID();
     @JsonProperty public abstract String merchantID();
     @JsonProperty public abstract String shopName();
     @JsonProperty public abstract String addressLine1();
