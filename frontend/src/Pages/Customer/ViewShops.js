@@ -70,12 +70,11 @@ class ViewShops extends React.Component {
     return Math.PI * latitudeInDegree / 180.0
   }
 
-  // Calculate distance between two points using Haversine formula
+  // Calculate distance to a Shop from user's current coordinates using Haversine formula
   getDistanceToShop = (shop) => {
-    // lambda - longitude
-    // phi - latitude
     const EARTH_RADIUS_IN_KM = 6371;
-
+    
+    // latitude and longitude of both points (User's current Coordinates and Shop's coordinates in degrees)
     const firstPointLatitude = shop["shop"]["latitude"];
     const firstPointLongitude = shop["shop"]["longitude"];
     const secondPointLatitude = this.props.latitude;
@@ -90,6 +89,7 @@ class ViewShops extends React.Component {
     const deltaLatitudeInRadian = this.convertDegreeToRadians(deltaLatitude);
     const deltaLongitudeInRadian = this.convertDegreeToRadians(deltaLongitude);
 
+    // Haversine formula
     const centralAngleInRadian = 2 * Math.asin(
       Math.sqrt(Math.sin(deltaLatitudeInRadian / 2) * Math.sin(deltaLatitudeInRadian / 2)
         + Math.cos(firstPointLatitudeInRadian) * Math.cos(secondPointLatitudeInRadian)
@@ -97,7 +97,7 @@ class ViewShops extends React.Component {
       )
     );
 
-    // arc_length = radius * angle subtended
+    // distance = radius * angle subtended
     return (centralAngleInRadian * EARTH_RADIUS_IN_KM).toFixed(2);
   }
 
