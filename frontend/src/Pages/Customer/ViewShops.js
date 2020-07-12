@@ -84,7 +84,7 @@ class ViewShops extends React.Component {
     const deltaLongitudeInRadians = Math.abs(secondPointLongitudeInRadians - firstPointLongitudeInRadians);
 
     // Haversine formula
-    const centralAngleInRadians = 2 * Math.asin(
+    const angleBetweenCoordinatesInRadians = 2 * Math.asin(
       Math.sqrt(Math.sin(deltaLatitudeInRadians / 2) * Math.sin(deltaLatitudeInRadians / 2)
         + Math.cos(firstPointLatitudeInRadians) * Math.cos(secondPointLatitudeInRadians)
         * Math.sin(deltaLongitudeInRadians / 2) * Math.sin(deltaLongitudeInRadians / 2)
@@ -92,7 +92,7 @@ class ViewShops extends React.Component {
     );
 
     // distance = radius * angle subtended
-    return (centralAngleInRadians * EARTH_RADIUS_IN_KM).toFixed(2);
+    return (angleBetweenCoordinatesInRadians * EARTH_RADIUS_IN_KM).toFixed(2);
   }
 
   componentDidUpdate(prevProps) {
