@@ -66,6 +66,41 @@ class ViewShops extends React.Component {
     });
   }
 
+  convertDegreeToRadians = (latitudeInDegree) => {
+    return Math.PI * latitudeInDegree / 180.0
+  }
+
+  // Calculate distance between two points using Haversine formula
+  getDistanceToShop = (shop) => {
+    // lambda - longitude
+    // phi - latitude
+    const EARTH_RADIUS_IN_KM = 6371;
+
+    const firstPointLatitude = shop["shop"]["latitude"];
+    const firstPointLongitude = shop["shop"]["longitude"];
+    const secondPointLatitude = this.props.latitude;
+    const secondPointLongitude = this.props.longitude;
+
+    const firstPointLatitudeInRadian = this.convertDegreeToRadians(firstPointLatitude);
+    const secondPointLatitudeInRadian = this.convertDegreeToRadians(secondPointLatitude);
+
+    const deltaLatitude = Math.abs(secondPointLatitude - firstPointLatitude);
+    const deltaLongitude = Math.abs(secondPointLongitude - firstPointLongitude);
+
+    const deltaLatitudeInRadian = this.convertDegreeToRadians(deltaLatitude);
+    const deltaLongitudeInRadian = this.convertDegreeToRadians(deltaLongitude);
+
+    const centralAngleInRadian = 2 * Math.asin(
+      Math.sqrt(Math.sin(deltaLatitudeInRadian / 2) * Math.sin(deltaLatitudeInRadian / 2)
+        + Math.cos(firstPointLatitudeInRadian) * Math.cos(secondPointLatitudeInRadian)
+        * Math.sin(deltaLongitudeInRadian / 2) * Math.sin(deltaLongitudeInRadian / 2)
+      )
+    );
+
+    // arc_length = radius * angle subtended
+    return (centralAngleInRadian * EARTH_RADIUS_IN_KM).toFixed(2);
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
       this.search();
@@ -85,64 +120,68 @@ class ViewShops extends React.Component {
       );
     } else {
       return (
-        this.state.pageLoading 
-        ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
-        : <Container className="mt-1 p-3">
-          <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
-            <Form.Row className="align-items-center">
-              <Col xs={7}>
-                <Form.Control
-                  placeholder="Search Nearby"
-                  autoComplete="off"
-                  onChange={this.searchBoxUpdateHandler}
-                />
-              </Col>
-              <Col xs={3}>
-                <Form.Control
-                  placeholder="3km"
-                  aria-label="distance"
-                  onChange={e => this.setState({ queryRadius: e.target.value })}
-                />
-              </Col>
-              <Col xs={2}>
-                <Button variant="success" onClick={this.search}>
-                  Go
+        this.state.pageLoading
+          ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+          : <Container className="mt-1 p-3">
+            <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
+              <Form.Row className="align-items-center">
+                <Col xs={7}>
+                  <Form.Control
+                    placeholder="Search Nearby"
+                    autoComplete="off"
+                    onChange={this.searchBoxUpdateHandler}
+                  />
+                </Col>
+                <Col xs={3}>
+                  <Form.Control
+                    placeholder="3km"
+                    aria-label="distance"
+                    onChange={e => this.setState({ queryRadius: e.target.value })}
+                  />
+                </Col>
+                <Col xs={2}>
+                  <Button variant="success" onClick={this.search}>
+                    Go
                 </Button>
-              </Col>
-            </Form.Row>
-          </Form>
+                </Col>
+              </Form.Row>
+            </Form>
 
-          <ListGroup variant="flush" className="mt-4">
-            {
-              this.state.shops.map(shop => {
-                return (
-                  <ListGroup.Item key={shop["shop"]["shopID"]}>
-                    <Card className="mb-4" style={{ backgroundColor: "#E3F2FD" }}>
-                      <Card.Body>
-                        <Card.Title>{shop["shop"]["shopName"]}</Card.Title>
-                        <Card.Text>
-                          <b>Sold By: </b>{shop["merchant"]["merchantName"]}
-                          <br />
-                          <b>At: </b>{shop["shop"]["addressLine1"]}
-                          <br />
-                          <b>Reach out at: </b>{shop["merchant"]["merchantPhone"]}
-                        </Card.Text>
-                        <Button variant="info">
-                          <Link
-                            to={{
-                              pathname: ROUTES.customer.catalog.replace(':shopid', shop["shop"]["shopID"]),
-                            }} className="btn btn-info box">
-                            View Catalog
+            <ListGroup variant="flush" className="mt-4">
+              {
+                this.state.shops.map(shop => {
+                  const shopDistanceInKM = this.getDistanceToShop(shop);
+                  return (
+                    <ListGroup.Item key={shop["shop"]["shopID"]}>
+                      <Card className="mb-4" style={{ backgroundColor: "#E3F2FD" }}>
+                        <Card.Body>
+                          <Card.Title>{shop["shop"]["shopName"]}</Card.Title>
+                          <Card.Text>
+                            <i><b>{shopDistanceInKM} km away</b></i>
+                            <br />
+                            <b />
+                            <b>Sold By: </b>{shop["merchant"]["merchantName"]}
+                            <br />
+                            <b>At: </b>{shop["shop"]["addressLine1"]}
+                            <br />
+                            <b>Reach out at: </b>{shop["merchant"]["merchantPhone"]}
+                          </Card.Text>
+                          <Button variant="info">
+                            <Link
+                              to={{
+                                pathname: ROUTES.customer.catalog.replace(':shopid', shop["shop"]["shopID"]),
+                              }} className="btn btn-info box">
+                              View Catalog
                           </Link>
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </ListGroup.Item>
-                )
-              })
-            }
-          </ListGroup>
-        </Container>
+                          </Button>
+                        </Card.Body>
+                      </Card>
+                    </ListGroup.Item>
+                  )
+                })
+              }
+            </ListGroup>
+          </Container>
       );
     }
   }
