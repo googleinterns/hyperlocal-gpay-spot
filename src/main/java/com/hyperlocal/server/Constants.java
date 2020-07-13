@@ -5,7 +5,7 @@ public final class Constants {
   /* The IP Addresses here is the Internal IP addresses of CloudSQL instance 
    * Obtaining an internal IP for CloudSQL: https://cloud.google.com/sql/docs/mysql/configure-private-ip 
    */
-  static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
+  static final String DATABASE_URL = "jdbc:mysql://10.124.33.5:3306/hyperlocal";
 
   /* The IP Address here is the internal IP Address of the Compute Engine running Elasticsearch server
    * Obtaining a static Internal IP for Compute Engine VM: https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address
