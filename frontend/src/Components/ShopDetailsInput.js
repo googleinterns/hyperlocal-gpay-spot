@@ -49,7 +49,10 @@ class ShopDetailsInput extends React.Component {
                 </Form.Group>
                 <Form.Group controlId="shopCategory" className="my-5">
                     <Form.Label>What do you plan to sell?</Form.Label>
-                    <Form.Control value={this.state.typeOfService} onChange={e => this.setState({ typeOfService: e.target.value })} as="select">
+                    <Form.Control
+                        value={this.state.typeOfService} 
+                        onChange={e => this.setState({ typeOfService: e.target.value })} 
+                        as="select">
                         <option disabled value=""> -- Select product/service -- </option>
                         <option value="Groceries">Groceries</option>
                         <option value="Garments">Garments</option>
@@ -70,10 +73,10 @@ class ShopDetailsInput extends React.Component {
                     />
                 </Form.Group>
                 <LocationInput 
-                show={this.state.showLocationInput} 
-                onHide={this.hideLocationInput}
-                setLocation={this.setShopLocation} 
-                enforceSubmission={false}
+                    show={this.state.showLocationInput} 
+                    onHide={this.hideLocationInput}
+                    setLocation={this.setShopLocation} 
+                    enforceSubmission={false}
                 />                      
                 <Button 
                     variant="primary" 
