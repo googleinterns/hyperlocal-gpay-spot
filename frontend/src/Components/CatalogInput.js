@@ -247,7 +247,7 @@ class CatalogInput extends React.Component {
   }
 }
 
-ShopDetailsInput.defaultProps = {
+CatalogInput.defaultProps = {
   submit: "Submit",
 };
 export default CatalogInput;
