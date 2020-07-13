@@ -24,11 +24,11 @@ The app.yaml file in `src/main/appengine/app.yaml` is the configuration file for
 ### cloudbuild.yaml
 Build and deployment to App Engine happens automatically whenever code is pushed to master branch. This is done via a build trigger installed via Cloud Build in GCP. 
 
-## pom.xml 
+### pom.xml 
 All dependencies for the backend are listed in this file. PLugin for integration with frontend is also specified there.
 
-## schema directory
+### schema directory
 Schema used in cloudSQL MySQL database tables (Merchants, Shops and Catalog) is specified there
 
-## cloudfunction directory
+### cloudfunction directory
 Document Mapping used for Search Index and the CloudFunction code is added there
