@@ -4,7 +4,7 @@
 
 ## Introduction
 This is the source code for Hyperlocal Shopping Spot App hosted on Google Pay.
-For more details about Spot Platform, please visit [this] (https://developers.google.com/pay/spot)
+For more details about Spot Platform, please visit [this](https://developers.google.com/pay/spot)
 
 For design doc please visit [go/hyperlocal-shopping](go/hyperlocal-shopping) (Only accessible to google.com accounts)
 
