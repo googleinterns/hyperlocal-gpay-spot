@@ -104,7 +104,7 @@
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
       <version>1.7.4</version>
-  </dependency>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
