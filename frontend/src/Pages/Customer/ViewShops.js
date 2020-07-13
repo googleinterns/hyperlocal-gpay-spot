@@ -66,8 +66,8 @@ class ViewShops extends React.Component {
     });
   }
 
-  convertDegreeToRadians = (latitudeInDegree) => {
-    return Math.PI * latitudeInDegree / 180.0
+  convertDegreeToRadians = (valueInDegree) => {
+    return Math.PI * valueInDegree / 180.0
   }
 
   // Calculate distance to a Shop from user's current coordinates using Haversine formula
