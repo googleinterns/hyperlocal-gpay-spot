@@ -46,22 +46,22 @@ class CatalogInput extends React.Component {
             itemsToDelete.push({serviceID: initialCatalog[i].serviceID});
     }
 
-    let itemsToAdd = [];
+    let itemsToCreate = [];
     for(let i = 0; i < currentCatalog.length; i++)
     {
         if(!("serviceID" in currentCatalog[i]))
         {
-            let itemToAdd = currentCatalog[i];
-            itemsToAdd.push({
-                serviceName: itemToAdd.serviceName,
-                serviceDescription: itemToAdd.serviceDescription,
-                imageURL: itemToAdd.serviceImageURL
+            let itemToCreate = currentCatalog[i];
+            itemsToCreate.push({
+                serviceName: itemToCreate.serviceName,
+                serviceDescription: itemToCreate.serviceDescription,
+                imageURL: itemToCreate.serviceImageURL
             });
             
         }
     }
 
-    let itemsToEdit = [];
+    let itemsToUpdate = [];
     for(let i = 0; i < initialCatalog.length; i++)
     {
         let curItemKey = initialCatalog[i].key;
@@ -74,7 +74,7 @@ class CatalogInput extends React.Component {
                 itemBefore.serviceDescription !== itemAfter.serviceDescription ||
                 itemBefore.serviceImageURL !== itemAfter.serviceImageURL)
             {
-                itemsToEdit.push({
+                itemsToUpdate.push({
                     serviceID: itemAfter.serviceID,
                     serviceName: itemAfter.serviceName,
                     serviceDescription: itemAfter.serviceDescription,
@@ -86,9 +86,9 @@ class CatalogInput extends React.Component {
     }
 
     this.props.setCatalog({
-        add: itemsToAdd,
-        edit: itemsToAdd,
-        delete: itemsToAdd
+        itemsTocreate,
+        itemsToUpdate,
+        itemsToDelete
     });
 
   }

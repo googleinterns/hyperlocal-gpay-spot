@@ -14,14 +14,14 @@ class Catalog extends React.Component {
     };
   }
 
-  setCatalog = ({itemsToAdd, itemsToEdit, itemsToDelete}) => {
+  setCatalog = ({itemsToCreate, itemsToUpdate, itemsToDelete}) => {
     this.setState({pageLoading: true});
     
-    if(!itemsToAdd.length && !itemsToEdit.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
+    if(!itemsToCreate.length && !itemsToUpdate.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
     
     axios.put(ROUTES.v1.put.updateCatalog.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
-      add: itemsToAdd,
-      edit: itemsToEdit,
+      create: itemsToCreate,
+      update: itemsToUpdate,
       delete: itemsToDelete
     })
     .then(resp => {
