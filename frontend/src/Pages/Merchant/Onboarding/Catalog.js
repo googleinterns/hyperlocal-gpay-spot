@@ -19,7 +19,7 @@ class Catalog extends React.Component {
     
     if(!itemsToAdd.length && !itemsToEdit.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
     
-    axios.put(ROUTES.api.put.updateCatalog.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
+    axios.put(ROUTES.v1.put.updateCatalog.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
       add: itemsToAdd,
       edit: itemsToEdit,
       delete: itemsToDelete
