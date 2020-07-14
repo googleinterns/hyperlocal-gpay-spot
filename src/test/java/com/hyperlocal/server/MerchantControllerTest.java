@@ -29,7 +29,7 @@ public class MerchantControllerTest {
   private final String MERCHANT_DATA_AS_STRING = new Gson().toJson(merchant);
   private JsonObject merchantJson = JsonParser.parseString(MERCHANT_DATA_AS_STRING).getAsJsonObject();
   private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
-  private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
+  private static final String MERCHANT_INSERT_STATEMENT = "INSERT INTO `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) VALUE (?, ?, ?) ON DUPLICATE KEY UPDATE `MerchantID` = `MerchantID`;";
 
   @Mock
   Connection connection;
