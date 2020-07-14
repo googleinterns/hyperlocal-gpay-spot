@@ -85,6 +85,8 @@ public class MerchantController {
     })
     .thenApply((resp) -> {
       return new Merchant(input);
+    }).exceptionally((ex) -> {
+      ex.printStackTrace();
     });
   }
 
