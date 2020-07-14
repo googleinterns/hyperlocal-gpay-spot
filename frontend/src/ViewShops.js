@@ -122,6 +122,35 @@ search = async () => {
     });
   }
 
+  convertDegreeToRadians = (valueInDegree) => {
+    return Math.PI * valueInDegree / 180.0
+  }
+
+  // Calculate distance to a Shop from user's current coordinates using Haversine formula
+  getDistanceToShop = (shop) => {
+    const EARTH_RADIUS_IN_KM = 6371;
+
+    // latitude and longitude of both points (User's current Coordinates and Shop's coordinates in radian)
+    const firstPointLatitudeInRadians = this.convertDegreeToRadians(shop["shop"]["latitude"]);
+    const firstPointLongitudeInRadians = this.convertDegreeToRadians(shop["shop"]["longitude"]);
+    const secondPointLatitudeInRadians = this.convertDegreeToRadians(this.props.latitude);
+    const secondPointLongitudeInRadians = this.convertDegreeToRadians(this.props.longitude);
+
+    const deltaLatitudeInRadians = Math.abs(secondPointLatitudeInRadians - firstPointLatitudeInRadians);
+    const deltaLongitudeInRadians = Math.abs(secondPointLongitudeInRadians - firstPointLongitudeInRadians);
+
+    // Haversine formula
+    const angleBetweenCoordinatesInRadians = 2 * Math.asin(
+      Math.sqrt(Math.sin(deltaLatitudeInRadians / 2) * Math.sin(deltaLatitudeInRadians / 2)
+        + Math.cos(firstPointLatitudeInRadians) * Math.cos(secondPointLatitudeInRadians)
+        * Math.sin(deltaLongitudeInRadians / 2) * Math.sin(deltaLongitudeInRadians / 2)
+      )
+    );
+
+    // distance = radius * angle subtended
+    return (angleBetweenCoordinatesInRadians * EARTH_RADIUS_IN_KM).toFixed(2);
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
       this.updateBrowseResults();
@@ -176,15 +205,17 @@ search = async () => {
 
           <ListGroup variant="flush" className="mt-4">
             {
-              this.state.shops.map(shop => {
-                return (
-                  <ListGroup.Item key={shop["shop"]["shopID"]}>
-                    <Card className="mb-4" style={{ backgroundColor: "#E3F2FD" }}>
-                      <Card.Body>
-                        <Card.Title>{shop["shop"]["shopName"]}</Card.Title>
-                        <Card.Text>
-                          <b>Sold By: </b>{shop["merchant"]["merchantName"]}
-                          <br />
+                this.state.shops.map(shop => {
+                  const shopDistanceInKM = this.getDistanceToShop(shop);
+                  return (
+                    <ListGroup.Item key={shop["shop"]["shopID"]}>
+                      <Card className="mb-4" style={{ backgroundColor: "#E3F2FD" }}>
+                        <Card.Body>
+                          <Card.Title>{shop["shop"]["shopName"]}</Card.Title>
+                          <Card.Text>
+                            <i><b>{shopDistanceInKM} km away</b></i>
+                            <br />
+                            <b>Sold By: </b>{shop["merchant"]["merchantName"]}                          <br />
                           <b>At: </b>{shop["shop"]["addressLine1"]}
                           <br />
                           <b>Reach out at: </b>{shop["merchant"]["merchantPhone"]}

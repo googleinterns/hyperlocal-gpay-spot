@@ -52,7 +52,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class ShopController {
 
   private PubSubTemplate publisher;
-  private static final String DATABASE_URL = "jdbc:mysql://10.124.32.3:3306/hyperlocal";
+  private static final String DATABASE_URL = "jdbc:mysql://10.124.33.5:3306/hyperlocal";
   private Connection connection;
   private Utilities util;
   private static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
