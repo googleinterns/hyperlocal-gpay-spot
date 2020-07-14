@@ -13,13 +13,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.github.jasync.sql.db.Connection;
-import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.RowData;
+import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.hyperlocal.server.Data.CatalogItem;
 import com.hyperlocal.server.Data.Merchant;
 import com.hyperlocal.server.Data.Shop;
@@ -35,10 +34,6 @@ import org.springframework.scheduling.annotation.AsyncResult;
 @SpringBootTest
 
 public class ShopControllerTest {
-
-  private final Shop shop = new Shop(3L, "4", "Test Shop", 43.424234, 43.4242444, "S-124", "Test");
-  private final String SHOP_DATA_AS_STRING = new Gson().toJson(shop);
-  private final JsonObject shopJson = JsonParser.parseString(SHOP_DATA_AS_STRING).getAsJsonObject();
 
   @Mock
   private static PubSubTemplate template;
@@ -74,7 +69,7 @@ public class ShopControllerTest {
     when(connection.sendPreparedStatement(Constants.SELECT_SHOPS_BY_MERCHANT_STATEMENT, Arrays.asList(merchantID)))
         .thenReturn(queryResultPromise);
     List<Shop> expectedList = new ArrayList<Shop>();
-    expectedList.add(new Shop(shopRecord));
+    expectedList.add(Shop.create(shopRecord));
 
     /* ACT */
     CompletableFuture<List<Shop>> actualListPromise = controller.getShopsByMerchantID(merchantID);
@@ -122,8 +117,8 @@ public class ShopControllerTest {
     ResultSet serviceRecords = new FakeResultSet(serviceRecord);
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
-    ShopDetails expectedShopDetails = new ShopDetails(new Shop(shopRecord), new Merchant(merchantRecord),
-        new ArrayList<CatalogItem>(Arrays.asList(new CatalogItem(serviceRecord))));
+    ShopDetails expectedShopDetails = new ShopDetails(Shop.create(shopRecord), Merchant.create(merchantRecord),
+        new ArrayList<CatalogItem>(Arrays.asList(CatalogItem.create(serviceRecord))));
 
     when(connection.sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID)))
         .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
@@ -261,9 +256,9 @@ public class ShopControllerTest {
     List<ShopDetails> expectedShopDetails = new ArrayList<ShopDetails>();
 
     for (Integer i = 0; i < 3; i++) {
-      Shop shop = new Shop(shopRecords.get(i));
-      Merchant merchant = new Merchant(merchantRecords.get(i));
-      List<CatalogItem> catalogItems = Arrays.asList(new CatalogItem(CatalogItems.get(i)));
+      Shop shop = Shop.create(shopRecords.get(i));
+      Merchant merchant = Merchant.create(merchantRecords.get(i));
+      List<CatalogItem> catalogItems = Arrays.asList(CatalogItem.create(CatalogItems.get(i)));
       ShopDetails shopDetails = new ShopDetails(shop, merchant, catalogItems);
       expectedShopDetails.add(shopDetails);
     }
@@ -329,7 +324,7 @@ public class ShopControllerTest {
     newShopDetails.addProperty("latitude", latitude);
     newShopDetails.addProperty("longitude", longitude);
     newShopDetails.addProperty("addressLine1", addressLine1);
-    Shop expectedOutput = new Shop(shopID, merchantID, shopName, latitude, longitude, addressLine1, typeOfService);
+    Shop expectedOutput = Shop.create(shopID, merchantID, shopName, latitude, longitude, addressLine1, typeOfService);
 
     // ACT
     Shop actualOutput = controller.insertShop(merchantID, new Gson().toJson(newShopDetails)).get();
@@ -372,7 +367,7 @@ public class ShopControllerTest {
     newShopDetails.addProperty("latitude", latitude);
     newShopDetails.addProperty("longitude", longitude);
     newShopDetails.addProperty("addressLine1", addressLine1);
-    Shop expectedOutput = new Shop(shopID, merchantID, shopName, latitude, longitude, addressLine1, typeOfService);
+    Shop expectedOutput = Shop.create(shopID, merchantID, shopName, latitude, longitude, addressLine1, typeOfService);
 
     // ACT
     Shop actualOutput = controller.updateShop(merchantID, shopID, new Gson().toJson(newShopDetails)).get();

@@ -1,22 +1,20 @@
 package com.hyperlocal.server;
 
-import com.hyperlocal.server.Data.*;
-
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.github.jasync.sql.db.Connection;
-import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.hyperlocal.server.Data.Merchant;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import java.util.List;
 
 // Rest Controller for Merchants
 
@@ -50,7 +48,7 @@ public class MerchantController {
     return connection
     .sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(merchantName, merchantPhone, merchantID))
     .thenApply((resp) -> {
-      return new Merchant(merchantID, merchantName, merchantPhone);
+      return Merchant.create(merchantID, merchantName, merchantPhone);
     });
   }
 
@@ -66,7 +64,7 @@ public class MerchantController {
     return connection
     .sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, queryParams)
     .thenApply((resp) -> {
-      return new Merchant(merchantJson);
+      return Merchant.create(merchantJson);
     });
   }
 

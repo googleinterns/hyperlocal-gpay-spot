@@ -1,29 +1,27 @@
 package com.hyperlocal.server.Data;
 
+import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.jasync.sql.db.RowData;
+import com.google.auto.value.AutoValue;
 
-public class CatalogItem {
-    public Long serviceID;
-    public transient Long shopID;
-    public String serviceName, serviceDescription, imageURL;
+@AutoValue
+public abstract class CatalogItem implements Serializable {
+    @JsonProperty public abstract Long serviceID();
+    @JsonProperty public abstract Long shopID();
+    @JsonProperty public abstract String serviceName();
+    @JsonProperty public abstract String serviceDescription();
+    @JsonProperty public abstract String imageURL();
     
-    public CatalogItem(RowData data)
+    public static CatalogItem create(RowData data)
     {
-        this.serviceID = (Long)data.get("ServiceID");
-        this.shopID = (Long)data.get("ShopID");
-        this.serviceName = (String)data.get("ServiceName");
-        this.serviceDescription = (String)data.get("ServiceDescription");
-        this.imageURL = (String)data.get("ImageURL");
-    }
-
-    public boolean equals(Object obj)
-    {
-      if(obj == null || !(obj instanceof CatalogItem)) return false;
-      CatalogItem serviceObj = (CatalogItem) obj;
-      return this.serviceID.equals(serviceObj.serviceID) &&
-             this.shopID.equals(serviceObj.shopID) &&
-             this.serviceName.equals(serviceObj.serviceName) &&
-             this.serviceDescription.equals(serviceObj.serviceDescription) &&
-             this.imageURL.equals(serviceObj.imageURL);
+        return new AutoValue_CatalogItem(
+            (Long)data.get("ServiceID"),
+            (Long)data.get("ShopID"),
+            (String)data.get("ServiceName"),
+            (String)data.get("ServiceDescription"),
+            (String)data.get("ImageURL")
+        );
     }
 }

@@ -1,7 +1,5 @@
 package com.hyperlocal.server;
 
-import com.hyperlocal.server.Data.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -16,7 +14,7 @@ import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.hyperlocal.server.Data.Merchant;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -29,7 +27,7 @@ public class MerchantControllerTest {
   String merchantID = "4";
   String merchantName = "Test Merchant";
   String merchantPhone = "+91 7867986767";
-  private final Merchant merchant = new Merchant(merchantID, merchantName, merchantPhone);
+  private final Merchant merchant = Merchant.create(merchantID, merchantName, merchantPhone);
 
   @Mock
   Connection connection;
