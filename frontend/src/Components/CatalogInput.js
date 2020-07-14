@@ -86,7 +86,7 @@ class CatalogInput extends React.Component {
     }
 
     this.props.setCatalog({
-        itemsTocreate,
+        itemsToCreate,
         itemsToUpdate,
         itemsToDelete
     });
