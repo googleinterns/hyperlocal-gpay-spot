@@ -28,7 +28,7 @@ public class MerchantController {
   private Connection connection;
   private Utilities util;
   private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
-  private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
+  private static final String MERCHANT_INSERT_STATEMENT = "INSERT INTO `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) VALUE (?, ?, ?) ON DUPLICATE KEY UPDATE `MerchantID` = `MerchantID`;";
 
   public MerchantController() {
     this.util = new Utilities();
