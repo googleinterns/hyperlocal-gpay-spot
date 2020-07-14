@@ -31,8 +31,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.search.MatchQuery;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -75,6 +78,38 @@ public class ShopController {
 
     // Boolean query to hold conditions of both Matchquery and Geodistance query
     BoolQueryBuilder boolMatchQueryWithDistanceFilter;
+
+    
+    {
+      QueryBuilders.boolQuery().must(
+        QueryBuilders.disMaxQuery()
+        .add(QueryBuilders
+          .multiMatchQuery(query, 
+          "shopname",
+          "typeofservice", 
+          "merchantname",
+          "catalogitems")
+          .fuzziness("AUTO")
+        ).add(QueryBuilders
+          .multiMatchQuery(query, 
+          "shopname",
+          "typeofservice", 
+          "merchantname",
+          "catalogitems"          
+          ).type(MatchQuery.Type.BOOLEAN_PREFIX)
+        )
+      ).filter(filterOnDistance);
+      HighlightBuilder highLightBuilder = 
+      new HighlightBuilder()
+      .requireFieldMatch(false)
+      .field("shopname")
+      .field("typeofservice")
+      .field("merchantname")
+      .field("catalogitems");
+
+      SearchRequestBuilder request
+    }
+
 
     // Create a match query
 
