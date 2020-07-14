@@ -70,7 +70,7 @@ class ViewShops extends React.Component {
     return Math.PI * valueInDegree / 180.0
   }
 
-  // Calculate distance to a Shop from user's current coordinates using Haversine formula
+  // Calculate distance to a Shop from user's current coordinates using Haversine formula: https://en.wikipedia.org/wiki/Haversine_formula
   getDistanceToShop = (shop) => {
     const EARTH_RADIUS_IN_KM = 6371;
 
