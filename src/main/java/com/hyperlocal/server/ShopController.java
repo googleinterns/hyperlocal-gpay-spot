@@ -35,10 +35,10 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -58,7 +58,7 @@ public class ShopController {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
-
+  
   // API for performing search and browse queries
   @GetMapping("/v1/shops")
   public CompletableFuture<List<ShopDetails>> getDataFromSearchIndex(
@@ -78,7 +78,7 @@ public class ShopController {
 
     // Create a match query
 
-    // default: If no input string provided, browse query (i.e match all) 
+    // default: If no input string provided, browse query (i.e match all)
     // else match on input text
     if (query.equals("")) {
       boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
@@ -142,7 +142,7 @@ public class ShopController {
             ShopDetails shopDetails = new ShopDetails();
             Long ShopID = (Long) shop.get("ShopID");
             String MerchantID = (String) shop.get("MerchantID");
-            shopDetails.setShop(new Shop(shop));
+            shopDetails.setShop(Shop.create(shop));
             merchantIDList.add(MerchantID);
             mapShopIdToShopDetails.put(ShopID, shopDetails);
           }
@@ -159,12 +159,12 @@ public class ShopController {
         .thenCompose((result) -> {
           ResultSet allMerchants = result.getRows();
           for (RowData merchant : allMerchants) {
-            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), new Merchant(merchant));
+            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), Merchant.create(merchant));
           }
           for (Long shopID : shopIDList) {
             if (mapShopIdToShopDetails.containsKey(shopID)) {
               ShopDetails shopDetails = mapShopIdToShopDetails.get(shopID);
-              String MerchantID = shopDetails.shop.merchantID;
+              String MerchantID = shopDetails.shop.merchantID();
               shopDetails.setMerchant(mapMerchantIdToMerchant.get(MerchantID));
               shopDetails.catalog = new ArrayList<CatalogItem>();
               mapShopIdToShopDetails.put(shopID, shopDetails);
@@ -180,7 +180,7 @@ public class ShopController {
           for (RowData serviceRecord : catalogRecords) {
             Long ShopID = (Long) serviceRecord.get("ShopID");
             ShopDetails shopDetails = mapShopIdToShopDetails.get(ShopID);
-            shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
+            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
             mapShopIdToShopDetails.put(ShopID, shopDetails);
           }
           for (Long ShopId : shopIDList) {
@@ -203,7 +203,7 @@ public class ShopController {
         .thenApply((QueryResult shopQueryResult) -> {
           ResultSet shopRecords = shopQueryResult.getRows();
           for (RowData shopRecord : shopRecords)
-            shopsList.add(new Shop(shopRecord));
+            shopsList.add(Shop.create(shopRecord));
           return shopsList;
 
         }).exceptionally(ex -> {
@@ -228,31 +228,24 @@ public class ShopController {
           if (wrappedShopRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
           RowData shopRecord = wrappedShopRecord.get(0);
-          System.out.println(shopRecord.toString());
-          shopDetails.setShop(new Shop(shopRecord));
+          shopDetails.setShop(Shop.create(shopRecord));
 
           // Get Merchant Details:
           return connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT,
-              Arrays.asList(shopDetails.shop.merchantID));
+              Arrays.asList(shopDetails.shop.merchantID()));
         }).thenCompose((QueryResult merchantQueryResult) -> {
           ResultSet wrappedMerchantRecord = merchantQueryResult.getRows();
           if (wrappedMerchantRecord.size() == 0)
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong. No merchant found for the shop.");
-                          System.out.println(wrappedMerchantRecord.get(0).toString());
-
-          shopDetails.setMerchant(new Merchant(wrappedMerchantRecord.get(0)));
+          shopDetails.setMerchant(Merchant.create(wrappedMerchantRecord.get(0)));
 
           // Get Catalog Details:
           return connection.sendPreparedStatement(Constants.SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
         }).thenApply((QueryResult catalogQueryResult) -> {
           ResultSet catalogRecords = catalogQueryResult.getRows();
           for (RowData serviceRecord : catalogRecords)
-            shopDetails.addCatalogItem(new CatalogItem(serviceRecord));
-          return shopDetails;
-
-        }).exceptionally((e) -> {
-          e.printStackTrace();
+            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
           return shopDetails;
         });
 
@@ -345,7 +338,7 @@ public class ShopController {
       return "";
     }).thenApply((publishPromise) -> {
       newShopDetails.addProperty("merchantID", merchantID);
-      return new Shop(newShopDetails);
+      return Shop.create(newShopDetails);
     });
   }
 
@@ -377,7 +370,7 @@ public class ShopController {
     }).thenApply((publishPromise) -> {
       newShopDetails.addProperty("shopID", shopID);
       newShopDetails.addProperty("merchantID", merchantID);
-      return new Shop(newShopDetails);
+      return Shop.create(newShopDetails);
     });
   }
 
