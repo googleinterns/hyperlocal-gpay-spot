@@ -21,13 +21,13 @@ public abstract class Shop implements Serializable{
     
     public static Shop create() {
       return new AutoValue_Shop(
-        0L,
-        "1",
-        "",
-        "",
-        "",
-        0.00,
-        0.00
+/* shopID = */          0L,
+/* merchantID = */      "1",
+/* shopName = */        "",
+/* addressLine1 = */    "",
+/* typeOfService = */   "",
+/* latitude = */        0.00,
+/* longitude = */       0.00
       );
     }
 
