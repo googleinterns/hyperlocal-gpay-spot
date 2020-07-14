@@ -150,7 +150,7 @@
     </dependency>
   </dependencies>
 
-  <!-- <build>
+  <build>
     <plugins>
       <plugin>
         <groupId>com.github.eirslett</groupId>
@@ -238,6 +238,6 @@
         </configuration>
       </plugin>
     </plugins>
-  </build> -->
+  </build>
 
 </project>
