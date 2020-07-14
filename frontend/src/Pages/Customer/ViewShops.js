@@ -153,7 +153,6 @@ class ViewShops extends React.Component {
                           <Card.Text>
                             <i><b>{shopDistanceInKM} km away</b></i>
                             <br />
-                            <b />
                             <b>Sold By: </b>{shop["merchant"]["merchantName"]}
                             <br />
                             <b>At: </b>{shop["shop"]["addressLine1"]}
