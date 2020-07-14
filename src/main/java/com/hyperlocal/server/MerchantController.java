@@ -87,6 +87,7 @@ public class MerchantController {
       return new Merchant(input);
     }).exceptionally((ex) -> {
       ex.printStackTrace();
+      return null;
     });
   }
 
