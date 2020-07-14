@@ -5,55 +5,37 @@
 * @param {!Object} context Metadata for the event.
 */
 
-const mysql = require('promise-mysql');
 const axios = require('axios');
-const SHOP_SELECT_STATEMENT = `SELECT MerchantID, ShopID, ShopName, Latitude, Longitude, AddressLine1, TypeOfService FROM Shops WHERE ShopID=?;`;
-const MERCHANT_SELECT_STATEMENT = `SELECT MerchantName, MerchantPhone FROM Merchants WHERE MerchantID=?;`
-const CATALOG_SELECT_STATEMENT = `SELECT ServiceName from Catalog WHERE ShopID = ?;`
-const ELASTICSEARCH_SERVER_URL = 'http://10.128.0.13:9200'
+
+const SEARCH_INDEX_URL = 'http://10.128.0.13:9200'
 const INDEX_NAME = "shops"
-const SOCKET_PATH = "/cloudsql/speedy-anthem-217710:us-central1:hyperlocal";
+const GET_SHOP_DATA_URL = 'http://speedy-anthem-217710.an.r.appspot.com/v1/shops/:shopid'
 
-let connection;
-
-const dbConfig = {
-  database: "hyperlocal",
-  user: "root",
-  socketPath: SOCKET_PATH
-};
-
-async function getShopDataByShopID(shopID) {
-  const shopData = await connection.query(SHOP_SELECT_STATEMENT, [shopID]);
-  return shopData;
+async function getShopDetailsByShopID(shopID) {
+  const shopDetailsPromise = await axios.get(GET_SHOP_DATA_URL.replace(':shopid', shopID));
+  return shopDetailsPromise.data;
 }
 
-async function getMerchantDataByMerchantID(merchantID) {
-  const merchantData = await connection.query(MERCHANT_SELECT_STATEMENT, [merchantID]);
-  return merchantData;
-}
-
-async function getCatalogByShopID(shopID) {
-  const catalogItemsList = await connection.query(CATALOG_SELECT_STATEMENT, [shopID]);
-  return catalogItemsList;
-}
-
-function createElasticSearchJson(shopData, merchantData, catalogItems) {
+function createElasticSearchJson(shopDetails, shopID) {
+  const shopData = shopDetails["shop"];
+  const merchantData = shopDetails["merchant"]
+  const catalogItems = shopDetails["catalog"]
   const catalogItemNames = catalogItems.map((catalogItem) => {
-    return catalogItem.ServiceName
+    return catalogItem.serviceName
   });
 
   const shopDataJson = {
-    "shopname": shopData.ShopName,
-    "typeofservice": shopData.TypeOfService,
-    "shopid": shopData.ShopID,
+    "shopname": shopData.shopName,
+    "typeofservice": shopData.typeOfService,
+    "shopid": shopID,
     "pin": {
       "location": {
-        "lat": shopData.Latitude,
-        "lon": shopData.Longitude
+        "lat": shopData.latitude,
+        "lon": shopData.longitude
       }
     },
-    "merchantname": merchantData.MerchantName,
-    "merchantphone": merchantData.MerchantPhone,
+    "merchantname": merchantData.merchantName,
+    "merchantphone": merchantData.merchantPhone,
     "catalogitems": catalogItemNames
   }
 
@@ -65,7 +47,7 @@ async function pushToElasticsearch(shopDataJson) {
   const shopDataJsonString = JSON.stringify(shopDataJson);
   const config = {
     method: 'put',
-    url: `${ELASTICSEARCH_SERVER_URL}/${INDEX_NAME}/_doc/${shopDataJson["shopid"]}`,
+    url: `${SEARCH_INDEX_URL}/${INDEX_NAME}/_doc/${shopDataJson["shopid"]}`,
     headers: {
       'Content-Type': 'application/json'
     },
@@ -83,10 +65,7 @@ async function pushToElasticsearch(shopDataJson) {
 
 exports.elasticsearch = async (event, context) => {
   const shopID = Buffer.from(event.data, 'base64').toString()
-  connection = await mysql.createConnection(dbConfig);
-  const shopData = await getShopDataByShopID(shopID);
-  const merchantData = await getMerchantDataByMerchantID(shopData[0].MerchantID);
-  const catalogItems = await getCatalogByShopID(shopID);
-  shopDataJson = createElasticSearchJson(shopData[0], merchantData[0], catalogItems);
+  const shopDetails = await getShopDetailsByShopID(shopID);
+  shopDataJson = createElasticSearchJson(shopDetails, shopID);
   await pushToElasticsearch(shopDataJson);
 };
