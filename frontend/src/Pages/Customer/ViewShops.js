@@ -45,7 +45,15 @@ class ViewShops extends React.Component {
     };
 
     const axiosResponse = await axios(config);
-    const shopDetailsList = axiosResponse.data;
+    const shopDetailsSnippets = axiosResponse.data;
+
+    let shopDetailsList = [];
+
+    shopDetailsSnippets.map((shopDetailsSnippet) => {
+      shopDetailsList.push(shopDetailsSnippet.shopDetails);
+    });
+
+    console.log(shopDetailsSnippets);
 
     this.setState({
       "shops": shopDetailsList,
