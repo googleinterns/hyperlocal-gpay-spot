@@ -22,6 +22,9 @@ const ROUTES = {
             'insertMerchant': base + '/v1/merchants',
             'insertShop': base + '/v1/merchants/:merchantID/shops',
             'updateCatalog': base + '/v1/shops/:shopID/catalog:batchUpdate'
+        },
+        'put': {
+            'updateShop': base + '/v1/merchants/:merchantID/shops/:shopID'
         }
     },
     'customer': {

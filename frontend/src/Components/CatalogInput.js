@@ -20,8 +20,8 @@ class CatalogInput extends React.Component {
             'serviceDescription': '',
             'serviceImageURL': '',  
         },
-        catalog : [],
-        initialCatalog: []
+        catalog : JSON.parse(JSON.stringify(this.props.value)), // Deep copy
+        initialCatalog: this.props.value
     };
   }
 
@@ -249,5 +249,6 @@ class CatalogInput extends React.Component {
 
 CatalogInput.defaultProps = {
   submit: "Submit",
+  value: []
 };
 export default CatalogInput;
