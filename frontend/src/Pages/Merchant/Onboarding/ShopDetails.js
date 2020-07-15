@@ -22,7 +22,7 @@ class ShopDetails extends React.Component {
 
   setShopDetails = (shop) => {
     this.setState({pageLoading: true});
-    axios.post(ROUTES.api.post.insertShop.replace(":merchantID", this.props.user.ID), {
+    axios.post(ROUTES.v1.post.insertShop.replace(":merchantID", this.props.user.ID), {
       shopName: shop.shopName,
       typeOfService: shop.typeOfService,
       addressLine1: shop.addressLine1,
