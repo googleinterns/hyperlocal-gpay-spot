@@ -4,6 +4,7 @@ import ROUTES from '../../../routes';
 import { Container } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import CatalogInput from '../../../Components/CatalogInput';
 
 class Catalog extends React.Component {
   constructor(props) {
