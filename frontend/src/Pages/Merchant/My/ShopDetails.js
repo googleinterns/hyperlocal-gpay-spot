@@ -16,7 +16,7 @@ class ShopDetails extends React.Component {
 
   setShopDetails = (shop) => {
     this.setState({pageLoading: true});
-    axios.put(ROUTES.api.put.updateShop.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
+    axios.put(ROUTES.v1.put.updateShop.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
       shopName: shop.shopName,
       typeOfService: shop.typeOfService,
       addressLine1: shop.addressLine1,

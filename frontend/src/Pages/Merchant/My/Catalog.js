@@ -20,7 +20,7 @@ class Catalog extends React.Component {
   }
 
   resetAndReloadServices = () => {
-    return axios.get(ROUTES.api.get.shopByShopID.replace(":shopID", this.props.user.shop.shopID))
+    return axios.get(ROUTES.v1.get.shopByShopID.replace(":shopID", this.props.user.shop.shopID))
     .then(res => {
       if(!("catalog" in res.data))
           throw new Error(res.data.error);
