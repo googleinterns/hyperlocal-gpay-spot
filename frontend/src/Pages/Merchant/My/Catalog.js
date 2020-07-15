@@ -10,18 +10,43 @@ class Catalog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        pageLoading: false
+        pageLoading: true,
+        initialCatalog: []
     };
   }
 
-  setCatalog = ({itemsToCreate, itemsToUpdate, itemsToDelete}) => {
+  componentDidMount() {
+    return this.resetAndReloadServices();
+  }
+
+  resetAndReloadServices = () => {
+    return axios.get(ROUTES.v1.get.shopByShopID.replace("%b", this.props.user.shop.shopID))
+    .then(res => {
+      if(!("catalog" in res.data))
+          throw new Error(res.data.error);
+      let initialCatalog = res.data.catalog;
+      initialCatalog.forEach((item, index) => {
+        item.key = index.toString();
+        item.serviceImageURL = item.imageURL;
+      });
+      this.setState({ initialCatalog, pageLoading: false });
+      return;
+    })
+    .catch(err => {
+        console.log(err);
+        alert("Whoops, something went wrong. Trying again...");
+        return this.resetAndReloadServices();
+    });
+  }
+
+  setCatalog = ({ itemsToCreate, itemsToUpdate, itemsToDelete }) => {
     this.setState({pageLoading: true});
-    
+
     if(!itemsToCreate.length && !itemsToUpdate.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
-    
+
     axios.post(ROUTES.v1.post.updateCatalog.replace(":shopID", this.props.user.shop.shopID), {
-      create: itemsToCreate,
-      update: itemsToUpdate,
+      add: itemsToCreate,
+      edit: itemsToUpdate,
       delete: itemsToDelete
     })
     .then(resp => {
@@ -42,11 +67,12 @@ class Catalog extends React.Component {
         {
             this.state.pageLoading
             ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
-            : <CatalogInput setCatalog={this.setCatalog} />
+            : <CatalogInput value={this.state.initialCatalog} setCatalog={this.setCatalog} />
         }
       </Container>
     );
   }
+
 }
 
 export default Catalog;
