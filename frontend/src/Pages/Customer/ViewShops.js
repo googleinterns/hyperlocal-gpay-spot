@@ -7,6 +7,11 @@ import LocationInput from '../../Components/LocationInput';
 import ROUTES from '../../routes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import TextField from '@material-ui/core/TextField';
+import parse from 'autosuggest-highlight/parse';
+import match from 'autosuggest-highlight/match';
+
 
 class ViewShops extends React.Component {
 
@@ -17,14 +22,12 @@ class ViewShops extends React.Component {
       pageLoading: true,
       searchQuery: "",
       queryRadius: "",
-      showModal: true
+      showModal: true,
+      suggestions: []
     }
   }
 
-  search = async () => {
-
-    this.setState({ pageLoading: true });
-
+  getConfigParams = () => {
     let requestParams = {};
     requestParams.latitude = this.props.latitude;
     requestParams.longitude = this.props.longitude;
@@ -44,28 +47,46 @@ class ViewShops extends React.Component {
       params: requestParams
     };
 
-    const axiosResponse = await axios(config);
-    const shopDetailsSnippets = axiosResponse.data;
+    return config;
+  }
 
+  search = async () => {
+    this.setState({ pageLoading: true });
+    const configParams = this.getConfigParams();
+    const shopDetailsSnippets = (await axios(configParams)).data;
+    console.log(shopDetailsSnippets);
     let shopDetailsList = [];
 
     shopDetailsSnippets.map((shopDetailsSnippet) => {
       shopDetailsList.push(shopDetailsSnippet.shopDetails);
     });
 
-    console.log(shopDetailsSnippets);
-
     this.setState({
       "shops": shopDetailsList,
       searchQuery: "",
       queryRadius: "",
-      pageLoading: false
+      pageLoading: false,
+      suggestions: []
     })
-
   }
 
-  searchBoxUpdateHandler = (e) => {
-    this.setState({ searchQuery: e.target.value });
+  updateSuggestions = async () => {
+    const configParams = this.getConfigParams();
+    const shopDetailsSnippets = (await axios(configParams)).data;
+    let suggestions = [];
+    shopDetailsSnippets.map(shopSnippet => {
+      if (Array.isArray(shopSnippet.matchedPhrases) && shopSnippet.matchedPhrases.length) {
+        let suggestion = shopSnippet.matchedPhrases[0].replace('<em>', '').replace('</em>', '');
+        suggestions.push(suggestion);
+      }
+    });
+    suggestions = [...new Set(suggestions)]
+    this.setState({ suggestions });
+  }
+
+  searchBoxUpdateHandler = (e, updatedSearchBoxValue) => {
+    this.setState({ searchQuery: updatedSearchBoxValue });
+    this.updateSuggestions();
   }
 
   onHide = () => {
@@ -128,10 +149,27 @@ class ViewShops extends React.Component {
             <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
               <Form.Row className="align-items-center">
                 <Col xs={7}>
-                  <Form.Control
-                    placeholder="Search Nearby"
-                    autoComplete="off"
-                    onChange={this.searchBoxUpdateHandler}
+                  <Autocomplete
+                    freeSolo
+                    id="autocomplete"
+                    options={this.state.suggestions}
+                    getOptionLabel={(suggestion) => suggestion}
+                    renderInput={(params) => <TextField {...params} label="Search Nearby" variant="outlined" size="small" />}
+                    onInputChange={this.searchBoxUpdateHandler}
+                    onChange={this.search}
+                    renderOption={(suggestion, { inputValue }) => {
+                      const matches = match(suggestion, inputValue);
+                      const parts = parse(suggestion, matches);
+                      return (
+                        <div>
+                          {parts.map((part, index) => (
+                            <span key={index} style={{ fontWeight: part.highlight ? 700 : 400 }}>
+                              {part.text}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    }}
                   />
                 </Col>
                 <Col xs={3}>
