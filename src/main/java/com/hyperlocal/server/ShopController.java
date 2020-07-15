@@ -18,17 +18,20 @@ import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.RowData;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.hyperlocal.server.Data.CatalogItem;
 import com.hyperlocal.server.Data.Merchant;
+import com.hyperlocal.server.Data.SearchSnippet;
 import com.hyperlocal.server.Data.Shop;
 import com.hyperlocal.server.Data.ShopDetails;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
@@ -36,6 +39,9 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.search.MatchQuery;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.ScoreSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,16 +67,16 @@ public class ShopController {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
-  
+
   // API for performing search and browse queries
   @GetMapping("/v1/shops")
-  public CompletableFuture<List<ShopDetails>> getDataFromSearchIndex(
+  public CompletableFuture<List<SearchSnippet>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
-      @RequestParam String latitude, 
-      @RequestParam String longitude) {
-
+      @RequestParam String latitude, @RequestParam String longitude) {
     List<Long> shopIDList = new ArrayList<Long>();
+    HashMap<Long, List<String>> mapShopIDtoHighlight = new HashMap<Long, List<String>>();
+    List<SearchSnippet> searchSnippets = new ArrayList<SearchSnippet>();
 
     // GeoDistance query for filtering everything in a radius
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
@@ -79,37 +85,8 @@ public class ShopController {
     // Boolean query to hold conditions of both Matchquery and Geodistance query
     BoolQueryBuilder boolMatchQueryWithDistanceFilter;
 
-    
-    {
-      QueryBuilders.boolQuery().must(
-        QueryBuilders.disMaxQuery()
-        .add(QueryBuilders
-          .multiMatchQuery(query, 
-          "shopname",
-          "typeofservice", 
-          "merchantname",
-          "catalogitems")
-          .fuzziness("AUTO")
-        ).add(QueryBuilders
-          .multiMatchQuery(query, 
-          "shopname",
-          "typeofservice", 
-          "merchantname",
-          "catalogitems"          
-          ).type(MatchQuery.Type.BOOLEAN_PREFIX)
-        )
-      ).filter(filterOnDistance);
-      HighlightBuilder highLightBuilder = 
-      new HighlightBuilder()
-      .requireFieldMatch(false)
-      .field("shopname")
-      .field("typeofservice")
-      .field("merchantname")
-      .field("catalogitems");
-
-      SearchRequestBuilder request
-    }
-
+    HighlightBuilder highLightBuilder = new HighlightBuilder().requireFieldMatch(false).field("shopname")
+        .field("typeofservice").field("merchantname").field("catalogitems");
 
     // Create a match query
 
@@ -119,15 +96,22 @@ public class ShopController {
       boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
           .filter(filterOnDistance);
     } else {
-      boolMatchQueryWithDistanceFilter = QueryBuilders
-          .boolQuery().must(QueryBuilders
-              .multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems").fuzziness("AUTO"))
+      boolMatchQueryWithDistanceFilter = QueryBuilders.boolQuery()
+          .must(QueryBuilders.disMaxQuery()
+              .add(QueryBuilders.multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems")
+                  .fuzziness("AUTO"))
+              .add(QueryBuilders.multiMatchQuery(query, "shopname", "typeofservice", "merchantname", "catalogitems")
+                  .type("bool_prefix")))
           .filter(filterOnDistance);
     }
 
     // Create a search request with the Boolean query
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
+    searchSourceBuilder.highlighter(highLightBuilder);
+    searchSourceBuilder.fetchSource(false);
+    searchSourceBuilder.sort(new ScoreSortBuilder())
+        .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
 
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
@@ -141,18 +125,49 @@ public class ShopController {
           // Empty {} is returned by search Index if nothing matches
           if (!responseString.equals("{}")) {
             JsonObject obj = JsonParser.parseString(responseString).getAsJsonObject();
-            JsonArray idListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
-            for (JsonElement id : idListJson) {
-              shopIDList.add(id.getAsJsonObject().get("_id").getAsLong());
+            JsonArray documentListJson = obj.get("hits").getAsJsonObject().get("hits").getAsJsonArray();
+            for (JsonElement document : documentListJson) {
+              Long shopID = document.getAsJsonObject().get("_id").getAsLong();
+              shopIDList.add(shopID);
+              // TODO: Rename variables here
+              if (document.getAsJsonObject().has("highlight")) {
+                JsonObject highlightObject = document.getAsJsonObject().get("highlight").getAsJsonObject();
+                List<String> matchedPhrases = new ArrayList<String>();
+
+                for (String highlightKey : highlightObject.keySet()) {
+                  JsonArray matchedPhrasesList = highlightObject.get(highlightKey).getAsJsonArray();
+                  for (JsonElement phrase : matchedPhrasesList) {
+                    matchedPhrases.add(phrase.getAsString());
+                  }
+                }
+                mapShopIDtoHighlight.put(shopID, matchedPhrases);
+              }
             }
           }
           // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
           // the shopIDs
           // If nothing matches then shopIDList is empty
           return getShopsByShopIDBatch(shopIDList);
+        }).thenApply((shopDetailsList) -> {
+          for (ShopDetails shopDetails : shopDetailsList) {
+            Long shopID = shopDetails.shop.shopID();
+            if (!mapShopIDtoHighlight.containsKey(shopID)) {
+              List<String> matchedPhrases = getMatchedPhrasesByKMP(shopDetails, query);
+              mapShopIDtoHighlight.put(shopID, matchedPhrases);
+            }
+            SearchSnippet searchSnippet = SearchSnippet.create(shopDetails, mapShopIDtoHighlight.get(shopID));
+            searchSnippets.add(searchSnippet);
+          }
+          return searchSnippets;
         });
   }
 
+  private List<String> getMatchedPhrasesByKMP(ShopDetails shopDetails, String query) {
+    List<String> match = new ArrayList<String>();
+    return match;
+  }
+
+  // Return all shops in the given shopID list in the same order
   public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(List<Long> shopIDList) {
 
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
@@ -351,20 +366,13 @@ public class ShopController {
    */
 
   @PostMapping("/v1/merchants/{merchantID}/shops")
-  public @ResponseBody CompletableFuture<Shop> insertShop(@PathVariable String merchantID, @RequestBody String shopDetailsString)
-      throws InterruptedException, ExecutionException {
+  public @ResponseBody CompletableFuture<Shop> insertShop(@PathVariable String merchantID,
+      @RequestBody String shopDetailsString) throws InterruptedException, ExecutionException {
     JsonObject newShopDetails = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-    List<Object> queryParams = Arrays.asList(
-      newShopDetails.get("shopName").getAsString(),
-      newShopDetails.get("typeOfService").getAsString(),
-      newShopDetails.get("latitude").getAsString(),
-      newShopDetails.get("longitude").getAsString(),
-      newShopDetails.get("addressLine1").getAsString(),
-      merchantID
-    );
-    return connection
-    .sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, queryParams)
-    .thenCompose((queryResult) -> {
+    List<Object> queryParams = Arrays.asList(newShopDetails.get("shopName").getAsString(),
+        newShopDetails.get("typeOfService").getAsString(), newShopDetails.get("latitude").getAsString(),
+        newShopDetails.get("longitude").getAsString(), newShopDetails.get("addressLine1").getAsString(), merchantID);
+    return connection.sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, queryParams).thenCompose((queryResult) -> {
       long shopID = ((MySQLQueryResult) queryResult).getLastInsertId();
       newShopDetails.addProperty("shopID", shopID);
       return publishMessage(Long.toString(shopID));
@@ -382,31 +390,26 @@ public class ShopController {
    */
 
   @PutMapping("/v1/merchants/{merchantID}/shops/{shopID}")
-  public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID, @RequestBody String shopDetailsString) {
+  public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID,
+      @RequestBody String shopDetailsString) {
     JsonObject newShopDetails = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-    List<Object> queryParams = Arrays.asList(
-      newShopDetails.get("shopName").getAsString(),
-      newShopDetails.get("typeOfService").getAsString(),
-      newShopDetails.get("latitude").getAsString(),
-      newShopDetails.get("longitude").getAsString(),
-      newShopDetails.get("addressLine1").getAsString(),
-      shopID
-    );
-    return connection
-    .sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
-    .thenCompose((QueryResult queryResult) -> {
-      return publishMessage(Long.toString(shopID));
-    }).exceptionally(e -> {
-      e.printStackTrace();
-      logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
-      Long.toString(shopID)));
-      // TODO: Handle errors
-      return "";
-    }).thenApply((publishPromise) -> {
-      newShopDetails.addProperty("shopID", shopID);
-      newShopDetails.addProperty("merchantID", merchantID);
-      return Shop.create(newShopDetails);
-    });
+    List<Object> queryParams = Arrays.asList(newShopDetails.get("shopName").getAsString(),
+        newShopDetails.get("typeOfService").getAsString(), newShopDetails.get("latitude").getAsString(),
+        newShopDetails.get("longitude").getAsString(), newShopDetails.get("addressLine1").getAsString(), shopID);
+    return connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
+        .thenCompose((QueryResult queryResult) -> {
+          return publishMessage(Long.toString(shopID));
+        }).exceptionally(e -> {
+          e.printStackTrace();
+          logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
+              Long.toString(shopID)));
+          // TODO: Handle errors
+          return "";
+        }).thenApply((publishPromise) -> {
+          newShopDetails.addProperty("shopID", shopID);
+          newShopDetails.addProperty("merchantID", merchantID);
+          return Shop.create(newShopDetails);
+        });
   }
 
   public CompletableFuture<String> publishMessage(String message) {

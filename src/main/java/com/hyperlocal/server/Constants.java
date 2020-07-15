@@ -10,7 +10,7 @@ public final class Constants {
   /* The IP Address here is the internal IP Address of the Compute Engine running Elasticsearch server
    * Obtaining a static Internal IP for Compute Engine VM: https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address
    */
-  static final String SEARCH_INDEX_URL = "http://10.128.0.13:9200/shops/_search?filter_path=hits.hits._id";
+  static final String SEARCH_INDEX_URL = "http://10.128.0.13:9200/shops/_search?filter_path=hits.hits";
 
   public static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`=?;";
   public static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
