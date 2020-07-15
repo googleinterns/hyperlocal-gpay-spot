@@ -14,7 +14,11 @@ public abstract class Merchant implements Serializable {
   @JsonProperty public abstract String merchantPhone();
 
   public static Merchant create() {
-    return new AutoValue_Merchant(null, null, null);
+    return new AutoValue_Merchant(
+/* merchantID = */      null,  
+/* merchantName = */    null, 
+/* merchantPhone = */   null
+    );
   }
 
   public static Merchant create(String merchantID, String merchantName, String merchantPhone) {

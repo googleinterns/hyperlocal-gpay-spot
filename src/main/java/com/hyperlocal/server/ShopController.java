@@ -67,7 +67,7 @@ public class ShopController {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
-
+  
   // API for performing search and browse queries
   @GetMapping("/v1/shops")
   public CompletableFuture<List<SearchSnippet>> getDataFromSearchIndex(
@@ -393,23 +393,29 @@ public class ShopController {
   public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID,
       @RequestBody String shopDetailsString) {
     JsonObject newShopDetails = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-    List<Object> queryParams = Arrays.asList(newShopDetails.get("shopName").getAsString(),
-        newShopDetails.get("typeOfService").getAsString(), newShopDetails.get("latitude").getAsString(),
-        newShopDetails.get("longitude").getAsString(), newShopDetails.get("addressLine1").getAsString(), shopID);
-    return connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
-        .thenCompose((QueryResult queryResult) -> {
-          return publishMessage(Long.toString(shopID));
-        }).exceptionally(e -> {
-          e.printStackTrace();
-          logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
-              Long.toString(shopID)));
-          // TODO: Handle errors
-          return "";
-        }).thenApply((publishPromise) -> {
-          newShopDetails.addProperty("shopID", shopID);
-          newShopDetails.addProperty("merchantID", merchantID);
-          return Shop.create(newShopDetails);
-        });
+    List<Object> queryParams = Arrays.asList(
+      newShopDetails.get("shopName").getAsString(),
+      newShopDetails.get("typeOfService").getAsString(),
+      newShopDetails.get("latitude").getAsString(),
+      newShopDetails.get("longitude").getAsString(),
+      newShopDetails.get("addressLine1").getAsString(),
+      shopID
+    );
+    return connection
+    .sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
+    .thenCompose((QueryResult queryResult) -> {
+      return publishMessage(Long.toString(shopID));
+    }).exceptionally(e -> {
+      e.printStackTrace();
+      logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
+      Long.toString(shopID)));
+      // TODO: Handle errors
+      return "";
+    }).thenApply((publishPromise) -> {
+      newShopDetails.addProperty("shopID", shopID);
+      newShopDetails.addProperty("merchantID", merchantID);
+      return Shop.create(newShopDetails);
+    });
   }
 
   public CompletableFuture<String> publishMessage(String message) {

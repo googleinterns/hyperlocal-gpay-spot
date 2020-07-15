@@ -10,6 +10,7 @@ import BuyerCatalog from './Pages/Customer/BuyerCatalog';
 
 // Merchant Pages
 import ShopDetails from './Pages/Merchant/Onboarding/ShopDetails';
+import Catalog from './Pages/Merchant/Onboarding/Catalog';
 import MyDashboard from './Pages/Merchant/My/Dashboard';
 
 class App extends React.Component {
@@ -68,6 +69,7 @@ class App extends React.Component {
             </Route>
             <Route path={ROUTES.customer.catalog} component={BuyerCatalog} />
             <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
+            <Route path={ROUTES.merchant.onboarding.catalog} render={(props) => <Catalog {...props} user={this.state.user} />} />
             <Route path={ROUTES.merchant.dashboard} render={(props) => <MyDashboard {...props} user={this.state.user} />} />
           </Switch>
         </Router>
