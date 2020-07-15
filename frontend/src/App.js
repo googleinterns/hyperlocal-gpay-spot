@@ -21,7 +21,7 @@ class App extends React.Component {
       latitude: null,
       longitude: null,
       user: {
-        auth: true,
+        auth: false,
         idToken: null
       }
     }
