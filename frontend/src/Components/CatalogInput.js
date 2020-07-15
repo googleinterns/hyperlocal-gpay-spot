@@ -116,25 +116,28 @@ class CatalogInput extends React.Component {
   }
 
   addNewServiceImageURL = (e) => {
+    const serviceImageURL = e.target.value;
     this.setState(state => {
         let addForm = state.addForm;
-        addForm.serviceImageURL = e.target.value;
+        addForm.serviceImageURL = serviceImageURL;
         return { addForm };
     });
   }
 
   addNewServiceDescription = (e) => {
+    const serviceDescription = e.target.value;
     this.setState(state => {
         let addForm = state.addForm;
-        addForm.serviceDescription = e.target.value;
+        addForm.serviceDescription = serviceDescription;
         return { addForm };
     });
   }
 
   addNewServiceName = (e) => {
+    const serviceName = e.target.value;
     this.setState(state => {
         let addForm = state.addForm;
-        addForm.serviceName = e.target.value;
+        addForm.serviceName = serviceName;
         return { addForm };
     });
   }
