@@ -253,8 +253,7 @@ public class ShopController {
   }
 
   @PostMapping("/v1/merchants/{merchantID}/shops/{shopID}/catalog:batchUpdate")
-  public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID,
-      @RequestBody String updatePayload) {
+  public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable String merchantID, @PathVariable Long shopID, @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
     JsonArray createCommands = commands.getAsJsonArray("create");
     JsonArray updateCommands = commands.getAsJsonArray("update");
