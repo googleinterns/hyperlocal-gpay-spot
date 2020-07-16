@@ -353,7 +353,8 @@ public class ShopControllerTest {
       Double.toString(latitude),
       Double.toString(longitude),
       addressLine1,
-      shopID
+      shopID,
+      merchantID
     );
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));

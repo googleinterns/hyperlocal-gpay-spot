@@ -354,7 +354,8 @@ public class ShopController {
       newShopDetails.get("latitude").getAsString(),
       newShopDetails.get("longitude").getAsString(),
       newShopDetails.get("addressLine1").getAsString(),
-      shopID
+      shopID,
+      merchantID
     );
     return connection
     .sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
