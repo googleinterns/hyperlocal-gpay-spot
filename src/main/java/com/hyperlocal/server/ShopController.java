@@ -44,6 +44,7 @@ import org.elasticsearch.search.sort.ScoreSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -69,14 +70,24 @@ public class ShopController {
   }
   
   // API for performing search and browse queries
+  @CrossOrigin(origins = { "http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com",
+  "https://microapps.google.com" })
   @GetMapping("/v1/shops")
   public CompletableFuture<List<SearchSnippet>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
       @RequestParam String latitude, @RequestParam String longitude) {
+
     List<Long> shopIDList = new ArrayList<Long>();
     HashMap<Long, List<String>> mapShopIDtoHighlight = new HashMap<Long, List<String>>();
     List<SearchSnippet> searchSnippets = new ArrayList<SearchSnippet>();
+
+    List<String> fieldsToSearch = new ArrayList<String>();
+    fieldsToSearch.add("shopname");
+    fieldsToSearch.add("typeofservice");
+    fieldsToSearch.add("merchantname");
+    fieldsToSearch.add("catalogitems");
+    
 
     // GeoDistance query for filtering everything in a radius
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
@@ -85,8 +96,16 @@ public class ShopController {
     // Boolean query to hold conditions of both Matchquery and Geodistance query
     BoolQueryBuilder boolMatchQueryWithDistanceFilter;
 
-    HighlightBuilder highLightBuilder = new HighlightBuilder().requireFieldMatch(false).field("shopname")
-        .field("typeofservice").field("merchantname").field("catalogitems");
+    HighlightBuilder highLightBuilder = new HighlightBuilder().requireFieldMatch(false);
+
+    for (String fieldName: fieldsToSearch) {
+      highLightBuilder = highLightBuilder
+        .field(fieldName)
+        .field(String.format("%s._2gram", fieldName))
+        .field(String.format("%s._3gram", fieldName))
+        .field(String.format("%s._index_prefix", fieldName));
+    }
+
 
     // Create a match query
 
@@ -112,6 +131,9 @@ public class ShopController {
     searchSourceBuilder.fetchSource(false);
     searchSourceBuilder.sort(new ScoreSortBuilder())
         .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
+
+
+    System.out.println(searchSourceBuilder.toString());
 
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
@@ -151,20 +173,12 @@ public class ShopController {
         }).thenApply((shopDetailsList) -> {
           for (ShopDetails shopDetails : shopDetailsList) {
             Long shopID = shopDetails.shop.shopID();
-            if (!mapShopIDtoHighlight.containsKey(shopID)) {
-              List<String> matchedPhrases = getMatchedPhrasesByKMP(shopDetails, query);
-              mapShopIDtoHighlight.put(shopID, matchedPhrases);
-            }
             SearchSnippet searchSnippet = SearchSnippet.create(shopDetails, mapShopIDtoHighlight.get(shopID));
             searchSnippets.add(searchSnippet);
           }
+          System.out.println(searchSnippets);
           return searchSnippets;
         });
-  }
-
-  private List<String> getMatchedPhrasesByKMP(ShopDetails shopDetails, String query) {
-    List<String> match = new ArrayList<String>();
-    return match;
   }
 
   // Return all shops in the given shopID list in the same order

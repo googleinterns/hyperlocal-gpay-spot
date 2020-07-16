@@ -81,6 +81,7 @@ class ViewShops extends React.Component {
       }
     });
     suggestions = [...new Set(suggestions)]
+    console.log(suggestions);
     this.setState({ suggestions });
   }
 
