@@ -1,0 +1,108 @@
+// Query sent to Search Index in JSON format (for easy reference and conversion to Java)
+
+{
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "dis_max": {
+              "tie_breaker": 0,
+              "queries": [
+                {
+                  "multi_match": {
+                    "query": "search_query_here",
+                    "fields": [
+                      "catalogitems",
+                      "merchantname",
+                      "shopname",
+                      "typeofservice"
+                    ],
+                    "type": "best_fields",
+                    "operator": "OR",
+                    "slop": 0,
+                    "fuzziness": "AUTO",
+                    "prefix_length": 0,
+                    "max_expansions": 50,
+                    "zero_terms_query": "NONE",
+                    "auto_generate_synonyms_phrase_query": true,
+                    "fuzzy_transpositions": true,
+                    "boost": 1
+                  }
+                },
+                {
+                  "multi_match": {
+                    "query": "search_query_here",
+                    "fields": [
+                      "catalogitems",
+                      "merchantname",
+                      "shopname",
+                      "typeofservice"
+                    ],
+                    "type": "bool_prefix",
+                    "operator": "OR",
+                    "slop": 0,
+                    "prefix_length": 0,
+                    "max_expansions": 50,
+                    "zero_terms_query": "NONE",
+                    "auto_generate_synonyms_phrase_query": true,
+                    "fuzzy_transpositions": true,
+                    "boost": 1
+                  }
+                }
+              ],
+              "boost": 1
+            }
+          }
+        ],
+        "filter": [
+          {
+            "geo_distance": {
+              "pin.location": [
+                77.2198576,
+                28.5262657
+              ],
+              "distance": 10000000,
+              "distance_type": "arc",
+              "validation_method": "STRICT",
+              "ignore_unmapped": false,
+              "boost": 1
+            }
+          }
+        ],
+        "adjust_pure_negative": true,
+        "boost": 1
+      }
+    },
+    "highlight": {
+      "fields": {
+        "shopname": {},
+        "shopname._2gram": {},
+        "shopname._3gram": {},
+        "shopname._index_prefix": {},
+        "typeofservice": {},
+        "typeofservice._2gram": {},
+        "typeofservice._3gram": {},
+        "typeofservice._index_prefix": {},
+        "merchantname": {},
+        "merchantname._2gram": {},
+        "merchantname._3gram": {},
+        "merchantname._index_prefix": {},
+        "catalogitems": {},
+        "catalogitems._2gram": {},
+        "catalogitems._3gram": {},
+        "catalogitems._index_prefix": {}
+      }
+    },
+    "sort": [
+      "_score",
+      {
+        "_geo_distance": {
+          "pin.location": [
+            77.2198576, 
+            28.5262657  
+          ],
+          "order": "asc"
+        }
+      }
+    ]
+  }

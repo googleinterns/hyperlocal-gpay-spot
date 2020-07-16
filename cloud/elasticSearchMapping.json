@@ -2,25 +2,25 @@
     "mappings": {
         "properties": {
             "pin": {
-                "properties": {
-                    "location": {
-                        "type": "geo_point"
-                    }
-                }
+    	      "properties": {
+                 "location": {
+                   "type": "geo_point"
+                 }
+              }
             },
             "shopname": {
-                "type": "text",
+                "type": "search_as_you_type",
                 "fields": {
-                    "keyword": {
-                        "type": "keyword"
+                    "raw": {
+                        "type": "text"
                     }
                 }
             },
             "typeofservice": {
-                "type": "text",
+                "type": "search_as_you_type",
                 "fields": {
-                    "keyword": {
-                        "type": "keyword"
+                    "raw": {
+                        "type": "text"
                     }
                 }
             },
@@ -29,16 +29,21 @@
                 "index": false
             },
             "merchantname": {
-                "type": "text"
+                "type": "search_as_you_type",
+                "fields": {
+                    "raw": {
+                        "type": "text"
+                    }
+                }
             },
             "merchantphone": {
                 "type": "text"
             },
             "catalogitems": {
-                "type": "text",
+                "type": "search_as_you_type",
                 "fields": {
-                    "keyword": {
-                        "type": "keyword"
+                    "raw": {
+                        "type": "text"
                     }
                 }
             }
