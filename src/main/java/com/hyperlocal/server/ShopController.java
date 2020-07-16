@@ -140,7 +140,8 @@ public class ShopController {
         .setHeader("Content-Type", "application/json").build();
 
     
-    return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
+    return client.sendAsync(request, BodyHandlers.ofString())
+      .thenApply(HttpResponse::body)
         .thenCompose((responseString) -> {
           // Empty {} is returned by search Index if nothing matches
           if (!responseString.equals("{}")) {
