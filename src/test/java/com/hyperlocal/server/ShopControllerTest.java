@@ -143,7 +143,8 @@ public class ShopControllerTest {
     /* ARRANGE */
     assertThat(controller).isNotNull();
 
-    // Params: shopID, payload
+    // Params: merchantID, shopID, payload
+    String merchantID = "123698745";
     Long shopID = 1000000000000L;
     HashMap<String, Object> payload = new HashMap<String, Object>();
 
@@ -183,7 +184,7 @@ public class ShopControllerTest {
         .thenReturn(new AsyncResult<>("DONE"));
 
     /* ACT */
-    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(shopID,
+    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(merchantID, shopID,
         new Gson().toJson(payload));
 
     /* ASSERT */
