@@ -121,8 +121,9 @@ public class ShopController {
     searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
     searchSourceBuilder.highlighter(highLightBuilder);
     searchSourceBuilder.fetchSource(false);
-    searchSourceBuilder.sort(new ScoreSortBuilder())
-        .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
+    searchSourceBuilder
+      .sort(new ScoreSortBuilder())
+      .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
 
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
@@ -176,7 +177,6 @@ public class ShopController {
     HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
     List<ShopDetails> shopsList = new ArrayList<ShopDetails>();
 
-    // if empty shopIDList then return empty shopsList
     if (shopIDList.isEmpty()) {
       return CompletableFuture.completedFuture(shopsList);
     }
@@ -185,63 +185,65 @@ public class ShopController {
 
     // Fetch All Shops in ShopIDList and store their merchantIDs in a List
     return connection
-        .sendPreparedStatement(String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder),
-            shopIDList)
-        .thenCompose((QueryResult result) -> {
-          List<String> merchantIDList = new ArrayList<String>();
-          ResultSet allShops = result.getRows();
-          for (RowData shop : allShops) {
-            ShopDetails shopDetails = new ShopDetails();
-            Long ShopID = (Long) shop.get("ShopID");
-            String MerchantID = (String) shop.get("MerchantID");
-            shopDetails.setShop(Shop.create(shop));
-            merchantIDList.add(MerchantID);
-            mapShopIdToShopDetails.put(ShopID, shopDetails);
-          }
+      .sendPreparedStatement(
+        String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder),shopIDList
 
-          // Select all Merchant Data for every merchantID in merchantIDList
-          String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
-          return connection.sendPreparedStatement(
-              String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder),
-              merchantIDList);
-        })
+      ).thenCompose((QueryResult result) -> {
+        List<String> merchantIDList = new ArrayList<String>();
+        ResultSet allShops = result.getRows();
+        for (RowData shop : allShops) {
+          ShopDetails shopDetails = new ShopDetails();
+          Long ShopID = (Long) shop.get("ShopID");
+          String MerchantID = (String) shop.get("MerchantID");
+          shopDetails.setShop(Shop.create(shop));
+          merchantIDList.add(MerchantID);
+          mapShopIdToShopDetails.put(ShopID, shopDetails);
+        }
+        String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(merchantIDList.size());
+        return connection
+          .sendPreparedStatement(
+            String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder),
+            merchantIDList
+          );
 
-        // Map All merchantIDs to their Merchants and Update ShopDetails with merchant
-        // Information
-        .thenCompose((result) -> {
-          ResultSet allMerchants = result.getRows();
-          for (RowData merchant : allMerchants) {
-            mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), Merchant.create(merchant));
-          }
-          for (Long shopID : shopIDList) {
-            if (mapShopIdToShopDetails.containsKey(shopID)) {
-              ShopDetails shopDetails = mapShopIdToShopDetails.get(shopID);
-              String MerchantID = shopDetails.shop.merchantID();
-              shopDetails.setMerchant(mapMerchantIdToMerchant.get(MerchantID));
-              shopDetails.catalog = new ArrayList<CatalogItem>();
-              mapShopIdToShopDetails.put(shopID, shopDetails);
-            }
-          }
-          // Get Catalog for all Shops
-          return connection.sendPreparedStatement(
-              String.format(Constants.SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList);
+      // Map All merchantIDs to their Merchants and Update ShopDetails with merchant
+      // Information
+      }).thenCompose((result) -> {
+        ResultSet allMerchants = result.getRows();
 
-          // Update ShopDetails with CatalogItems
-        }).thenApply((catalogQueryResult) -> {
-          ResultSet catalogRecords = catalogQueryResult.getRows();
-          for (RowData serviceRecord : catalogRecords) {
-            Long ShopID = (Long) serviceRecord.get("ShopID");
-            ShopDetails shopDetails = mapShopIdToShopDetails.get(ShopID);
-            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
-            mapShopIdToShopDetails.put(ShopID, shopDetails);
+        for (RowData merchant : allMerchants) {
+          mapMerchantIdToMerchant.put((String) merchant.get("MerchantID"), Merchant.create(merchant));
+        }
+        for (Long shopID : shopIDList) {
+          if (mapShopIdToShopDetails.containsKey(shopID)) {
+            ShopDetails shopDetails = mapShopIdToShopDetails.get(shopID);
+            String MerchantID = shopDetails.shop.merchantID();
+            shopDetails.setMerchant(mapMerchantIdToMerchant.get(MerchantID));
+            shopDetails.catalog = new ArrayList<CatalogItem>();
+            mapShopIdToShopDetails.put(shopID, shopDetails);
           }
-          for (Long ShopId : shopIDList) {
-            if (mapShopIdToShopDetails.containsKey(ShopId)) {
-              shopsList.add(mapShopIdToShopDetails.get(ShopId));
-            }
+        }
+
+        // Get Catalog for all Shops
+        return connection.sendPreparedStatement(
+            String.format(Constants.SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIDList
+          );
+        // Update ShopDetails with CatalogItems
+      }).thenApply((catalogQueryResult) -> {
+        ResultSet catalogRecords = catalogQueryResult.getRows();
+        for (RowData serviceRecord : catalogRecords) {
+          Long ShopID = (Long) serviceRecord.get("ShopID");
+          ShopDetails shopDetails = mapShopIdToShopDetails.get(ShopID);
+          shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
+          mapShopIdToShopDetails.put(ShopID, shopDetails);
+        }
+        for (Long ShopId : shopIDList) {
+          if (mapShopIdToShopDetails.containsKey(ShopId)) {
+            shopsList.add(mapShopIdToShopDetails.get(ShopId));
           }
-          return shopsList;
-        });
+        }
+        return shopsList;
+      });
   }
 
   // Fetch all shops by merchantID
@@ -371,10 +373,17 @@ public class ShopController {
   public @ResponseBody CompletableFuture<Shop> insertShop(@PathVariable String merchantID,
       @RequestBody String shopDetailsString) throws InterruptedException, ExecutionException {
     JsonObject newShopDetails = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-    List<Object> queryParams = Arrays.asList(newShopDetails.get("shopName").getAsString(),
-        newShopDetails.get("typeOfService").getAsString(), newShopDetails.get("latitude").getAsString(),
-        newShopDetails.get("longitude").getAsString(), newShopDetails.get("addressLine1").getAsString(), merchantID);
-    return connection.sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, queryParams).thenCompose((queryResult) -> {
+    List<Object> queryParams = Arrays.asList(
+      newShopDetails.get("shopName").getAsString(),
+      newShopDetails.get("typeOfService").getAsString(), 
+      newShopDetails.get("latitude").getAsString(),
+      newShopDetails.get("longitude").getAsString(), 
+      newShopDetails.get("addressLine1").getAsString(), 
+      merchantID
+    );
+    return connection
+    .sendPreparedStatement(Constants.SHOP_INSERT_STATEMENT, queryParams)
+    .thenCompose((queryResult) -> {
       long shopID = ((MySQLQueryResult) queryResult).getLastInsertId();
       newShopDetails.addProperty("shopID", shopID);
       return publishMessage(Long.toString(shopID));
@@ -394,25 +403,30 @@ public class ShopController {
   public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID,
       @RequestBody String shopDetailsString) {
     JsonObject newShopDetails = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-    List<Object> queryParams = Arrays.asList(newShopDetails.get("shopName").getAsString(),
-        newShopDetails.get("typeOfService").getAsString(), newShopDetails.get("latitude").getAsString(),
-        newShopDetails.get("longitude").getAsString(), newShopDetails.get("addressLine1").getAsString(), shopID);
-    return connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
-        .thenCompose((QueryResult queryResult) -> {
-          return publishMessage(Long.toString(shopID));
-        }).exceptionally(e -> {
-          logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
-              Long.toString(shopID)));
-          return "";
-        }).thenApply((publishPromise) -> {
-          newShopDetails.addProperty("shopID", shopID);
-          newShopDetails.addProperty("merchantID", merchantID);
-          return Shop.create(newShopDetails);
-        });
+    List<Object> queryParams = Arrays.asList(
+      newShopDetails.get("shopName").getAsString(),
+      newShopDetails.get("typeOfService").getAsString(), 
+      newShopDetails.get("latitude").getAsString(),
+      newShopDetails.get("longitude").getAsString(), 
+      newShopDetails.get("addressLine1").getAsString(), 
+      shopID
+    );
+    return connection
+    .sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
+    .thenCompose((QueryResult queryResult) -> {
+      return publishMessage(Long.toString(shopID));
+    }).exceptionally(e -> {
+      logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
+          Long.toString(shopID)));
+      return "";
+    }).thenApply((publishPromise) -> {
+      newShopDetails.addProperty("shopID", shopID);
+      newShopDetails.addProperty("merchantID", merchantID);
+      return Shop.create(newShopDetails);
+    });
   }
 
   public CompletableFuture<String> publishMessage(String message) {
     return this.publisher.publish(Constants.PUBSUB_URL, message).completable();
   }
-
 }

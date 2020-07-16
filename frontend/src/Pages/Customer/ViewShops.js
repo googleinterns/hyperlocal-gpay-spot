@@ -23,11 +23,11 @@ class ViewShops extends React.Component {
       searchQuery: "",
       queryRadius: "",
       showModal: true,
-      suggestions: []
+      searchSuggestions: []
     }
   }
 
-  getConfigParams = () => {
+  getSearchConfig = () => {
     let requestParams = {};
     requestParams.latitude = this.props.latitude;
     requestParams.longitude = this.props.longitude;
@@ -52,7 +52,7 @@ class ViewShops extends React.Component {
 
   search = async () => {
     this.setState({ pageLoading: true });
-    const configParams = this.getConfigParams();
+    const configParams = this.getSearchConfig();
     const shopDetailsSnippets = (await axios(configParams)).data;
     let shopDetailsList = [];
 
@@ -65,24 +65,24 @@ class ViewShops extends React.Component {
       searchQuery: "",
       queryRadius: "",
       pageLoading: false,
-      suggestions: []
+      searchSuggestions: []
     })
   }
 
   updateSuggestions = async () => {
-    const configParams = this.getConfigParams();
+    const configParams = this.getSearchConfig();
     const shopDetailsSnippets = (await axios(configParams)).data;
-    let suggestions = [];
+    let searchSuggestions = [];
     shopDetailsSnippets.map(shopSnippet => {
       if (Array.isArray(shopSnippet.matchedPhrases) && shopSnippet.matchedPhrases.length) {
         let suggestion = shopSnippet.matchedPhrases[0].replace('<em>', '').replace('</em>', '');
-        suggestions.push(suggestion);
+        searchSuggestions.push(suggestion);
       }
     });
 
     // To ensure that duplicate suggestions aren't there
-    suggestions = [...new Set(suggestions)]
-    this.setState({ suggestions });
+    searchSuggestions = [...new Set(searchSuggestions)]
+    this.setState({ searchSuggestions });
   }
 
   searchBoxUpdateHandler = (e, updatedSearchBoxValue) => {
@@ -153,7 +153,7 @@ class ViewShops extends React.Component {
                   <Autocomplete
                     freeSolo
                     id="autocomplete"
-                    options={this.state.suggestions}
+                    options={this.state.searchSuggestions}
                     getOptionLabel={(suggestion) => suggestion}
                     renderInput={(params) => <TextField {...params} label="Search Nearby" variant="outlined" size="small" />}
                     onInputChange={this.searchBoxUpdateHandler}
