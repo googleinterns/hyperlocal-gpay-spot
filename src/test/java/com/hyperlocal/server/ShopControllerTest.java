@@ -278,7 +278,7 @@ public class ShopControllerTest {
 
     /* ACT */
 
-    CompletableFuture<List<ShopDetails>> actualShopDetailsPromise = controller.getShopsByShopIDBatch(shopIdList);
+    CompletableFuture<List<ShopDetails>> actualShopDetailsPromise = controller.getShopDetailsListByShopIDBatch(shopIdList);
 
     /* ASSERT */
 

@@ -54,7 +54,6 @@ class ViewShops extends React.Component {
     this.setState({ pageLoading: true });
     const configParams = this.getConfigParams();
     const shopDetailsSnippets = (await axios(configParams)).data;
-    console.log(shopDetailsSnippets);
     let shopDetailsList = [];
 
     shopDetailsSnippets.map((shopDetailsSnippet) => {
@@ -80,8 +79,9 @@ class ViewShops extends React.Component {
         suggestions.push(suggestion);
       }
     });
+
+    // To ensure that duplicate suggestions aren't there
     suggestions = [...new Set(suggestions)]
-    console.log(suggestions);
     this.setState({ suggestions });
   }
 

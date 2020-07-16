@@ -18,7 +18,6 @@ import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.RowData;
 import com.github.jasync.sql.db.mysql.MySQLConnectionBuilder;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -31,20 +30,15 @@ import com.hyperlocal.server.Data.ShopDetails;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.search.MatchQuery;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
 import org.elasticsearch.search.sort.ScoreSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,15 +62,14 @@ public class ShopController {
     this.publisher = pubSubTemplate;
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
-  
+
   // API for performing search and browse queries
-  @CrossOrigin(origins = { "http://localhost:3000", "https://speedy-anthem-217710.an.r.appspot.com",
-  "https://microapps.google.com" })
   @GetMapping("/v1/shops")
   public CompletableFuture<List<SearchSnippet>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
       @RequestParam(value = "queryRadius", required = false, defaultValue = "3km") String queryRadius,
-      @RequestParam String latitude, @RequestParam String longitude) {
+      @RequestParam String latitude, 
+      @RequestParam String longitude) {
 
     List<Long> shopIDList = new ArrayList<Long>();
     HashMap<Long, List<String>> mapShopIDtoHighlight = new HashMap<Long, List<String>>();
@@ -87,7 +80,6 @@ public class ShopController {
     fieldsToSearch.add("typeofservice");
     fieldsToSearch.add("merchantname");
     fieldsToSearch.add("catalogitems");
-    
 
     // GeoDistance query for filtering everything in a radius
     GeoDistanceQueryBuilder filterOnDistance = QueryBuilders.geoDistanceQuery("pin.location")
@@ -96,19 +88,19 @@ public class ShopController {
     // Boolean query to hold conditions of both Matchquery and Geodistance query
     BoolQueryBuilder boolMatchQueryWithDistanceFilter;
 
+    // Build Highlight query to get matched phrases
     HighlightBuilder highLightBuilder = new HighlightBuilder().requireFieldMatch(false);
 
-    for (String fieldName: fieldsToSearch) {
+    // We are spliting the tokens as unigram, bigram, trigram and also indexing their prefixes to ensure both infix and prefix match
+    for (String fieldName : fieldsToSearch) {
       highLightBuilder = highLightBuilder
-        .field(fieldName)
-        .field(String.format("%s._2gram", fieldName))
-        .field(String.format("%s._3gram", fieldName))
-        .field(String.format("%s._index_prefix", fieldName));
+                          .field(fieldName)
+                          .field(String.format("%s._2gram", fieldName))
+                          .field(String.format("%s._3gram", fieldName))
+                          .field(String.format("%s._index_prefix", fieldName));
     }
 
-
     // Create a match query
-
     // default: If no input string provided, browse query (i.e match all)
     // else match on input text
     if (query.equals("")) {
@@ -124,7 +116,7 @@ public class ShopController {
           .filter(filterOnDistance);
     }
 
-    // Create a search request with the Boolean query
+    // Add bool query, geodistance filter, highlighter and sorting to search Request
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(boolMatchQueryWithDistanceFilter);
     searchSourceBuilder.highlighter(highLightBuilder);
@@ -132,16 +124,13 @@ public class ShopController {
     searchSourceBuilder.sort(new ScoreSortBuilder())
         .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
 
-
-    System.out.println(searchSourceBuilder.toString());
-
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
     HttpRequest request = HttpRequest.newBuilder().uri(URI.create(Constants.SEARCH_INDEX_URL))
         .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
         .setHeader("Content-Type", "application/json").build();
 
-    // Send request to search Index asynchronously and parse response to get ShopIDs
+    
     return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
         .thenCompose((responseString) -> {
           // Empty {} is returned by search Index if nothing matches
@@ -151,38 +140,37 @@ public class ShopController {
             for (JsonElement document : documentListJson) {
               Long shopID = document.getAsJsonObject().get("_id").getAsLong();
               shopIDList.add(shopID);
-              // TODO: Rename variables here
+              List<String> matchedPhrases = new ArrayList<String>();
+
+              // Highlights are only present if the query string wasn't empty, empty matchedphrases otherwise
               if (document.getAsJsonObject().has("highlight")) {
                 JsonObject highlightObject = document.getAsJsonObject().get("highlight").getAsJsonObject();
-                List<String> matchedPhrases = new ArrayList<String>();
-
                 for (String highlightKey : highlightObject.keySet()) {
                   JsonArray matchedPhrasesList = highlightObject.get(highlightKey).getAsJsonArray();
                   for (JsonElement phrase : matchedPhrasesList) {
                     matchedPhrases.add(phrase.getAsString());
                   }
                 }
-                mapShopIDtoHighlight.put(shopID, matchedPhrases);
               }
+              mapShopIDtoHighlight.put(shopID, matchedPhrases);
             }
           }
-          // Perform BatchQuery on shopIDs and get List of ShopDetails corresponding to
-          // the shopIDs
-          // If nothing matches then shopIDList is empty
-          return getShopsByShopIDBatch(shopIDList);
+ 
+          return getShopDetailsListByShopIDBatch(shopIDList);
         }).thenApply((shopDetailsList) -> {
+
+          // With shopdetails and matched phrases available, create search snippets
           for (ShopDetails shopDetails : shopDetailsList) {
             Long shopID = shopDetails.shop.shopID();
             SearchSnippet searchSnippet = SearchSnippet.create(shopDetails, mapShopIDtoHighlight.get(shopID));
             searchSnippets.add(searchSnippet);
           }
-          System.out.println(searchSnippets);
           return searchSnippets;
         });
   }
 
   // Return all shops in the given shopID list in the same order
-  public CompletableFuture<List<ShopDetails>> getShopsByShopIDBatch(List<Long> shopIDList) {
+  public CompletableFuture<List<ShopDetails>> getShopDetailsListByShopIDBatch(List<Long> shopIDList) {
 
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
     HashMap<Long, ShopDetails> mapShopIdToShopDetails = new HashMap<Long, ShopDetails>();
@@ -391,7 +379,6 @@ public class ShopController {
       newShopDetails.addProperty("shopID", shopID);
       return publishMessage(Long.toString(shopID));
     }).exceptionally(e -> {
-      // TODO: Handle errors
       return "";
     }).thenApply((publishPromise) -> {
       newShopDetails.addProperty("merchantID", merchantID);
@@ -407,29 +394,21 @@ public class ShopController {
   public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID,
       @RequestBody String shopDetailsString) {
     JsonObject newShopDetails = JsonParser.parseString(shopDetailsString).getAsJsonObject();
-    List<Object> queryParams = Arrays.asList(
-      newShopDetails.get("shopName").getAsString(),
-      newShopDetails.get("typeOfService").getAsString(),
-      newShopDetails.get("latitude").getAsString(),
-      newShopDetails.get("longitude").getAsString(),
-      newShopDetails.get("addressLine1").getAsString(),
-      shopID
-    );
-    return connection
-    .sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
-    .thenCompose((QueryResult queryResult) -> {
-      return publishMessage(Long.toString(shopID));
-    }).exceptionally(e -> {
-      e.printStackTrace();
-      logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
-      Long.toString(shopID)));
-      // TODO: Handle errors
-      return "";
-    }).thenApply((publishPromise) -> {
-      newShopDetails.addProperty("shopID", shopID);
-      newShopDetails.addProperty("merchantID", merchantID);
-      return Shop.create(newShopDetails);
-    });
+    List<Object> queryParams = Arrays.asList(newShopDetails.get("shopName").getAsString(),
+        newShopDetails.get("typeOfService").getAsString(), newShopDetails.get("latitude").getAsString(),
+        newShopDetails.get("longitude").getAsString(), newShopDetails.get("addressLine1").getAsString(), shopID);
+    return connection.sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
+        .thenCompose((QueryResult queryResult) -> {
+          return publishMessage(Long.toString(shopID));
+        }).exceptionally(e -> {
+          logger.error(String.format("ShopID %s: Could not update or publish to PubSub. Exited exceptionally!",
+              Long.toString(shopID)));
+          return "";
+        }).thenApply((publishPromise) -> {
+          newShopDetails.addProperty("shopID", shopID);
+          newShopDetails.addProperty("merchantID", merchantID);
+          return Shop.create(newShopDetails);
+        });
   }
 
   public CompletableFuture<String> publishMessage(String message) {
