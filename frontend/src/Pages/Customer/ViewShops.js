@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import '../../App.css';
 import LocationInput from '../../Components/LocationInput';
 import ROUTES from '../../routes';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 class ViewShops extends React.Component {
 
@@ -12,6 +14,7 @@ class ViewShops extends React.Component {
     super(props);
     this.state = {
       shops: [],
+      pageLoading: true,
       searchQuery: "",
       queryRadius: "",
       showModal: true
@@ -20,70 +23,41 @@ class ViewShops extends React.Component {
 
   search = async () => {
 
-    //Empty query implies browse intent
-    if (this.state.searchQuery === "") {
-      this.updateBrowseResults();
-      return;
+    this.setState({ pageLoading: true });
+
+    let requestParams = {};
+    requestParams.latitude = this.props.latitude;
+    requestParams.longitude = this.props.longitude;
+
+    if (this.state.searchQuery !== "") {
+      requestParams.query = this.state.searchQuery;
     }
 
-    let searchRadius = this.state.queryRadius;
-
-    // Use a default radius if no radius specified
-    if (this.state.queryRadius === "") {
-      searchRadius = "3km";
-    }
-
-    const config = {
-      method: 'get',
-      url: ROUTES.api.get.index.search,
-      headers: {},
-      params: {
-        query: this.state.searchQuery,
-        queryRadius: searchRadius,
-        latitude: this.props.latitude,
-        longitude: this.props.longitude
-      }
-    };
-
-    const shopDetailsList = (await axios(config)).data;
-
-    this.setState({
-      "shops": shopDetailsList
-    })
-  }
-
-  updateBrowseResults = async () => {
-
-    let searchRadius = this.state.queryRadius;
-
-    // Use a default radius if no radius specified
-    if (this.state.queryRadius === "") {
-      searchRadius = "3km";
+    if (this.state.queryRadius !== "") {
+      requestParams.queryRadius = this.state.queryRadius;
     }
 
     const config = {
       method: 'get',
-      url: ROUTES.api.get.index.browse,
+      url: ROUTES.v1.get.index.search,
       headers: {},
-      params: {
-        queryRadius: searchRadius,
-        latitude: this.props.latitude,
-        longitude: this.props.longitude
-      }
+      params: requestParams
     };
-    const shopDetailsList = (await axios(config)).data;
+
+    const axiosResponse = await axios(config);
+    const shopDetailsList = axiosResponse.data;
 
     this.setState({
-      "shops": shopDetailsList
+      "shops": shopDetailsList,
+      searchQuery: "",
+      queryRadius: "",
+      pageLoading: false
     })
+
   }
-  
+
   searchBoxUpdateHandler = (e) => {
-    this.setState({ searchQuery: e.target.value }, () => {
-      if (this.state.searchQuery === "") {
-        this.updateBrowseResults();
-      }
-    })
+    this.setState({ searchQuery: e.target.value });
   }
 
   onHide = () => {
@@ -92,15 +66,44 @@ class ViewShops extends React.Component {
     });
   }
 
+  convertDegreeToRadians = (valueInDegree) => {
+    return Math.PI * valueInDegree / 180.0
+  }
+
+  // Calculate distance to a Shop from user's current coordinates using Haversine formula: https://en.wikipedia.org/wiki/Haversine_formula
+  getDistanceToShop = (shop) => {
+    const EARTH_RADIUS_IN_KM = 6371;
+
+    // latitude and longitude of both points (User's current Coordinates and Shop's coordinates in radian)
+    const firstPointLatitudeInRadians = this.convertDegreeToRadians(shop["shop"]["latitude"]);
+    const firstPointLongitudeInRadians = this.convertDegreeToRadians(shop["shop"]["longitude"]);
+    const secondPointLatitudeInRadians = this.convertDegreeToRadians(this.props.latitude);
+    const secondPointLongitudeInRadians = this.convertDegreeToRadians(this.props.longitude);
+
+    const deltaLatitudeInRadians = Math.abs(secondPointLatitudeInRadians - firstPointLatitudeInRadians);
+    const deltaLongitudeInRadians = Math.abs(secondPointLongitudeInRadians - firstPointLongitudeInRadians);
+
+    // Haversine formula
+    const angleBetweenCoordinatesInRadians = 2 * Math.asin(
+      Math.sqrt(Math.sin(deltaLatitudeInRadians / 2) * Math.sin(deltaLatitudeInRadians / 2)
+        + Math.cos(firstPointLatitudeInRadians) * Math.cos(secondPointLatitudeInRadians)
+        * Math.sin(deltaLongitudeInRadians / 2) * Math.sin(deltaLongitudeInRadians / 2)
+      )
+    );
+
+    // distance = radius * angle subtended
+    return (angleBetweenCoordinatesInRadians * EARTH_RADIUS_IN_KM).toFixed(2);
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
-      this.updateBrowseResults();
+      this.search();
     }
   }
 
   componentDidMount() {
     if (this.props.latitude !== null || (this.props.longitude !== null)) {
-      this.updateBrowseResults();
+      this.search();
     }
   }
 
@@ -111,62 +114,67 @@ class ViewShops extends React.Component {
       );
     } else {
       return (
-        <Container className="mt-1 p-3">
-          <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
-            <Form.Row className="align-items-center">
-              <Col xs={7}>
-                <Form.Control
-                  placeholder="Search Nearby"
-                  autoComplete="off"
-                  onChange={this.searchBoxUpdateHandler}
-                />
-              </Col>
-              <Col xs={3}>
-                <Form.Control
-                  placeholder="3km"
-                  aria-label="distance"
-                  onChange={e => this.setState({ queryRadius: e.target.value })}
-                />
-              </Col>
-              <Col xs={2}>
-                <Button variant="success" onClick={this.search}>
-                  Go
+        this.state.pageLoading
+          ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+          : <Container className="mt-1 p-3">
+            <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
+              <Form.Row className="align-items-center">
+                <Col xs={7}>
+                  <Form.Control
+                    placeholder="Search Nearby"
+                    autoComplete="off"
+                    onChange={this.searchBoxUpdateHandler}
+                  />
+                </Col>
+                <Col xs={3}>
+                  <Form.Control
+                    placeholder="3km"
+                    aria-label="distance"
+                    onChange={e => this.setState({ queryRadius: e.target.value })}
+                  />
+                </Col>
+                <Col xs={2}>
+                  <Button variant="success" onClick={this.search}>
+                    Go
                 </Button>
-              </Col>
-            </Form.Row>
-          </Form>
+                </Col>
+              </Form.Row>
+            </Form>
 
-          <ListGroup variant="flush" className="mt-4">
-            {
-              this.state.shops.map(shop => {
-                return (
-                  <ListGroup.Item key={shop["shop"]["shopID"]}>
-                    <Card className="mb-4" style={{ backgroundColor: "#E3F2FD" }}>
-                      <Card.Body>
-                        <Card.Title>{shop["shop"]["shopName"]}</Card.Title>
-                        <Card.Text>
-                          <b>Sold By: </b>{shop["merchant"]["merchantName"]}
-                          <br />
-                          <b>At: </b>{shop["shop"]["addressLine1"]}
-                          <br />
-                          <b>Reach out at: </b>{shop["merchant"]["merchantPhone"]}
-                        </Card.Text>
-                        <Button variant="info">
-                          <Link
-                            to={{
-                              pathname: ROUTES.customer.catalog + shop["shop"]["shopID"],
-                            }} className="btn btn-info box">
-                            View Catalog
+            <ListGroup variant="flush" className="mt-4">
+              {
+                this.state.shops.map(shop => {
+                  const shopDistanceInKM = this.getDistanceToShop(shop);
+                  return (
+                    <ListGroup.Item key={shop["shop"]["shopID"]}>
+                      <Card className="mb-4" style={{ backgroundColor: "#E3F2FD" }}>
+                        <Card.Body>
+                          <Card.Title>{shop["shop"]["shopName"]}</Card.Title>
+                          <Card.Text>
+                            <i><b>{shopDistanceInKM} km away</b></i>
+                            <br />
+                            <b>Sold By: </b>{shop["merchant"]["merchantName"]}
+                            <br />
+                            <b>At: </b>{shop["shop"]["addressLine1"]}
+                            <br />
+                            <b>Reach out at: </b>{shop["merchant"]["merchantPhone"]}
+                          </Card.Text>
+                          <Button variant="info">
+                            <Link
+                              to={{
+                                pathname: ROUTES.customer.catalog.replace(':shopid', shop["shop"]["shopID"]),
+                              }} className="btn btn-info box">
+                              View Catalog
                           </Link>
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </ListGroup.Item>
-                )
-              })
-            }
-          </ListGroup>
-        </Container>
+                          </Button>
+                        </Card.Body>
+                      </Card>
+                    </ListGroup.Item>
+                  )
+                })
+              }
+            </ListGroup>
+          </Container>
       );
     }
   }

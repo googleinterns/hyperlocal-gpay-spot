@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import {Container} from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import ROUTES from '../../../routes';
@@ -14,23 +14,20 @@ class ShopDetails extends React.Component {
     };
   }
 
-  componentDidUpdate(prevProps) {
-    if(this.props.user.shop && !prevProps.user.shop) {
-      this.props.history.push(ROUTES.merchant.onboarding.catalog);
-    }
-  }
-
   setShopDetails = (shop) => {
     this.setState({pageLoading: true});
-    axios.post(ROUTES.v1.post.insertShop.replace(":merchantID", this.props.user.ID), {
+    axios.put(ROUTES.v1.put.updateShop.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
       shopName: shop.shopName,
       typeOfService: shop.typeOfService,
       addressLine1: shop.addressLine1,
       latitude: shop.latitude,
-      longitude: shop.longitude
+      longitude: shop.longitude      
     })
     .then(resp => {
-      if("shopID" in resp.data) this.props.setShop(resp.data);
+      if("shopID" in resp.data) {
+        this.props.setShop(resp.data);
+        return this.props.history.push(ROUTES.merchant.dashboard);
+      }
       else throw new Error(resp.data.error);
     })
     .catch(ex => {
@@ -42,11 +39,11 @@ class ShopDetails extends React.Component {
   render() {
     return (
         <Container>
-          <h3 className="h3 my-5">Seller Onboarding</h3>
+          <h3 className="h3 my-5">Seller Details</h3>
           {
               this.state.pageLoading 
-              ?   <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
-              :   <ShopDetailsInput submit="Proceed" setShopDetails={this.setShopDetails} />
+              ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
+              : <ShopDetailsInput value={this.props.user.shop} setShopDetails={this.setShopDetails} />
           }
         </Container>
     );

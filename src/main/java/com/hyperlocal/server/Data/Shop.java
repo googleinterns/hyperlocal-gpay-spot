@@ -1,69 +1,71 @@
 package com.hyperlocal.server.Data;
 
-import com.hyperlocal.server.Utilities;
-import com.github.jasync.sql.db.RowData;
-import com.google.gson.JsonObject;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
-public class Shop {
-    public Long shopID;
-    public String merchantID;
-    public String shopName, addressLine1, typeOfService;
-    public Double latitude, longitude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.jasync.sql.db.RowData;
+import com.google.auto.value.AutoValue;
+import com.google.gson.JsonObject;
+
+@AutoValue
+public abstract class Shop implements Serializable{
+
+    @JsonProperty public abstract Long shopID();
+    @JsonProperty public abstract String merchantID();
+    @JsonProperty public abstract String shopName();
+    @JsonProperty public abstract String addressLine1();
+    @JsonProperty public abstract String typeOfService();
+    @JsonProperty public abstract Double latitude();
+    @JsonProperty public abstract Double longitude();
     
-    public Shop() {
-      this.shopID = 1L;
-      this.merchantID = "1";
-      this.shopName = "Test";
-      this.addressLine1 = "TEST";
-      this.typeOfService = "TEST";
-      this.latitude = 32.32;
-      this.longitude = 32.32;
+    public static Shop create() {
+      return new AutoValue_Shop(
+/* shopID = */          0L,
+/* merchantID = */      "1",
+/* shopName = */        "",
+/* addressLine1 = */    "",
+/* typeOfService = */   "",
+/* latitude = */        0.00,
+/* longitude = */       0.00
+      );
     }
 
-    public Shop(Long shopID, String merchantID, String shopName, Double latitude, Double longitude, String addressLine1, String typeOfService)
+    public static Shop create(Long shopID, String merchantID, String shopName, Double latitude, Double longitude, String addressLine1, String typeOfService)
     {
-        this.shopID = shopID;
-        this.merchantID = merchantID;
-        this.shopName = shopName;
-        this.addressLine1 = addressLine1;
-        this.typeOfService = typeOfService;
-        this.latitude = latitude;
-        this.longitude = longitude;
+      return new AutoValue_Shop(
+        shopID,
+        merchantID,
+        shopName,
+        addressLine1,
+        typeOfService,
+        latitude,
+        longitude
+      );
     }
 
-    public Shop(RowData data)
+    public static Shop create(RowData data)
     {
-        this.shopID = (Long)data.get("ShopID");
-        this.merchantID = (String)data.get("MerchantID");
-        this.shopName = (String)data.get("ShopName");
-        this.latitude = ((BigDecimal)data.get("Latitude")).doubleValue();
-        this.longitude = ((BigDecimal)data.get("Longitude")).doubleValue();
-        this.addressLine1 = (String)data.get("AddressLine1");
-        this.typeOfService = (String)data.get("TypeOfService");
+      return new AutoValue_Shop(
+        (Long)data.get("ShopID"),
+        (String)data.get("MerchantID"),
+        (String)data.get("ShopName"),        
+        (String)data.get("AddressLine1"),
+        (String)data.get("TypeOfService"),
+        ((BigDecimal)data.get("Latitude")).doubleValue(),
+        ((BigDecimal)data.get("Longitude")).doubleValue()
+      );
     }
 
-    public Shop(JsonObject data) {
-      this.shopID = data.get("shopID").getAsLong();
-      this.merchantID = data.get("merchantID").getAsString();
-      this.shopName = data.get("shopName").getAsString();
-      this.addressLine1 = data.get("addressLine1").getAsString();
-      this.typeOfService = data.get("typeOfService").getAsString();
-      this.latitude = data.get("latitude").getAsDouble();
-      this.longitude = data.get("longitude").getAsDouble();
+    public static Shop create(JsonObject data) {
+      return new AutoValue_Shop(
+        data.get("shopID").getAsLong(),
+        data.get("merchantID").getAsString(),
+        data.get("shopName").getAsString(),
+        data.get("addressLine1").getAsString(),
+        data.get("typeOfService").getAsString(),
+        data.get("latitude").getAsDouble(),
+        data.get("longitude").getAsDouble()
+      );
     }
-
-    public boolean equals(Object obj)
-    {
-      if(obj == null || !(obj instanceof Shop)) return false;
-      Shop shopObj = (Shop) obj;
-      return this.shopID.equals(shopObj.shopID) &&
-             this.merchantID.equals(shopObj.merchantID) &&
-             this.shopName.equals(shopObj.shopName) &&
-             this.addressLine1.equals(shopObj.addressLine1) &&
-             this.typeOfService.equals(shopObj.typeOfService) &&
-             Utilities.doubleThresholdCompare(this.latitude, shopObj.latitude, 0.0000001) &&
-             Utilities.doubleThresholdCompare(this.longitude, shopObj.longitude, 0.0000001);
-    }
-
 }

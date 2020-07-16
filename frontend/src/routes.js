@@ -10,17 +10,21 @@ const ROUTES = {
             'catalog': '/onboarding/catalog'
         }
     },
-    'api': {
-        'get':{
-            'shopsByMerchantID': base+'/api/merchant/%b/shops',
+    'v1': {
+        'get': {
+            'shopsByMerchantID': base + '/v1/merchants/%b/shops',
             'index': {
-              'search': base+'/api/query/elastic',
-              'browse': base+'/api/browse/elastic'
+              'search': base + '/v1/shops/'
             },
-            'shopByShopID': base + 'api/shop/%b'
+            'shopByShopID': base + '/v1/shops/%b'
         },
-        'post':{
-            'insertMerchant': base+'/api/insert/merchant'
+        'post': {
+            'insertMerchant': base + '/v1/merchants',
+            'insertShop': base + '/v1/merchants/:merchantID/shops',
+            'updateCatalog': base + '/v1/shops/:shopID/catalog:batchUpdate'
+        },
+        'put': {
+            'updateShop': base + '/v1/merchants/:merchantID/shops/:shopID'
         }
     },
     'customer': {

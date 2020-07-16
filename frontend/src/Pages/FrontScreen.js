@@ -13,11 +13,12 @@ class FrontScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      pageLoading: true
+      pageLoading: true,
     }
   }
 
   componentDidMount() {
+    if(this.props.user.auth) this.setState({pageLoading: false});
     this.authenticate();
   }
 
@@ -27,14 +28,14 @@ class FrontScreen extends React.Component {
     }
   }
 
-  authenticate() {
+  authenticate = async() => {
     const microapps = window.microapps;
     const request = { nonce: 'nonce typically generated server-side' };
     microapps.getIdentity(request).then(response => {
       /* response: Concatenation of '.' separated base64 encoded JSON strings,
        * of which string at index 1 (0-based indexing) is the user identity.
        *
-       * Line 29: Decoding the base64 string at index 1 and parsing it as JSON
+       * Line below: Decoding the base64 string at index 1 and parsing it as JSON
        */
       const decoded = JSON.parse(atob(response.split('.')[1])); 
       console.log('GetIdentity response: ', decoded);
@@ -46,10 +47,10 @@ class FrontScreen extends React.Component {
 
   setAsMerchant = async () => {
     this.setState({pageLoading: true});
-    let merchantShops = await axios.get(ROUTES.api.get.shopsByMerchantID.replace('%b', this.props.user.ID));
+    let merchantShops = await axios.get(ROUTES.v1.get.shopsByMerchantID.replace('%b', this.props.user.ID));
     if(!merchantShops.data[0])
     {
-        await axios.post(ROUTES.api.post.insertMerchant, {
+        await axios.post(ROUTES.v1.post.insertMerchant, {
             merchantID: this.props.user.ID,
             merchantName: this.props.user.name,
             merchantPhone: "0123456789" // TODO: Implement Phone Number API

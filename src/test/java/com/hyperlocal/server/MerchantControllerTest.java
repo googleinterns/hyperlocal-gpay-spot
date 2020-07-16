@@ -1,13 +1,12 @@
 package com.hyperlocal.server;
 
-import com.hyperlocal.server.Data.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.github.jasync.sql.db.Connection;
@@ -15,7 +14,7 @@ import com.github.jasync.sql.db.QueryResult;
 import com.github.jasync.sql.db.ResultSet;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.hyperlocal.server.Data.Merchant;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,11 +24,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 public class MerchantControllerTest {
 
-  Merchant merchant = new Merchant("4", "Test Merchant", "7867986767");
-  private final String MERCHANT_DATA_AS_STRING = new Gson().toJson(merchant);
-  private JsonObject merchantJson = JsonParser.parseString(MERCHANT_DATA_AS_STRING).getAsJsonObject();
-  private static final String MERCHANT_UPDATE_STATEMENT = "UPDATE `Merchants` SET `MerchantName` = ?, `MerchantPhone` = ? WHERE `MerchantID`= ?;";
-  private static final String MERCHANT_INSERT_STATEMENT = "INSERT into `Merchants` (`MerchantID`, `MerchantName`, `MerchantPhone`) values (?,?,?);";
+  String merchantID = "4";
+  String merchantName = "Test Merchant";
+  String merchantPhone = "+91 7867986767";
+  private final Merchant merchant = Merchant.create(merchantID, merchantName, merchantPhone);
 
   @Mock
   Connection connection;
@@ -42,33 +40,42 @@ public class MerchantControllerTest {
 
   @Test
   public void shouldInsertMerchant() throws Exception {
+    // ARRANGE
     assertThat(controller).isNotNull();
-    assertThat(merchantJson).isNotNull();
-
-    String InsertQueryParameters[] = new String[] { "4", "Test Merchant", "7867986767" };
+    List<Object> queryParams = Arrays.asList(merchantID, merchantName, merchantPhone);
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
-
-    when(connection.sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, queryParams))
         .thenReturn(queryResult);
-    CompletableFuture<QueryResult> result = controller.insertNewMerchant(merchantJson);
-    assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(MERCHANT_INSERT_STATEMENT, Arrays.asList(InsertQueryParameters));
+    Merchant expectedOutput = merchant;
+
+    // ACT
+    Merchant actualOutput = controller.insertMerchant(new Gson().toJson(merchant)).get();
+    
+    // ASSERT
+    assertEquals(expectedOutput, actualOutput);
+    verify(connection).sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, queryParams);
   }
 
   @Test
   public void shouldUpdateMerchant() throws Exception {
+    // ARRANGE
     assertThat(controller).isNotNull();
-    assertThat(merchantJson).isNotNull();
-
-    String updateQueryParameters[] = new String[] { "Test Merchant", "7867986767", "4" };
+    List<Object> queryParams = Arrays.asList(merchantName, merchantPhone, merchantID);
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
-
-    when(connection.sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters)))
+    when(connection.sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, queryParams))
         .thenReturn(queryResult);
-    CompletableFuture<QueryResult> result = controller.updateMerchantDetails(merchantJson);
-    assertEquals(queryResult.get(), result.get());
-    verify(connection).sendPreparedStatement(MERCHANT_UPDATE_STATEMENT, Arrays.asList(updateQueryParameters));
+    JsonObject newMerchantDetails = new JsonObject();
+    newMerchantDetails.addProperty("merchantName", merchantName);
+    newMerchantDetails.addProperty("merchantPhone", merchantPhone);
+    Merchant expectedOutput = merchant;
+    
+    // ACT
+    Merchant actualOutput = controller.updateMerchant(merchantID, new Gson().toJson(newMerchantDetails)).get();
+    
+    // ASSERT
+    assertEquals(expectedOutput, actualOutput);
+    verify(connection).sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, queryParams);
   }
 }
