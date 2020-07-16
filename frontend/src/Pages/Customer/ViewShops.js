@@ -75,6 +75,7 @@ class ViewShops extends React.Component {
     let searchSuggestions = [];
     shopDetailsSnippets.map(shopSnippet => {
       if (Array.isArray(shopSnippet.matchedPhrases) && shopSnippet.matchedPhrases.length) {
+        // Search Index wraps the matched words in <em> tags by default, removing the tags here
         let suggestion = shopSnippet.matchedPhrases[0].replace('<em>', '').replace('</em>', '');
         searchSuggestions.push(suggestion);
       }
