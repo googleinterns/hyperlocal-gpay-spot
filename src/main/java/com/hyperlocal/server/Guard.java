@@ -1,5 +1,6 @@
 package com.hyperlocal.server;
 
+import com.google.gson.JsonParser;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import javax.servlet.http.HttpServletRequest;
@@ -9,11 +10,22 @@ public class Guard {
     public boolean hasValidIdToken(HttpServletRequest request, String suppliedMerchantID) {
         String encodedIdToken = request.getHeader("X-Authorization");
         if(encodedIdToken == null) return false;
-
-        String idToken = Utilities.verifyAndDecodeIdJwt(encodedIdToken);
+        
+        String idToken = null;
+        try
+        {
+            idToken = Utilities.verifyAndDecodeIdJwt(encodedIdToken).get();
+        }
+        catch(Exception e)
+        {
+            // idToken remains set to null: access defined.
+        }
         if(idToken == null) return false;
 
-        String actualMerchantID = JsonParser.parseString(idToken).getAsJsonObject().get("sub").getAsString();
+        JsonObject idTokenObject = JsonParser.parseString(idToken).getAsJsonObject();
+        if(!idTokenObject.has("sub")) return false;
+
+        String actualMerchantID = idTokenObject.get("sub").getAsString();
         if(actualMerchantID.equals(suppliedMerchantID)) return true;
         else return false;
     }
