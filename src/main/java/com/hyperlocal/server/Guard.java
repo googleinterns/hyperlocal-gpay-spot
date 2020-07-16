@@ -1,6 +1,7 @@
 package com.hyperlocal.server;
 
 import com.google.gson.JsonParser;
+import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import javax.servlet.http.HttpServletRequest;
