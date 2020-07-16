@@ -51,7 +51,7 @@ public class Utilities {
     }
 
     public static CompletableFuture<String> verifyAndDecodeIdJwt(String token) {
-      return this.getResponseBody(IDENTITY_API_JWKS_URL)
+      return getResponseBody(IDENTITY_API_JWKS_URL)
           .thenApply((jsonWebKeySetString) -> {
               try {
                   // Set token and algorithm
