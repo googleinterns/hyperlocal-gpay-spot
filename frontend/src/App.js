@@ -9,9 +9,12 @@ import ViewShops from './Pages/Customer/ViewShops';
 import BuyerCatalog from './Pages/Customer/BuyerCatalog';
 
 // Merchant Pages
-import ShopDetails from './Pages/Merchant/Onboarding/ShopDetails';
-import Catalog from './Pages/Merchant/Onboarding/Catalog';
+import OnboardingShopDetails from './Pages/Merchant/Onboarding/ShopDetails';
+import OnboardingCatalog from './Pages/Merchant/Onboarding/Catalog';
 import MyDashboard from './Pages/Merchant/My/Dashboard';
+import MyShopDetails from './Pages/Merchant/My/ShopDetails';
+import MyCatalog from './Pages/Merchant/My/Catalog';
+
 
 class App extends React.Component {
   constructor(props) {
@@ -68,10 +71,12 @@ class App extends React.Component {
               <ViewShops setLocation={this.setLocation} latitude={this.state.latitude} longitude={this.state.longitude} />
             </Route>
             <Route path={ROUTES.customer.catalog} component={BuyerCatalog} />
-            <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <ShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
-            <Route path={ROUTES.merchant.onboarding.catalog} render={(props) => <Catalog {...props} user={this.state.user} />} />
+            <Route path={ROUTES.merchant.onboarding.shopInfo} render={(props) => <OnboardingShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
+            <Route path={ROUTES.merchant.onboarding.catalog} render={(props) => <OnboardingCatalog {...props} user={this.state.user} />} />
             <Route path={ROUTES.merchant.dashboard} render={(props) => <MyDashboard {...props} user={this.state.user} />} />
-          </Switch>
+            <Route path={ROUTES.merchant.shopInfo} render={(props) => <MyShopDetails {...props} setShop={this.setShop} user={this.state.user} />} />
+            <Route path={ROUTES.merchant.catalog} render={(props) => <MyCatalog {...props} user={this.state.user} />} />
+         </Switch>
         </Router>
       </>
     );

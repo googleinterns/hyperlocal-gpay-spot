@@ -11,16 +11,20 @@ const ROUTES = {
         }
     },
     'v1': {
-        'get':{
+        'get': {
             'shopsByMerchantID': base + '/v1/merchants/%b/shops',
             'index': {
               'search': base + '/v1/shops/'
             },
             'shopByShopID': base + '/v1/shops/%b'
         },
-        'post':{
+        'post': {
             'insertMerchant': base + '/v1/merchants',
-            'insertShop': base + '/v1/merchants/:merchantID/shops'
+            'insertShop': base + '/v1/merchants/:merchantID/shops',
+            'updateCatalog': base + '/v1/shops/:shopID/catalog:batchUpdate'
+        },
+        'put': {
+            'updateShop': base + '/v1/merchants/:merchantID/shops/:shopID'
         }
     },
     'customer': {
