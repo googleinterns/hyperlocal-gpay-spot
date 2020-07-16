@@ -49,6 +49,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+
 @RestController
 public class ShopController {
 
@@ -63,7 +64,14 @@ public class ShopController {
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
 
-  // API for performing search and browse queries
+  /**
+   * Search Endpoint which returns list of Search Snippets
+   * @param query The search query string
+   * @param queryRadius The geographical radius to search in with default 3km
+   * @param latitude The latitude to measure queryRadius from
+   * @param longitude The longitude to measure queryRadius from
+   * @return CompletableFuture of List of Search Snippets matching the search criteria
+   */
   @GetMapping("/v1/shops")
   public CompletableFuture<List<SearchSnippet>> getDataFromSearchIndex(
       @RequestParam(value = "query", required = false, defaultValue = "") String query,
@@ -132,7 +140,8 @@ public class ShopController {
         .setHeader("Content-Type", "application/json").build();
 
     
-    return client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
+    return client.sendAsync(request, BodyHandlers.ofString())
+      .thenApply(HttpResponse::body)
         .thenCompose((responseString) -> {
           // Empty {} is returned by search Index if nothing matches
           if (!responseString.equals("{}")) {
@@ -170,7 +179,11 @@ public class ShopController {
         });
   }
 
-  // Return all shops in the given shopID list in the same order
+  /**
+   * Return a list of {@link ShopDetails} objects  
+   * @param shopIDList List of shopIDs to get ShopDetails of
+   * @return CompletableFuture of list of ShopDetails
+   */
   public CompletableFuture<List<ShopDetails>> getShopDetailsListByShopIDBatch(List<Long> shopIDList) {
 
     HashMap<String, Merchant> mapMerchantIdToMerchant = new HashMap<String, Merchant>();
@@ -246,7 +259,11 @@ public class ShopController {
       });
   }
 
-  // Fetch all shops by merchantID
+  /**
+   * Return the list of Shops owned by a Merchant
+   * @param merchantID Unique ID of the merchant (SUB)
+   * @return CompletableFuture of List of Shops owned by the Merchant
+   */
   @GetMapping("/v1/merchants/{merchantID}/shops")
   public CompletableFuture<List<Shop>> getShopsByMerchantID(@PathVariable String merchantID) {
     List<Shop> shopsList = new ArrayList<Shop>();
@@ -268,7 +285,10 @@ public class ShopController {
     return shopsPromise;
   }
 
-  // Fetch catalog, shop & merchant details by shopID.
+  /** Fetch catalog, shop & merchant details by shopID 
+   * @param shopID The Unique ID of the shop 
+   * @return CompletableFuture of ShopDetails of the Shop
+  */
   @GetMapping("/v1/shops/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
@@ -306,6 +326,13 @@ public class ShopController {
     return shopDetailsPromise;
   }
 
+  /**
+   * Update the catalog for a shop
+   * @param shopID The Unique ID of the Shop
+   * @param updatePayload JSON Payload containing Data to update
+   * @return {@code HashMap<"success",true>} if upsert is successful throws exception otherwise
+   * @throws ResponseStatusException
+   */
   @PostMapping("/v1/shops/{shopID}/catalog:batchUpdate")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID,
       @RequestBody String updatePayload) {
@@ -365,8 +392,13 @@ public class ShopController {
 
   }
 
-  /*
-   * Route to handle shop upserts for a merchant Returns: Inserted Shop Instance
+  /**
+   * Upsert Shops for a merchant
+   * @param merchantID Unique ID of the merchant
+   * @param shopDetailsString JSON string containtaing {@link Shop} information
+   * @return CompletableFuture of the upserted Shop
+   * @throws InterruptedException
+   * @throws ExecutionException
    */
 
   @PostMapping("/v1/merchants/{merchantID}/shops")
@@ -395,10 +427,14 @@ public class ShopController {
     });
   }
 
-  /*
-   * Expects: All shop details (including the ShopID of the shop to be Updated)
-   */
 
+  /**
+   * 
+   * @param merchantID The Unique ID of the merchant
+   * @param shopID The Unique ID of the Shop
+   * @param shopDetailsString JSON serialized {@link Shop} object of updated Shop
+   * @return Updated shop as CompletableFuture
+   */
   @PutMapping("/v1/merchants/{merchantID}/shops/{shopID}")
   public CompletableFuture<Shop> updateShop(@PathVariable String merchantID, @PathVariable Long shopID,
       @RequestBody String shopDetailsString) {
@@ -426,6 +462,11 @@ public class ShopController {
     });
   }
 
+  /**
+   * 
+   * @param message The message to be pushed to Pub Sub
+   * @return The CompletableFuture of the call
+   */
   public CompletableFuture<String> publishMessage(String message) {
     return this.publisher.publish(Constants.PUBSUB_URL, message).completable();
   }

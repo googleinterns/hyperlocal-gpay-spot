@@ -6,6 +6,12 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 
+/**
+ * Wrapper class for Search Result
+ * @author Diksha, Onish
+ * @version 1.0
+ * @since 1.0
+ */
 @AutoValue
 public abstract class SearchSnippet implements Serializable {
   @JsonProperty public abstract ShopDetails shopDetails();
