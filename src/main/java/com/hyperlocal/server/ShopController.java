@@ -252,7 +252,7 @@ public class ShopController {
     return shopDetailsPromise;
   }
 
-  @PostMapping("/v1/shops/{shopID}/catalog:batchUpdate")
+  @PostMapping("/v1/merchants/{merchantID}/shops/{shopID}/catalog:batchUpdate")
   public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID,
       @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
