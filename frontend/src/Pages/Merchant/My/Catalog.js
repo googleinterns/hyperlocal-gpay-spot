@@ -45,8 +45,8 @@ class Catalog extends React.Component {
     if(!itemsToCreate.length && !itemsToUpdate.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
 
     axios.post(ROUTES.v1.post.updateCatalog.replace(":shopID", this.props.user.shop.shopID), {
-      add: itemsToCreate,
-      edit: itemsToUpdate,
+      create: itemsToCreate,
+      update: itemsToUpdate,
       delete: itemsToDelete
     })
     .then(resp => {
