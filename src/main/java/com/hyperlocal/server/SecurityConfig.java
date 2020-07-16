@@ -6,6 +6,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import javax.servlet.Filter;
+import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
+import org.springframework.security.web.header.writers.frameoptions.StaticAllowFromStrategy;
+import java.util.Arrays;
+import java.net.URI;
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +23,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .access("@guard.hasValidIdToken(request,#merchantID)")
         .and()
         .sessionManagement()
-        .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and()
+        .headers().frameOptions().disable()
+        .addHeaderWriter(new XFrameOptionsHeaderWriter(new StaticAllowFromStrategy(new URI("microapps.google.com"))));
     }        
 }
