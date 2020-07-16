@@ -1,5 +1,10 @@
 package com.hyperlocal.server;
 
+/**
+ * @author: Diksha, Onish
+ * @version: 1.0
+ * @since: 1.0
+ */
 public final class Constants {
 
   /* The IP Addresses here is the Internal IP addresses of CloudSQL instance 
