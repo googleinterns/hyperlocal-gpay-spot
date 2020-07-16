@@ -11,18 +11,18 @@ class AuthHTTP {
     }
     
     static async get(url) {
-        const idToken = await windows.microapps.getIdentity();
-        return axios.get(url, getHeaderConfig({ idToken }));
+        const idToken = await window.microapps.getIdentity();
+        return axios.get(url, AuthHTTP.getHeaderConfig({ idToken }));
     }
     
     static async post(url, data) {
-        const idToken = await windows.microapps.getIdentity();
-        return axios.post(url, data, getHeaderConfig({ idToken }));
+        const idToken = await window.microapps.getIdentity();
+        return axios.post(url, data, AuthHTTP.getHeaderConfig({ idToken }));
     }
 
     static async put(url, data) {
-        const idToken = await windows.microapps.getIdentity();
-        return axios.put(url, data, getHeaderConfig({ idToken }));
+        const idToken = await window.microapps.getIdentity();
+        return axios.put(url, data, AuthHTTP.getHeaderConfig({ idToken }));
     }
 
 }
