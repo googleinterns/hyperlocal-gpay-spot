@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+
+// Helper class to make HTTP requests with X-Authorization header
+
 class AuthHTTP {
 
     static getHeaderConfig({idToken}) {
