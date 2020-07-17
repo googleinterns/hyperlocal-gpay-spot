@@ -19,7 +19,7 @@ public class Guard {
         }
         catch(Exception e)
         {
-            // idToken remains set to null: access defined.
+            // idToken remains set to null: access denied.
         }
         if(idToken == null) return false;
 
