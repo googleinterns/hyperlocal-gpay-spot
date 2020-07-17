@@ -177,33 +177,32 @@ public class ShopControllerTest {
 
     QueryResult emptyQueryResult = new QueryResult(1L, "Success", resultSet);
 
-    HashMap<String, Object> expectedMap = new HashMap<String, Object>();
-    expectedMap.put("success", true);
-
     when(connection.sendQuery("BEGIN"))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList))
+    when(connection.sendPreparedStatement(String.format(Constants.INSERT_CATALOG_STATEMENT, Constants.INSERT_CATALOG_PLACEHOLDER), createList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
+    when(connection.sendPreparedStatement(String.format(Constants.DELETE_CATALOG_STATEMENT, "?"), Arrays.asList(deleteServiceID)))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendQuery("COMMIT")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(template.publish(Constants.PUBSUB_URL, "1000000000000"))
         .thenReturn(new AsyncResult<>("DONE"));
 
+    HashMap<String, Object> expectedMap = new HashMap<String, Object>();
+    expectedMap.put("success", true);
+
     /* ACT */
-    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(merchantID, shopID,
-        new Gson().toJson(payload));
+    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(merchantID, shopID, new Gson().toJson(payload));
 
     /* ASSERT */
     assertEquals(expectedMap, actualMapPromise.get());
     verify(connection).sendQuery("BEGIN");
-    verify(connection).sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList);
+    verify(connection).sendPreparedStatement(String.format(Constants.INSERT_CATALOG_STATEMENT, Constants.INSERT_CATALOG_PLACEHOLDER), createList);
     verify(connection).sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList);
-    verify(connection).sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
-    verify(connection).sendQuery("COMMIT");
+    verify(connection).sendPreparedStatement(String.format(Constants.DELETE_CATALOG_STATEMENT, "?"), Arrays.asList(deleteServiceID));
     verify(template).publish(Constants.PUBSUB_URL, "1000000000000");
+    verify(connection).sendQuery("COMMIT");
   }
 
   @Test
