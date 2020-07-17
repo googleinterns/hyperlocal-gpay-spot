@@ -7,6 +7,11 @@ import LocationInput from '../../Components/LocationInput';
 import ROUTES from '../../routes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import TextField from '@material-ui/core/TextField';
+import parse from 'autosuggest-highlight/parse';
+import match from 'autosuggest-highlight/match';
+
 
 class ViewShops extends React.Component {
 
@@ -17,14 +22,12 @@ class ViewShops extends React.Component {
       pageLoading: true,
       searchQuery: "",
       queryRadius: "",
-      showModal: true
+      showModal: true,
+      searchSuggestions: []
     }
   }
 
-  search = async () => {
-
-    this.setState({ pageLoading: true });
-
+  getSearchConfig = () => {
     let requestParams = {};
     requestParams.latitude = this.props.latitude;
     requestParams.longitude = this.props.longitude;
@@ -44,20 +47,48 @@ class ViewShops extends React.Component {
       params: requestParams
     };
 
-    const axiosResponse = await axios(config);
-    const shopDetailsList = axiosResponse.data;
+    return config;
+  }
+
+  search = async () => {
+    this.setState({ pageLoading: true });
+    const configParams = this.getSearchConfig();
+    const shopDetailsSnippets = (await axios(configParams)).data;
+    let shopDetailsList = [];
+
+    shopDetailsSnippets.map((shopDetailsSnippet) => {
+      shopDetailsList.push(shopDetailsSnippet.shopDetails);
+    });
 
     this.setState({
       "shops": shopDetailsList,
       searchQuery: "",
       queryRadius: "",
-      pageLoading: false
+      pageLoading: false,
+      searchSuggestions: []
     })
-
   }
 
-  searchBoxUpdateHandler = (e) => {
-    this.setState({ searchQuery: e.target.value });
+  updateSuggestions = async () => {
+    const configParams = this.getSearchConfig();
+    const shopDetailsSnippets = (await axios(configParams)).data;
+    let searchSuggestions = [];
+    shopDetailsSnippets.map(shopSnippet => {
+      if (Array.isArray(shopSnippet.matchedPhrases) && shopSnippet.matchedPhrases.length) {
+        // Search Index wraps the matched words in <em> tags by default, removing the tags here
+        let suggestion = shopSnippet.matchedPhrases[0].replace('<em>', '').replace('</em>', '');
+        searchSuggestions.push(suggestion);
+      }
+    });
+
+    // To ensure that duplicate suggestions aren't there
+    searchSuggestions = [...new Set(searchSuggestions)]
+    this.setState({ searchSuggestions });
+  }
+
+  searchBoxUpdateHandler = (e, updatedSearchBoxValue) => {
+    this.setState({ searchQuery: updatedSearchBoxValue });
+    this.updateSuggestions();
   }
 
   onHide = () => {
@@ -120,10 +151,27 @@ class ViewShops extends React.Component {
             <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
               <Form.Row className="align-items-center">
                 <Col xs={7}>
-                  <Form.Control
-                    placeholder="Search Nearby"
-                    autoComplete="off"
-                    onChange={this.searchBoxUpdateHandler}
+                  <Autocomplete
+                    freeSolo
+                    id="autocomplete"
+                    options={this.state.searchSuggestions}
+                    getOptionLabel={(suggestion) => suggestion}
+                    renderInput={(params) => <TextField {...params} label="Search Nearby" variant="outlined" size="small" />}
+                    onInputChange={this.searchBoxUpdateHandler}
+                    onChange={this.search}
+                    renderOption={(suggestion, { inputValue }) => {
+                      const matches = match(suggestion, inputValue);
+                      const parts = parse(suggestion, matches);
+                      return (
+                        <div>
+                          {parts.map((part, index) => (
+                            <span key={index} style={{ fontWeight: part.highlight ? 700 : 400 }}>
+                              {part.text}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    }}
                   />
                 </Col>
                 <Col xs={3}>
