@@ -130,7 +130,7 @@ public class ShopController {
       .sort(new ScoreSortBuilder())
       .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
 
-    return util.getResponseBody(searchSourceBuilder.toString())
+    return util.getResponseBody(Constants.SEARCH_INDEX_URL, searchSourceBuilder.toString())
         .thenCompose((responseString) -> {
           // Empty {} is returned by search Index if nothing matches
           if (!responseString.equals("{}")) {

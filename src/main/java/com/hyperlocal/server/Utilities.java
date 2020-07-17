@@ -3,6 +3,7 @@ package com.hyperlocal.server;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
@@ -55,12 +56,16 @@ public class Utilities {
    * @param URL: The URL to make a a get request too
    * @return the completableFuture of the response String
    */
-  public CompletableFuture<String> getResponseBody(String URL) {
+  public CompletableFuture<String> getResponseBody(String URL, String requestBody) {
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(Constants.SEARCH_INDEX_URL))
-        .method("GET", HttpRequest.BodyPublishers.ofString(URL))
-        .setHeader("Content-Type", "application/json").build();
+    Builder requestBuilder = HttpRequest.newBuilder().uri(URI.create(URL));
+    if(requestBody != null) {
+      requestBuilder = requestBuilder
+        .method("GET", HttpRequest.BodyPublishers.ofString(requestBody))
+        .setHeader("Content-Type", "application/json");
+    }
+    HttpRequest request = requestBuilder.build();
     return client.sendAsync(request, BodyHandlers.ofString())
       .thenApply(HttpResponse::body);
   }
