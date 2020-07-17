@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 public class Utilities {
 
   /**
+   * Generate a HashMap for error object
    * @param msg The error message
    * @return HashMap of {@code<"error", "message">}, {@code <"success", false>}
    */
@@ -23,7 +24,6 @@ public class Utilities {
 
   /**
    * Compare if two doubles are in threshold range of each other
-   * 
    * @param numA      the first double
    * @param numB      the second double
    * @param threshold the threshold difference for equality
@@ -36,7 +36,6 @@ public class Utilities {
 
   /**
    * Create a (?,?,?....?) placeholder for SQL prepared statements
-   * 
    * @param numOfPlaceholders the number of {@code ?} required in placeholder
    * @return Comma separated string of {@code ?}s
    */

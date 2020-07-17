@@ -1,10 +1,5 @@
 package com.hyperlocal.server;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -57,7 +52,7 @@ public class ShopController {
 
   private Connection connection;
 
-  private Utilities util;
+  private Utilities util = new Utilities();;
 
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
@@ -279,7 +274,8 @@ public class ShopController {
     return shopsPromise;
   }
 
-  /** Fetch catalog, shop & merchant details by shopID 
+  /** 
+   * Fetch catalog, shop & merchant details by shopID 
    * @param shopID The Unique ID of the shop 
    * @return CompletableFuture of ShopDetails of the Shop
   */
@@ -422,8 +418,8 @@ public class ShopController {
   }
 
 
-  /**
-   * 
+  /** 
+   * Update a shop's details
    * @param merchantID The Unique ID of the merchant
    * @param shopID The Unique ID of the Shop
    * @param shopDetailsString JSON serialized {@link Shop} object of updated Shop
@@ -456,8 +452,8 @@ public class ShopController {
     });
   }
 
-  /**
-   * 
+  /** 
+   * Publish a message to Pub Sub
    * @param message The message to be pushed to Pub Sub
    * @return The CompletableFuture of the call
    */

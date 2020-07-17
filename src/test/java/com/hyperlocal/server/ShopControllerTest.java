@@ -226,7 +226,6 @@ public class ShopControllerTest {
     shopIdList.add(1L);
     shopIdList.add(2L);
     
-    System.out.println(responseJson.toString());
     when(util.getResponseBody(anyString()))
     .thenReturn(CompletableFuture.completedFuture(responseJson.toString()));
 
