@@ -8,6 +8,11 @@ import com.github.jasync.sql.db.RowData;
 import com.google.auto.value.AutoValue;
 import com.google.gson.JsonObject;
 
+/**
+ * @author: Diksha, Onish
+ * @version: 1.0
+ * @since: 1.0
+ */
 @AutoValue
 public abstract class Shop implements Serializable{
 
