@@ -57,6 +57,8 @@ public class ShopController {
 
   private Connection connection;
 
+  private Utilities util;
+
   private static final Logger logger = LogManager.getLogger(ShopController.class);
 
   public ShopController(PubSubTemplate pubSubTemplate) {
@@ -133,15 +135,7 @@ public class ShopController {
       .sort(new ScoreSortBuilder())
       .sort(new GeoDistanceSortBuilder("pin.location", Double.parseDouble(latitude), Double.parseDouble(longitude)));
 
-    // Create the HTTP Request to send
-    HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(Constants.SEARCH_INDEX_URL))
-        .method("GET", HttpRequest.BodyPublishers.ofString(searchSourceBuilder.toString()))
-        .setHeader("Content-Type", "application/json").build();
-
-    
-    return client.sendAsync(request, BodyHandlers.ofString())
-      .thenApply(HttpResponse::body)
+    return util.getResponseBody(searchSourceBuilder.toString())
         .thenCompose((responseString) -> {
           // Empty {} is returned by search Index if nothing matches
           if (!responseString.equals("{}")) {

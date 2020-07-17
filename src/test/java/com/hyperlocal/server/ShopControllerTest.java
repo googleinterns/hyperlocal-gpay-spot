@@ -3,6 +3,7 @@ package com.hyperlocal.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,7 +52,7 @@ public class ShopControllerTest {
   private static Connection connection;
 
   @Mock
-  private static HttpClient client;
+  private Utilities util;
 
   @InjectMocks
   ShopController controller = new ShopController(template);
@@ -222,10 +223,8 @@ public class ShopControllerTest {
     shopIdList.add(1L);
     shopIdList.add(2L);
     
-    HttpResponse httpResponse = new FakeHTTPResponse(responseJson.toString());
-    CompletableFuture<HttpResponse<Object>> responseFuture = CompletableFuture.completedFuture(httpResponse);
-    when(client.sendAsync(any(), any())).thenReturn(responseFuture);
-
+    when(util.getResponseBody(anyString()))
+    .thenReturn(CompletableFuture.completedFuture(responseJson.toString()));
 
     ArrayList<String> merchantIDList = new ArrayList<String>();
     merchantIDList.add("1");
@@ -312,7 +311,7 @@ public class ShopControllerTest {
   
     // ASSERT
     
-    verify(client).sendAsync(any(), any());
+    verify(util).getResponseBody(anyString());
     assertEquals(expectedResponse, actualResponse);
   }
 
