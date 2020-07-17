@@ -226,11 +226,11 @@ public class ShopController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
           RowData shopDetailsRecord = shopDetailsRecords.get(0);
           ShopDetails shopDetails = new ShopDetails();
-          shopDetails.setShop(new Shop(shopDetailsRecord));
-          shopDetails.setMerchant(new Merchant(shopDetailsRecord));
+          shopDetails.setShop(Shop.create(shopDetailsRecord));
+          shopDetails.setMerchant(Merchant.create(shopDetailsRecord));
           if(shopDetailsRecord.get("ServiceName") == null) return shopDetails;
           for(RowData catalogItem : shopDetailsRecords) {
-            shopDetails.addCatalogItem(new CatalogItem(catalogItem));
+            shopDetails.addCatalogItem(CatalogItem.create(catalogItem));
           }
           return shopDetails;  
         });
