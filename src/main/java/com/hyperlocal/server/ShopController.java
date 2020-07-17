@@ -218,35 +218,21 @@ public class ShopController {
   @GetMapping("/v1/shops/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
-    ShopDetails shopDetails = new ShopDetails();
-
     CompletableFuture<ShopDetails> shopDetailsPromise = connection
-        // Get Shop details:
-        .sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
-        .thenCompose((QueryResult shopQueryResult) -> {
-          ResultSet wrappedShopRecord = shopQueryResult.getRows();
-          if (wrappedShopRecord.size() == 0)
+        .sendPreparedStatement(Constants.SELECT_SHOP_DETAILS_STATEMENT, Arrays.asList(shopID))
+        .thenApply((QueryResult shopDetailsQueryResult) -> {
+          ResultSet shopDetailsRecords = shopDetailsQueryResult.getRows();
+          if(shopDetailsRecords.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
-          RowData shopRecord = wrappedShopRecord.get(0);
-          shopDetails.setShop(Shop.create(shopRecord));
-
-          // Get Merchant Details:
-          return connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT,
-              Arrays.asList(shopDetails.shop.merchantID()));
-        }).thenCompose((QueryResult merchantQueryResult) -> {
-          ResultSet wrappedMerchantRecord = merchantQueryResult.getRows();
-          if (wrappedMerchantRecord.size() == 0)
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                "Something went wrong. No merchant found for the shop.");
-          shopDetails.setMerchant(Merchant.create(wrappedMerchantRecord.get(0)));
-
-          // Get Catalog Details:
-          return connection.sendPreparedStatement(Constants.SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
-        }).thenApply((QueryResult catalogQueryResult) -> {
-          ResultSet catalogRecords = catalogQueryResult.getRows();
-          for (RowData serviceRecord : catalogRecords)
-            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
-          return shopDetails;
+          RowData shopDetailsRecord = shopDetailsRecords.get(0);
+          ShopDetails shopDetails = new ShopDetails();
+          shopDetails.setShop(new Shop(shopDetailsRecord));
+          shopDetails.setMerchant(new Merchant(shopDetailsRecord));
+          if(shopDetailsRecord.get("ServiceName") == null) return shopDetails;
+          for(RowData catalogItem : shopDetailsRecords) {
+            shopDetails.addCatalogItem(new CatalogItem(catalogItem));
+          }
+          return shopDetails;  
         });
 
     return shopDetailsPromise;
