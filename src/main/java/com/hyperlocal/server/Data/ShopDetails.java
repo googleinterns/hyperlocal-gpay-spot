@@ -3,11 +3,7 @@ package com.hyperlocal.server.Data;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * @author: Diksha, Onish
- * @version: 1.0
- * @since: 1.0
- */
+
 public class ShopDetails {
     public Shop shop;
     public Merchant merchant;

@@ -7,11 +7,6 @@ import com.github.jasync.sql.db.RowData;
 import com.google.gson.JsonObject;
 import com.google.auto.value.AutoValue;
 
-/**
- * @author: Diksha, Onish
- * @version: 1.0
- * @since: 1.0
- */
 @AutoValue
 public abstract class Merchant implements Serializable {
   @JsonProperty public abstract String merchantID();

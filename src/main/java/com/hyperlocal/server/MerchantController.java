@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+// Rest Controller for Merchants
+
 @RestController
 public class MerchantController {
 
@@ -25,12 +27,18 @@ public class MerchantController {
     connection = MySQLConnectionBuilder.createConnectionPool(Constants.DATABASE_URL);
   }
 
-  /**
-   * Updates details of a merchant
-   * @param merchantID The unique ID of the merchant
-   * @param postInputString JSON serialized {@link Merchant} details
-   * @return CompletableFuture of the updated Merchant
+  /*
+   * Update details of a merchant
+   * 
+   * Expects: A Json String from client as Input with the following format:
+   * 
+   * { "MerchantID": <Merchant sub id here>, "MerchantName": <Updated Name of the
+   * merchant here>, "MechantPhone": <Updated PhoneNumber of the merchant here> }
+   * 
+   * Returns: Merchant Object with updated Details if exists, else return inserted
+   * Merchant object
    */
+
   @PutMapping("/v1/merchants/{merchantID}")
   public CompletableFuture<Merchant> updateMerchant(@PathVariable String merchantID, @RequestBody String postInputString) {
     // TODO: Rewrite method with ID JWT & phone JWT verification
@@ -44,11 +52,6 @@ public class MerchantController {
     });
   }
 
-  /**
-   * Insert a new merchant
-   * @param postInputString JSON serialized {@link Merchant} details
-   * @return CompletableFuture of the newly inserted Merchant
-   */
   @PostMapping("/v1/merchants")
   public CompletableFuture<Merchant> insertMerchant(@RequestBody String postInputString) {
     // TODO: Rewrite method with ID JWT & phone JWT verification

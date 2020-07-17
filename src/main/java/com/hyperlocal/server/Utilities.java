@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 public class Utilities {
+<<<<<<< HEAD
 
   /**
    * @param msg The error message
@@ -43,6 +44,34 @@ public class Utilities {
   public static String getPlaceHolderString(Integer numOfPlaceholders) {
     if (numOfPlaceholders == 0) {
       return "";
+=======
+    
+    // Shorthand for a HashMap with error message
+    public static HashMap<String, Object> generateError(Object msg)
+    {
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("error", msg);
+        map.put("success", false);
+        return map;
+    }
+
+    // Avoid false negatives in Double comparisons due to precision errors
+    public static boolean doubleThresholdCompare(Double numA, Double numB, Double threshold)
+    {
+        return Math.abs(numA-numB) < threshold;
+    }
+
+    // Create a ?,?,? placeholder with numOfPlaceholders '?' to use in SQL prepared statements
+    public static String getPlaceHolderString(Integer numOfPlaceholders) {      
+      if (numOfPlaceholders == 0) {
+          return "";
+      }
+      StringBuilder result = new StringBuilder("?");
+      for (Integer i = 0; i < numOfPlaceholders-1; i++) {
+        result.append(",?");
+      }
+      return result.toString();
+>>>>>>> parent of 6764e3a... Refactor: Add javadoc comments to public methods (#48)
     }
     StringBuilder result = new StringBuilder("?");
     for (Integer i = 0; i < numOfPlaceholders - 1; i++) {
