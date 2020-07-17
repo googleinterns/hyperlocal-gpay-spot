@@ -278,9 +278,7 @@ public class ShopController {
     }
 
     if(deleteCommands.size() > 0) {
-      String[] deletePlaceholdersArray = new String[deleteCommands.size()];
-      Arrays.fill(deletePlaceholdersArray, "?");
-      String deletePlaceholders = String.join(", ", deletePlaceholdersArray);
+      String deletePlaceholders = Utilities.getPlaceHolderString(deleteCommands.size());
       String deleteQuery = String.format(Constants.DELETE_CATALOG_STATEMENT, deletePlaceholders);
       List<Object> deleteQueryParameters = new ArrayList<Object>();
       for(JsonElement deleteCommandRaw : deleteCommands) {
