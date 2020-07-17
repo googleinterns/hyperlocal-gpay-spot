@@ -245,55 +245,69 @@ public class ShopController {
     JsonArray updateCommands = commands.getAsJsonArray("update");
     JsonArray deleteCommands = commands.getAsJsonArray("delete");
     CompletableFuture<QueryResult> statusPromise = connection.sendQuery("BEGIN");
-
-    // Process create commands
-    for (JsonElement createCommandRaw : createCommands) {
+    
+    if(addCommands.size() > 0) {
+      String[] insertPlaceholdersArray = new String[createCommands.size()];
+      Arrays.fill(insertPlaceholdersArray, Constants.INSERT_CATALOG_PLACEHOLDER);
+      String insertPlaceholders = String.join(", ", insertPlaceholdersArray);
+      String insertQuery = String.format(Constants.INSERT_CATALOG_STATEMENT, insertPlaceholders);
+      List<Object> insertQueryParameters = new ArrayList<Object>();
+      for(JsonElement createCommandRaw : createCommands)
+      {
+          JsonObject createCommand = createCommandRaw.getAsJsonObject();
+          insertQueryParameters.add(shopID);
+          insertQueryParameters.add(createCommand.get("serviceName").getAsString());
+          insertQueryParameters.add(createCommand.get("serviceDescription").getAsString());
+          insertQueryParameters.add(createCommand.get("imageURL").getAsString());
+      }
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        JsonObject createCommand = createCommandRaw.getAsJsonObject();
-        String serviceName = createCommand.get("serviceName").getAsString();
-        String serviceDescription = createCommand.get("serviceDescription").getAsString();
-        String imageURL = createCommand.get("imageURL").getAsString();
-        return connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT,
-            Arrays.asList(shopID, serviceName, serviceDescription, imageURL));
+        return connection.sendPreparedStatement(insertQuery, insertQueryParameters);
       });
     }
+    
 
-    // Process update commands
-    for (JsonElement updateCommandRaw : updateCommands) {
+    for(JsonElement updateCommandRaw : updateCommands) {
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
         JsonObject updateCommand = updateCommandRaw.getAsJsonObject();
         Long serviceID = updateCommand.get("serviceID").getAsLong();
         String serviceName = updateCommand.get("serviceName").getAsString();
         String serviceDescription = updateCommand.get("serviceDescription").getAsString();
         String imageURL = updateCommand.get("imageURL").getAsString();
-        return connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT,
-            Arrays.asList(serviceName, serviceDescription, imageURL, serviceID));
+        return connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, Arrays.asList(serviceName, serviceDescription, imageURL, serviceID));
       });
     }
 
-    // Process delete commands
-    for (JsonElement deleteCommandRaw : deleteCommands) {
+    if(deleteCommands.size() > 0) {
+      String[] deletePlaceholdersArray = new String[deleteCommands.size()];
+      Arrays.fill(deletePlaceholdersArray, "?");
+      String deletePlaceholders = String.join(", ", deletePlaceholdersArray);
+      String deleteQuery = String.format(Constants.DELETE_CATALOG_STATEMENT, deletePlaceholders);
+      List<Object> deleteQueryParameters = new ArrayList<Object>();
+      for(JsonElement deleteCommandRaw : deleteCommands) {
+        deleteQueryParameters.add(deleteCommandRaw.getAsJsonObject().get("serviceID").getAsLong());
+      }
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        Long serviceID = deleteCommandRaw.getAsJsonObject().get("serviceID").getAsLong();
-        return connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(serviceID));
+        return connection.sendPreparedStatement(deleteQuery, deleteQueryParameters);
       });
     }
-
-    return statusPromise.thenCompose((QueryResult result) -> {
-      // If successful, commit
-      return connection.sendQuery("COMMIT");
-    }).thenCompose((QueryResult result) -> {
-      return publishMessage(Long.toString(shopID));
-    }).thenApply((String publishPromise) -> {
-      HashMap<String, Object> successMap = new HashMap<String, Object>();
-      successMap.put("success", true);
-      return successMap;
-    }).exceptionally((ex) -> {
-      // Else, auto-rollback when connection closes
-      logger.error("Executed exceptionally: upsertCatalog()", ex);
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
-    });
-
+    //publish promise not working -check that
+    return statusPromise
+      .thenCompose((QueryResult result) -> {
+        // If successful, commit
+        return connection.sendQuery("COMMIT");
+      }).thenCompose((QueryResult result) -> {
+        return publishMessage(Long.toString(shopID));
+      }).thenApply((String publishPromise) -> {
+        HashMap<String, Object> successMap = new HashMap<String, Object>();
+        successMap.put("success", true);
+        return successMap;
+      }).exceptionally((ex) -> {
+        // Else, auto-rollback when connection closes
+        logger.error("Executed exceptionally: upsertCatalog()", ex);
+        ex.printStackTrace();
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
+      });
+      
   }
 
   /*
