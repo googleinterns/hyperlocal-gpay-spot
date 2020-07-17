@@ -246,7 +246,7 @@ public class ShopController {
     JsonArray deleteCommands = commands.getAsJsonArray("delete");
     CompletableFuture<QueryResult> statusPromise = connection.sendQuery("BEGIN");
     
-    if(addCommands.size() > 0) {
+    if(createCommands.size() > 0) {
       String[] insertPlaceholdersArray = new String[createCommands.size()];
       Arrays.fill(insertPlaceholdersArray, Constants.INSERT_CATALOG_PLACEHOLDER);
       String insertPlaceholders = String.join(", ", insertPlaceholdersArray);
@@ -307,7 +307,7 @@ public class ShopController {
         ex.printStackTrace();
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
       });
-      
+
   }
 
   /*
