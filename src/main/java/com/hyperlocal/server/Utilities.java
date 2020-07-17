@@ -3,6 +3,17 @@ package com.hyperlocal.server;
 import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 
+import org.apache.http.util.EntityUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.cache.CacheConfig;
+import org.apache.http.impl.client.cache.CachingHttpClients;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.cache.HttpCacheContext;
+import org.apache.http.client.cache.CacheResponseStatus;
+
+
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -22,7 +33,20 @@ import org.jose4j.jwk.VerificationJwkSelector;
 
 public class Utilities {
     public static final String IDENTITY_API_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+    public static CacheConfig cacheConfig = CacheConfig.custom()
+            .setMaxCacheEntries(10)
+            .setMaxObjectSize(10000)
+            .build();
+    public static RequestConfig requestConfig = RequestConfig.custom()
+            .setConnectTimeout(30000)
+            .setSocketTimeout(30000)
+            .build();
+    public static CloseableHttpClient cachingClient = CachingHttpClients.custom()
+            .setCacheConfig(cacheConfig)
+            .setDefaultRequestConfig(requestConfig)
+            .build();
 
+    
     // Shorthand for a HashMap with error message
     public static HashMap<String, Object> generateError(Object msg)
     {
@@ -50,37 +74,42 @@ public class Utilities {
       return result.toString();
     }
 
-    public static CompletableFuture<String> verifyAndDecodeIdJwt(String token) {
-      return getResponseBody(IDENTITY_API_JWKS_URL)
-          .thenApply((jsonWebKeySetString) -> {
-              try {
-                  // Set token and algorithm
-                  JsonWebSignature jsonWebSignature = new JsonWebSignature();
-                  jsonWebSignature.setAlgorithmConstraints(new AlgorithmConstraints(ConstraintType.PERMIT,   AlgorithmIdentifiers.RSA_USING_SHA256));
-                  jsonWebSignature.setCompactSerialization(token);
-                  
-                  // Find and use relevant JWK
-                  JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jsonWebKeySetString);
-                  JsonWebKey jsonWebKey = new VerificationJwkSelector().select(jsonWebSignature, jsonWebKeySet.getJsonWebKeys());
-                  jsonWebSignature.setKey(jsonWebKey.getKey());
+    public static String verifyAndDecodeIdJwt(String token) {
+        String jsonWebKeySetString =  getResponseBody(IDENTITY_API_JWKS_URL);
+        try {
+            // Set token and algorithm
+            JsonWebSignature jsonWebSignature = new JsonWebSignature();
+            jsonWebSignature.setAlgorithmConstraints(new AlgorithmConstraints(ConstraintType.PERMIT,   AlgorithmIdentifiers.RSA_USING_SHA256));
+            jsonWebSignature.setCompactSerialization(token);
+            
+            // Find and use relevant JWK
+            JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jsonWebKeySetString);
+            JsonWebKey jsonWebKey = new VerificationJwkSelector().select(jsonWebSignature, jsonWebKeySet.getJsonWebKeys());
+            jsonWebSignature.setKey(jsonWebKey.getKey());
 
-                  if(!jsonWebSignature.verifySignature()) return null;
+            if(!jsonWebSignature.verifySignature()) return null;
 
-                  return jsonWebSignature.getPayload();
-              } catch(Exception ex) {
-                  ex.printStackTrace();
-                  return null;
-              }
-          });
+            return jsonWebSignature.getPayload();
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
     }
 
-    public static CompletableFuture<String> getResponseBody(String url) {
-      HttpClient client = HttpClient.newHttpClient();
-      HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .build();
-      return client.sendAsync(request, BodyHandlers.ofString())
-            .thenApply(HttpResponse::body);
+    public static String getResponseBody(String url) {
+        
+        System.out.println("Before time new: "+System.currentTimeMillis());
+        HttpCacheContext context = HttpCacheContext.create();
+        HttpGet httpget = new HttpGet(url);
+        String s = null;
+        try {
+            CloseableHttpResponse response = Utilities.cachingClient.execute(httpget, context);
+            s = EntityUtils.toString(response.getEntity());
+            response.close();
+            System.out.println("After time new: "+System.currentTimeMillis());
+        } finally {
+            return s;
+        }
     }
 
 }
