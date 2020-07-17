@@ -51,6 +51,11 @@ public class Utilities {
     return result.toString();
   }
 
+  /**
+   * Make a get request to {@code URL} and get Response Body
+   * @param URL: The URL to make a a get request too
+   * @return the completableFuture of the response String
+   */
   public CompletableFuture<String> getResponseBody(String URL) {
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
