@@ -226,7 +226,7 @@ public class ShopControllerTest {
     shopIdList.add(1L);
     shopIdList.add(2L);
     
-    when(util.getResponseBody(anyString()))
+    when(util.getResponseBody(Constants.SEARCH_INDEX_URL, anyString()))
     .thenReturn(CompletableFuture.completedFuture(responseJson.toString()));
 
     ArrayList<String> merchantIDList = new ArrayList<String>();
@@ -314,7 +314,7 @@ public class ShopControllerTest {
   
     // ASSERT
     
-    verify(util).getResponseBody(anyString());
+    verify(util).getResponseBody(Constants.SEARCH_INDEX_URL, anyString());
     assertEquals(expectedResponse, actualResponse);
   }
 
