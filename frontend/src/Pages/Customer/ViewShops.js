@@ -158,7 +158,7 @@ class ViewShops extends React.Component {
         this.state.pageLoading
           ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
           : <Container className="mt-1 p-3">
-            <Button variant="primary" onClick={this.changeLocation} block> Change Location</Button>
+            <Button variant="primary" className="mb-2" onClick={this.changeLocation} block> Change Location</Button>
             <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
               <Form.Row className="align-items-center">
                 <Col xs={7}>
