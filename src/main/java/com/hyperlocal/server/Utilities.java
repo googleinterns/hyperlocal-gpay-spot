@@ -52,9 +52,10 @@ public class Utilities {
   }
 
   /**
-   * Make a get request to {@code URL} and get Response Body
-   * @param URL: The URL to make a a get request too
-   * @return the completableFuture of the response String
+   * Make an HTTP GET request to {@code URL} with {@code requestBody} message and get the response body.
+   * @param URL The URL to make the request to.
+   * @param requestBody The body of the GET request. {@code null} value refers to empty body.
+   * @return The CompletableFuture of the response string
    */
   public CompletableFuture<String> getResponseBody(String URL, String requestBody) {
     // Create the HTTP Request to send
