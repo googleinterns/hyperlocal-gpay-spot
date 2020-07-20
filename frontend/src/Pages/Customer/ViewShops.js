@@ -131,6 +131,9 @@ class ViewShops extends React.Component {
       latitude: null,
       longitude: null
     });
+    this.setState({
+      showModal: true
+    });
   }
 
   componentDidUpdate(prevProps) {
