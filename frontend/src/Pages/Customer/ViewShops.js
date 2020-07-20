@@ -126,6 +126,13 @@ class ViewShops extends React.Component {
     return (angleBetweenCoordinatesInRadians * EARTH_RADIUS_IN_KM).toFixed(2);
   }
 
+  changeLocation = () => {
+    this.props.setLocation({
+      latitude: null,
+      longitude: null
+    });
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
       this.search();
@@ -148,6 +155,7 @@ class ViewShops extends React.Component {
         this.state.pageLoading
           ? <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
           : <Container className="mt-1 p-3">
+            <Button variant="primary" onClick={this.changeLocation} block> Change Location</Button>
             <Form onSubmit={(e) => { e.preventDefault(); this.search(); }}>
               <Form.Row className="align-items-center">
                 <Col xs={7}>
