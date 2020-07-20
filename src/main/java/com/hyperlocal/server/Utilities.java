@@ -52,7 +52,7 @@ public class Utilities {
   }
 
   /**
-   * Make an HTTP GET request to {@code URL} with {@code requestBody} message and get the response body.
+   * Make an HTTP GET request and get the response's body.
    * @param URL The URL to make the request to.
    * @param requestBody The body of the GET request. {@code null} value refers to empty body.
    * @return The CompletableFuture of the response string
