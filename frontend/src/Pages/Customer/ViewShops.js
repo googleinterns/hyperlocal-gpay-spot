@@ -134,7 +134,7 @@ class ViewShops extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.latitude !== prevProps.latitude || (this.props.longitude !== prevProps.longitude)) {
+    if (this.props.latitude != null && (this.props.latitude !== prevProps.latitude || this.props.longitude !== prevProps.longitude)) {
       this.search();
     }
   }
