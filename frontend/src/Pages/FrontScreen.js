@@ -50,12 +50,9 @@ class FrontScreen extends React.Component {
     let merchantShops = await AuthHTTP.get(ROUTES.v1.get.shopsByMerchantID.replace('%b', this.props.user.ID));
     if(!merchantShops.data[0])
     {
-        await AuthHTTP.post(ROUTES.v1.post.insertMerchant, {
-            merchantID: this.props.user.ID,
-            merchantName: this.props.user.name,
-            merchantPhone: "0123456789" // TODO: Implement Phone Number API
-        });
-        this.props.history.push(ROUTES.merchant.onboarding.shopInfo);
+      let phoneJWT = await window.microapps.getPhoneNumber();
+      await AuthHTTP.post(ROUTES.v1.post.insertMerchant, { phoneJWT });
+      this.props.history.push(ROUTES.merchant.onboarding.shopInfo);
     }
     else 
     {
