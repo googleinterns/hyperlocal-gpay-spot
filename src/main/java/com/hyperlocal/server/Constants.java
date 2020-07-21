@@ -16,6 +16,9 @@ public final class Constants {
    * Obtaining a static Internal IP for Compute Engine VM: https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address
    */
   static final String SEARCH_INDEX_URL = "http://10.128.0.13:9200/shops/_search?filter_path=hits.hits";
+  
+  public static final String IDENTITY_API_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+  public static final String PHONE_API_JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/microapps-signingservice@system.gserviceaccount.com";
 
   public static final String SHOP_UPDATE_STATEMENT = "UPDATE `Shops` SET `ShopName` = ?, `TypeOfService`=?, `Latitude` = ?, `Longitude` = ?, `AddressLine1` = ? WHERE `ShopID`= ? AND `MerchantID` = ?;";
   public static final String SHOP_INSERT_STATEMENT = "INSERT INTO `Shops` (`ShopName`, `TypeOfService`, `Latitude`, `Longitude`, `AddressLine1`, `MerchantID`) VALUES (?,?,?,?,?,?);";;
