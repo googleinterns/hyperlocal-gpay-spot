@@ -14,7 +14,7 @@ const ROUTES = {
         'get': {
             'shopsByMerchantID': base + '/v1/merchants/%b/shops',
             'index': {
-              'search': base + '/v1/shops/'
+              'search': base + '/v1/shops'
             },
             'shopByShopID': base + '/v1/shops/%b'
         },

@@ -2,6 +2,8 @@ import React from 'react';
 import axios from 'axios';
 import { Row, Col, Button, Container, Jumbotron, Card, Image, ListGroup } from 'react-bootstrap';
 import ROUTES from '../../routes';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 const CALL_BUTTON_IMAGE_URL = "/images/call.png";
 
@@ -31,10 +33,7 @@ class BuyerCatalog extends React.Component {
   render() {
     if (this.state.shopFetched === false) {
       return (
-        <Container className="p-0 ">
-          <Jumbotron>
-          </Jumbotron>
-        </Container>
+        <div className="text-center mt-5"><FontAwesomeIcon icon={faSpinner} size="3x" /></div>
       );
     } else {
       return (

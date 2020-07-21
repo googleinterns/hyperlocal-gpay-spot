@@ -6,6 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.jasync.sql.db.RowData;
 import com.google.auto.value.AutoValue;
 
+/**
+ * @author: Diksha, Onish
+ * @version: 1.0
+ * @since: 1.0
+ */
 @AutoValue
 public abstract class CatalogItem implements Serializable {
     @JsonProperty public abstract Long serviceID();
