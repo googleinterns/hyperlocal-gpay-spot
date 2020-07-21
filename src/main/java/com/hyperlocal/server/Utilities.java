@@ -98,17 +98,15 @@ public class Utilities {
 
     public static String getResponseBody(String url) {
         
-        System.out.println("Before time new: "+System.currentTimeMillis());
         HttpCacheContext context = HttpCacheContext.create();
         HttpGet httpget = new HttpGet(url);
-        String s = null;
+        String responseBody = null;
         try {
             CloseableHttpResponse response = Utilities.cachingClient.execute(httpget, context);
-            s = EntityUtils.toString(response.getEntity());
+            responseBody = EntityUtils.toString(response.getEntity());
             response.close();
-            System.out.println("After time new: "+System.currentTimeMillis());
         } finally {
-            return s;
+            return responseBody;
         }
     }
 
