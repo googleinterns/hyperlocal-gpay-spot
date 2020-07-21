@@ -75,7 +75,7 @@ public class Utilities {
     }
 
     public static String verifyAndDecodeIdJwt(String token) {
-        String jsonWebKeySetString =  getResponseBody(IDENTITY_API_JWKS_URL);
+        String jsonWebKeySetString =  getCachedResponseBody(IDENTITY_API_JWKS_URL);
         try {
             // Set token and algorithm
             JsonWebSignature jsonWebSignature = new JsonWebSignature();
@@ -96,7 +96,7 @@ public class Utilities {
         }
     }
 
-    private static String getResponseBody(String url) {
+    private static String getCachedResponseBody(String url) {
         
         HttpCacheContext context = HttpCacheContext.create();
         HttpGet httpget = new HttpGet(url);
