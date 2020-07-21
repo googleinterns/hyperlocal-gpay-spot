@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import javax.servlet.http.HttpServletRequest;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 @Component
 public class Guard {
@@ -20,6 +22,7 @@ public class Guard {
         catch(Exception e)
         {
             // idToken remains set to null: access denied.
+            Logger.getLogger("Auth").log(Level.WARNING, e.getMessage(), e);
         }
         if(idToken == null) return false;
 

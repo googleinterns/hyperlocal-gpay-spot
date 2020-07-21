@@ -1,5 +1,7 @@
 package com.hyperlocal.server;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 
@@ -68,7 +70,7 @@ public class Utilities {
 
                   return jsonWebSignature.getPayload();
               } catch(Exception ex) {
-                  ex.printStackTrace();
+                  Logger.getLogger("JwtVerification").log(Level.WARNING, ex.getMessage(), ex);
                   return null;
               }
           });
