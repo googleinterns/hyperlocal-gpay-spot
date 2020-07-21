@@ -282,35 +282,21 @@ public class ShopController {
   @GetMapping("/v1/shops/{shopID}")
   public CompletableFuture<ShopDetails> getShopDetails(@PathVariable Long shopID) {
 
-    ShopDetails shopDetails = new ShopDetails();
-
     CompletableFuture<ShopDetails> shopDetailsPromise = connection
-        // Get Shop details:
-        .sendPreparedStatement(Constants.SELECT_SHOP_STATEMENT, Arrays.asList(shopID))
-        .thenCompose((QueryResult shopQueryResult) -> {
-          ResultSet wrappedShopRecord = shopQueryResult.getRows();
-          if (wrappedShopRecord.size() == 0)
+        .sendPreparedStatement(Constants.SELECT_SHOP_DETAILS_STATEMENT, Arrays.asList(shopID))
+        .thenApply((QueryResult shopDetailsQueryResult) -> {
+          ResultSet shopDetailsRecords = shopDetailsQueryResult.getRows();
+          if(shopDetailsRecords.size() == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested shop was not found.");
-          RowData shopRecord = wrappedShopRecord.get(0);
-          shopDetails.setShop(Shop.create(shopRecord));
-
-          // Get Merchant Details:
-          return connection.sendPreparedStatement(Constants.SELECT_MERCHANT_STATEMENT,
-              Arrays.asList(shopDetails.shop.merchantID()));
-        }).thenCompose((QueryResult merchantQueryResult) -> {
-          ResultSet wrappedMerchantRecord = merchantQueryResult.getRows();
-          if (wrappedMerchantRecord.size() == 0)
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                "Something went wrong. No merchant found for the shop.");
-          shopDetails.setMerchant(Merchant.create(wrappedMerchantRecord.get(0)));
-
-          // Get Catalog Details:
-          return connection.sendPreparedStatement(Constants.SELECT_CATALOG_BY_SHOP_STATEMENT, Arrays.asList(shopID));
-        }).thenApply((QueryResult catalogQueryResult) -> {
-          ResultSet catalogRecords = catalogQueryResult.getRows();
-          for (RowData serviceRecord : catalogRecords)
-            shopDetails.addCatalogItem(CatalogItem.create(serviceRecord));
-          return shopDetails;
+          RowData shopDetailsRecord = shopDetailsRecords.get(0);
+          ShopDetails shopDetails = new ShopDetails();
+          shopDetails.setShop(Shop.create(shopDetailsRecord));
+          shopDetails.setMerchant(Merchant.create(shopDetailsRecord));
+          if(shopDetailsRecord.get("ServiceName") == null) return shopDetails;
+          for(RowData catalogItem : shopDetailsRecords) {
+            shopDetails.addCatalogItem(CatalogItem.create(catalogItem));
+          }
+          return shopDetails;  
         });
 
     return shopDetailsPromise;
@@ -331,54 +317,66 @@ public class ShopController {
     JsonArray updateCommands = commands.getAsJsonArray("update");
     JsonArray deleteCommands = commands.getAsJsonArray("delete");
     CompletableFuture<QueryResult> statusPromise = connection.sendQuery("BEGIN");
-
-    // Process create commands
-    for (JsonElement createCommandRaw : createCommands) {
+    
+    if(createCommands.size() > 0) {
+      String[] insertPlaceholdersArray = new String[createCommands.size()];
+      Arrays.fill(insertPlaceholdersArray, Constants.INSERT_CATALOG_PLACEHOLDER);
+      String insertPlaceholders = String.join(", ", insertPlaceholdersArray);
+      String insertQuery = String.format(Constants.INSERT_CATALOG_STATEMENT, insertPlaceholders);
+      List<Object> insertQueryParameters = new ArrayList<Object>();
+      for(JsonElement createCommandRaw : createCommands)
+      {
+          JsonObject createCommand = createCommandRaw.getAsJsonObject();
+          insertQueryParameters.add(shopID);
+          insertQueryParameters.add(createCommand.get("serviceName").getAsString());
+          insertQueryParameters.add(createCommand.get("serviceDescription").getAsString());
+          insertQueryParameters.add(createCommand.get("imageURL").getAsString());
+      }
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        JsonObject createCommand = createCommandRaw.getAsJsonObject();
-        String serviceName = createCommand.get("serviceName").getAsString();
-        String serviceDescription = createCommand.get("serviceDescription").getAsString();
-        String imageURL = createCommand.get("imageURL").getAsString();
-        return connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT,
-            Arrays.asList(shopID, serviceName, serviceDescription, imageURL));
+        return connection.sendPreparedStatement(insertQuery, insertQueryParameters);
       });
     }
+    
 
-    // Process update commands
-    for (JsonElement updateCommandRaw : updateCommands) {
+    for(JsonElement updateCommandRaw : updateCommands) {
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
         JsonObject updateCommand = updateCommandRaw.getAsJsonObject();
         Long serviceID = updateCommand.get("serviceID").getAsLong();
         String serviceName = updateCommand.get("serviceName").getAsString();
         String serviceDescription = updateCommand.get("serviceDescription").getAsString();
         String imageURL = updateCommand.get("imageURL").getAsString();
-        return connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT,
-            Arrays.asList(serviceName, serviceDescription, imageURL, serviceID));
+        return connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, Arrays.asList(serviceName, serviceDescription, imageURL, serviceID));
       });
     }
 
-    // Process delete commands
-    for (JsonElement deleteCommandRaw : deleteCommands) {
+    if(deleteCommands.size() > 0) {
+      String deletePlaceholders = Utilities.getPlaceHolderString(deleteCommands.size());
+      String deleteQuery = String.format(Constants.DELETE_CATALOG_STATEMENT, deletePlaceholders);
+      List<Object> deleteQueryParameters = new ArrayList<Object>();
+      for(JsonElement deleteCommandRaw : deleteCommands) {
+        deleteQueryParameters.add(deleteCommandRaw.getAsJsonObject().get("serviceID").getAsLong());
+      }
       statusPromise = statusPromise.thenCompose((QueryResult result) -> {
-        Long serviceID = deleteCommandRaw.getAsJsonObject().get("serviceID").getAsLong();
-        return connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(serviceID));
+        return connection.sendPreparedStatement(deleteQuery, deleteQueryParameters);
       });
     }
-
-    return statusPromise.thenCompose((QueryResult result) -> {
-      // If successful, commit
-      return connection.sendQuery("COMMIT");
-    }).thenCompose((QueryResult result) -> {
-      return publishMessage(Long.toString(shopID));
-    }).thenApply((String publishPromise) -> {
-      HashMap<String, Object> successMap = new HashMap<String, Object>();
-      successMap.put("success", true);
-      return successMap;
-    }).exceptionally((ex) -> {
-      // Else, auto-rollback when connection closes
-      logger.error("Executed exceptionally: upsertCatalog()", ex);
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
-    });
+    //publish promise not working -check that
+    return statusPromise
+      .thenCompose((QueryResult result) -> {
+        // If successful, commit
+        return connection.sendQuery("COMMIT");
+      }).thenCompose((QueryResult result) -> {
+        return publishMessage(Long.toString(shopID));
+      }).thenApply((String publishPromise) -> {
+        HashMap<String, Object> successMap = new HashMap<String, Object>();
+        successMap.put("success", true);
+        return successMap;
+      }).exceptionally((ex) -> {
+        // Else, auto-rollback when connection closes
+        logger.error("Executed exceptionally: upsertCatalog()", ex);
+        ex.printStackTrace();
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
+      });
 
   }
 
