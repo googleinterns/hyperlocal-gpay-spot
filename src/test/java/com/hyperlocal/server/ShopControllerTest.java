@@ -2,6 +2,7 @@ package com.hyperlocal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -226,7 +227,7 @@ public class ShopControllerTest {
     shopIdList.add(1L);
     shopIdList.add(2L);
     
-    when(util.getResponseBody(anyString()))
+    when(util.getResponseBody(eq(Constants.SEARCH_INDEX_URL), anyString()))
     .thenReturn(CompletableFuture.completedFuture(responseJson.toString()));
 
     ArrayList<String> merchantIDList = new ArrayList<String>();
@@ -314,7 +315,7 @@ public class ShopControllerTest {
   
     // ASSERT
     
-    verify(util).getResponseBody(anyString());
+    verify(util).getResponseBody(eq(Constants.SEARCH_INDEX_URL), anyString());
     assertEquals(expectedResponse, actualResponse);
   }
 

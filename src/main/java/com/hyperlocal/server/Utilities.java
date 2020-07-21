@@ -3,6 +3,7 @@ package com.hyperlocal.server;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
@@ -51,16 +52,21 @@ public class Utilities {
   }
 
   /**
-   * Make a get request to {@code URL} and get Response Body
-   * @param URL: The URL to make a a get request too
-   * @return the completableFuture of the response String
+   * Make an HTTP GET request and get the response's body.
+   * @param URL The URL to make the request to.
+   * @param requestBody The body of the GET request. {@code null} value refers to empty body.
+   * @return The CompletableFuture of the response string
    */
-  public CompletableFuture<String> getResponseBody(String URL) {
+  public CompletableFuture<String> getResponseBody(String URL, String requestBody) {
     // Create the HTTP Request to send
     HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(Constants.SEARCH_INDEX_URL))
-        .method("GET", HttpRequest.BodyPublishers.ofString(URL))
-        .setHeader("Content-Type", "application/json").build();
+    Builder requestBuilder = HttpRequest.newBuilder().uri(URI.create(URL));
+    if(requestBody != null) {
+      requestBuilder = requestBuilder
+        .method("GET", HttpRequest.BodyPublishers.ofString(requestBody))
+        .setHeader("Content-Type", "application/json");
+    }
+    HttpRequest request = requestBuilder.build();
     return client.sendAsync(request, BodyHandlers.ofString())
       .thenApply(HttpResponse::body);
   }
