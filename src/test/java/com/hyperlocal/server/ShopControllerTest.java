@@ -2,15 +2,21 @@ package com.hyperlocal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import com.github.jasync.sql.db.Connection;
 import com.github.jasync.sql.db.QueryResult;
@@ -18,9 +24,11 @@ import com.github.jasync.sql.db.ResultSet;
 import com.github.jasync.sql.db.RowData;
 import com.github.jasync.sql.db.mysql.MySQLQueryResult;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hyperlocal.server.Data.CatalogItem;
 import com.hyperlocal.server.Data.Merchant;
+import com.hyperlocal.server.Data.SearchSnippet;
 import com.hyperlocal.server.Data.Shop;
 import com.hyperlocal.server.Data.ShopDetails;
 
@@ -39,7 +47,13 @@ public class ShopControllerTest {
   private static PubSubTemplate template;
 
   @Mock
+  private static HttpResponse httpResponse;
+
+  @Mock
   private static Connection connection;
+
+  @Mock
+  private Utilities util;
 
   @InjectMocks
   ShopController controller = new ShopController(template);
@@ -54,15 +68,9 @@ public class ShopControllerTest {
     assertThat(controller).isNotNull();
     String merchantID = "1000000000000";
 
-    RowData shopRecord = new FakeRowData(
-      "ShopID", 1L,
-      "MerchantID", "1000000000000", 
-      "ShopName", "Arvind Shop",
-      "Latitude", new BigDecimal(23.33), 
-      "Longitude", new BigDecimal(23.33), 
-      "AddressLine1", "Mumbai",
-      "TypeOfService", "Groceries"
-    );
+    RowData shopRecord = new FakeRowData("ShopID", 1L, "MerchantID", "1000000000000", "ShopName", "Arvind Shop",
+        "Latitude", new BigDecimal(23.33), "Longitude", new BigDecimal(23.33), "AddressLine1", "Mumbai",
+        "TypeOfService", "Groceries");
     ResultSet shopRecords = new FakeResultSet(shopRecord);
     QueryResult shopsQueryResult = new QueryResult(0L, "Success", shopRecords);
     CompletableFuture<QueryResult> queryResultPromise = CompletableFuture.completedFuture(shopsQueryResult);
@@ -88,32 +96,18 @@ public class ShopControllerTest {
     Long shopID = 1000000000000L;
 
     String merchantID = "2000000000000";
-    RowData shopRecord = new FakeRowData(
-      "ShopID", shopID, 
-      "MerchantID", merchantID, 
-      "ShopName", "Arvind Shop",
-      "Latitude", new BigDecimal(23.33), 
-      "Longitude", new BigDecimal(23.33), 
-      "AddressLine1", "Mumbai",
-      "TypeOfService", "Groceries"
-    );
+    RowData shopRecord = new FakeRowData("ShopID", shopID, "MerchantID", merchantID, "ShopName", "Arvind Shop",
+        "Latitude", new BigDecimal(23.33), "Longitude", new BigDecimal(23.33), "AddressLine1", "Mumbai",
+        "TypeOfService", "Groceries");
     ResultSet wrappedShopRecord = new FakeResultSet(shopRecord);
     QueryResult shopQueryResult = new QueryResult(0L, "Success", wrappedShopRecord);
-    RowData merchantRecord = new FakeRowData(
-      "MerchantID", merchantID, 
-      "MerchantName", "Arvind", 
-      "MerchantPhone", "9876543210"
-    );
+    RowData merchantRecord = new FakeRowData("MerchantID", merchantID, "MerchantName", "Arvind", "MerchantPhone",
+        "9876543210");
     ResultSet wrappedMerchantRecord = new FakeResultSet(merchantRecord);
     QueryResult merchantQueryResult = new QueryResult(0L, "Success", wrappedMerchantRecord);
 
-    RowData serviceRecord = new FakeRowData(
-      "ServiceID", 101L, 
-      "ShopID", shopID, 
-      "ServiceName", "Apples",
-      "ServiceDescription", "Fresh off the market!", 
-      "ImageURL", "#"
-    );
+    RowData serviceRecord = new FakeRowData("ServiceID", 101L, "ShopID", shopID, "ServiceName", "Apples",
+        "ServiceDescription", "Fresh off the market!", "ImageURL", "#");
     ResultSet serviceRecords = new FakeResultSet(serviceRecord);
     QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
 
@@ -171,8 +165,7 @@ public class ShopControllerTest {
     HashMap<String, Object> expectedMap = new HashMap<String, Object>();
     expectedMap.put("success", true);
 
-    when(connection.sendQuery("BEGIN"))
-        .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
+    when(connection.sendQuery("BEGIN")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.INSERT_CATALOG_STATEMENT, createList))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendPreparedStatement(Constants.UPDATE_CATALOG_STATEMENT, updateList))
@@ -180,8 +173,7 @@ public class ShopControllerTest {
     when(connection.sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID)))
         .thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
     when(connection.sendQuery("COMMIT")).thenReturn(CompletableFuture.completedFuture(emptyQueryResult));
-    when(template.publish(Constants.PUBSUB_URL, "1000000000000"))
-        .thenReturn(new AsyncResult<>("DONE"));
+    when(template.publish(Constants.PUBSUB_URL, "1000000000000")).thenReturn(new AsyncResult<>("DONE"));
 
     /* ACT */
     CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(merchantID, shopID,
@@ -195,6 +187,137 @@ public class ShopControllerTest {
     verify(connection).sendPreparedStatement(Constants.DELETE_CATALOG_STATEMENT, Arrays.asList(deleteServiceID));
     verify(connection).sendQuery("COMMIT");
     verify(template).publish(Constants.PUBSUB_URL, "1000000000000");
+  }
+
+  @Test
+  public void shouldGetDataFromSearchIndex() throws InterruptedException, ExecutionException {
+    /* ARRANGE */
+    assertThat(controller).isNotNull();
+
+    String query = "apple";
+    String queryRadius = "5km";
+
+    JsonObject responseJson = new JsonObject();
+    JsonArray hits = new JsonArray();
+    JsonObject firstHit = new JsonObject();
+    JsonObject secondHit = new JsonObject();
+
+    JsonObject highlightFirst = new JsonObject();
+    JsonArray prefixesFirst= new JsonArray();
+    prefixesFirst.add("Choco <em>Pie</em>");
+    highlightFirst.add("catalog", prefixesFirst);
+    firstHit.addProperty("_id", "1");
+    firstHit.add("highlight", highlightFirst);
+
+    JsonObject highlightSecond = new JsonObject();
+    JsonArray prefixesSecond = new JsonArray();
+    prefixesSecond.add("Arvind <em>Fruits</em>");
+    highlightSecond.add("shopname", prefixesSecond);
+    secondHit.addProperty("_id", "2");
+    secondHit.add("highlight", highlightSecond);
+
+    hits.add(firstHit);
+    hits.add(secondHit);
+
+    JsonObject innerHit = new JsonObject();
+
+    innerHit.add("hits", hits);
+    responseJson.add("hits", innerHit);
+
+    ArrayList<Long> shopIdList = new ArrayList<Long>();
+    shopIdList.add(1L);
+    shopIdList.add(2L);
+    
+    when(util.getResponseBody(eq(Constants.SEARCH_INDEX_URL), anyString()))
+    .thenReturn(CompletableFuture.completedFuture(responseJson.toString()));
+
+    ArrayList<String> merchantIDList = new ArrayList<String>();
+    merchantIDList.add("1");
+    merchantIDList.add("2");
+
+    ArrayList<RowData> shopRecords = new ArrayList<RowData>();
+    for (Long shopID : shopIdList) {
+      RowData shopRecord = new FakeRowData(
+        "ShopID", shopID, 
+        "MerchantID", Long.toString(shopID), 
+        "ShopName", "Arvind Shop", 
+        "Latitude", new BigDecimal(23.33), 
+        "Longitude", new BigDecimal(23.33), 
+        "AddressLine1", "Mumbai", 
+        "TypeOfService", "Groceries"
+      );
+      shopRecords.add(shopRecord);
+    }
+    ResultSet wrappedShopRecord = new FakeResultSet(shopRecords);
+    QueryResult shopQueryResult = new QueryResult(0L, "Success", wrappedShopRecord);
+
+    ArrayList<RowData> merchantRecords = new ArrayList<RowData>();
+    for (String merchantID : merchantIDList) {
+      RowData merchantRecord = new FakeRowData(
+        "MerchantID", merchantID, 
+        "MerchantName", "Arvind", 
+        "MerchantPhone", "9876543210");
+      merchantRecords.add(merchantRecord);
+    }
+    ResultSet wrappedMerchantRecord = new FakeResultSet(merchantRecords);
+    QueryResult merchantQueryResult = new QueryResult(0L, "Success", wrappedMerchantRecord);
+
+    ArrayList<RowData> CatalogItems = new ArrayList<RowData>();
+    for (Long shopID : shopIdList) {
+      RowData serviceRecord = new FakeRowData(
+        "ServiceID", 101L, 
+        "ShopID", shopID, 
+        "ServiceName", "Apples",
+        "ServiceDescription", "Fresh off the market!", 
+        "ImageURL", "#")
+      ;
+      CatalogItems.add(serviceRecord);
+    }
+    ResultSet serviceRecords = new FakeResultSet(CatalogItems);
+    QueryResult servicesQueryResult = new QueryResult(0L, "Success", serviceRecords);
+
+    List<ShopDetails> expectedShopDetails = new ArrayList<ShopDetails>();
+
+    for (Integer i = 0; i < 2; i++) {
+      Shop shop = Shop.create(shopRecords.get(i));
+      Merchant merchant = Merchant.create(merchantRecords.get(i));
+      List<CatalogItem> catalogItems = Arrays.asList(CatalogItem.create(CatalogItems.get(i)));
+      ShopDetails shopDetails = new ShopDetails(shop, merchant, catalogItems);
+      expectedShopDetails.add(shopDetails);
+    }
+
+    String shopPreparedStatementPlaceholder = Utilities.getPlaceHolderString(2);
+    String merchantPreparedStatementPlaceholder = Utilities.getPlaceHolderString(2);
+
+    when(connection.sendPreparedStatement(
+      String.format(Constants.SELECT_SHOPS_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList))
+        .thenReturn(CompletableFuture.completedFuture(shopQueryResult));
+    when(connection.sendPreparedStatement(
+      String.format(Constants.SELECT_MERCHANT_BATCH_QUERY, merchantPreparedStatementPlaceholder), merchantIDList))
+        .thenReturn(CompletableFuture.completedFuture(merchantQueryResult));
+    when(connection.sendPreparedStatement(
+      String.format(Constants.SELECT_CATALOG_BATCH_QUERY, shopPreparedStatementPlaceholder), shopIdList))
+        .thenReturn(CompletableFuture.completedFuture(servicesQueryResult));
+
+    List<String> firstPhrase = new ArrayList<String>();
+    List<String> secondPhrase = new ArrayList<String>();
+
+    firstPhrase.add("Choco <em>Pie</em>");
+    secondPhrase.add("Arvind <em>Fruits</em>");
+
+    List<SearchSnippet> expectedResponse = new ArrayList<SearchSnippet>();
+
+    expectedResponse.add(SearchSnippet.create(expectedShopDetails.get(0), firstPhrase));
+    expectedResponse.add(SearchSnippet.create(expectedShopDetails.get(1), secondPhrase));
+  
+    // ACT
+
+    List<SearchSnippet> actualResponse = controller.getDataFromSearchIndex(query, queryRadius, "0.0", "0.0").get();
+  
+    // ASSERT
+    
+    verify(util).getResponseBody(eq(Constants.SEARCH_INDEX_URL), anyString());
+    assertEquals(expectedResponse, actualResponse);
   }
 
   @Test
@@ -279,7 +402,7 @@ public class ShopControllerTest {
 
     /* ACT */
 
-    CompletableFuture<List<ShopDetails>> actualShopDetailsPromise = controller.getShopsByShopIDBatch(shopIdList);
+    CompletableFuture<List<ShopDetails>> actualShopDetailsPromise = controller.getShopDetailsListByShopIDBatch(shopIdList);
 
     /* ASSERT */
 
