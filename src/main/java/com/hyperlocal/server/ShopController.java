@@ -318,8 +318,9 @@ public class ShopController {
 
   /**
    * Update the catalog for a shop
-   * @param shopID The Unique ID of the Shop
-   * @param updatePayload JSON Payload containing Data to update
+   * @param merchantID The unique ID of the Merchant
+   * @param shopID The unique ID of the Shop
+   * @param updatePayload JSON payload containing Data to update
    * @return {@code HashMap<"success",true>} if upsert is successful throws exception otherwise
    * @throws ResponseStatusException
    */

@@ -17,7 +17,7 @@ public class Guard {
         String idToken = null;
         try
         {
-            idToken = Utilities.verifyAndDecodeIdJwt(encodedIdToken).get();
+            idToken = Utilities.verifyAndDecodeIdJwt(encodedIdToken);
         }
         catch(Exception e)
         {

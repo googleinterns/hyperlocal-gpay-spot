@@ -1,9 +1,19 @@
 package com.hyperlocal.server;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
 import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import org.apache.http.util.EntityUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.cache.CacheConfig;
+import org.apache.http.impl.client.cache.CachingHttpClients;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.cache.HttpCacheContext;
+import org.apache.http.client.cache.CacheResponseStatus;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -24,8 +34,21 @@ import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.VerificationJwkSelector;
 
 public class Utilities {
-    public static final String IDENTITY_API_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
-
+  public static final String IDENTITY_API_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+  public static CacheConfig cacheConfig = CacheConfig.custom()
+          .setMaxCacheEntries(10)
+          .setMaxObjectSize(10000)
+          .build();
+  public static RequestConfig requestConfig = RequestConfig.custom()
+          .setConnectTimeout(30000)
+          .setSocketTimeout(30000)
+          .build();
+  public static CloseableHttpClient cachingClient = CachingHttpClients.custom()
+          .setCacheConfig(cacheConfig)
+          .setDefaultRequestConfig(requestConfig)
+          .build();
+  public static HttpClient regularClient = HttpClient.newHttpClient();
+    
   /**
    * Generate a HashMap for error object
    * @param msg The error message
@@ -71,39 +94,53 @@ public class Utilities {
    * @param token The JWT token that needs to be verified
    * @return The CompletableFuture of the decoded token, if verified successfully. Otherwise, {@code null}.
    */
-  public static CompletableFuture<String> verifyAndDecodeIdJwt(String token) {
-    return getResponseBody(IDENTITY_API_JWKS_URL, null)
-        .thenApply((jsonWebKeySetString) -> {
-            try {
-                // Set token and algorithm
-                JsonWebSignature jsonWebSignature = new JsonWebSignature();
-                jsonWebSignature.setAlgorithmConstraints(new AlgorithmConstraints(ConstraintType.PERMIT,   AlgorithmIdentifiers.RSA_USING_SHA256));
-                jsonWebSignature.setCompactSerialization(token);
+  public static String verifyAndDecodeIdJwt(String token) {
+      String jsonWebKeySetString =  getCachedResponseBody(IDENTITY_API_JWKS_URL);
+      try {
+          // Set token and algorithm
+          JsonWebSignature jsonWebSignature = new JsonWebSignature();
+          jsonWebSignature.setAlgorithmConstraints(new AlgorithmConstraints(ConstraintType.PERMIT,   AlgorithmIdentifiers.RSA_USING_SHA256));
+          jsonWebSignature.setCompactSerialization(token);
 
-                // Find and use relevant JWK
-                JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jsonWebKeySetString);
-                JsonWebKey jsonWebKey = new VerificationJwkSelector().select(jsonWebSignature, jsonWebKeySet.getJsonWebKeys());
-                jsonWebSignature.setKey(jsonWebKey.getKey());
+          // Find and use relevant JWK
+          JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jsonWebKeySetString);
+          JsonWebKey jsonWebKey = new VerificationJwkSelector().select(jsonWebSignature, jsonWebKeySet.getJsonWebKeys());
+          jsonWebSignature.setKey(jsonWebKey.getKey());
 
-                if(!jsonWebSignature.verifySignature()) return null;
+          if(!jsonWebSignature.verifySignature()) return null;
 
-                return jsonWebSignature.getPayload();
-            } catch(Exception ex) {
-                Logger.getLogger("JwtVerification").log(Level.WARNING, ex.getMessage(), ex);
-                return null;
-            }
-        });
+          return jsonWebSignature.getPayload();
+      } catch(Exception ex) {
+          Logger.getLogger("JwtVerification").log(Level.WARNING, ex.getMessage(), ex);
+          return null;
+      }
+  }
+
+  /**
+   * Get cached response body of an HTTP GET request. If cache doesn't exist, make a new request.
+   * @param URL The URL to make the request to.
+   * @return The response body.
+   */
+  private static String getCachedResponseBody(String url) {
+      HttpCacheContext context = HttpCacheContext.create();
+      HttpGet httpget = new HttpGet(url);
+      String responseBody = null;
+      try {
+          CloseableHttpResponse response = Utilities.cachingClient.execute(httpget, context);
+          responseBody = EntityUtils.toString(response.getEntity());
+          response.close();
+      } finally {
+          return responseBody;
+      }
   }
   
   /**
    * Make an HTTP GET request and get the response's body.
    * @param URL The URL to make the request to.
    * @param requestBody The body of the GET request. {@code null} value refers to empty body.
-   * @return The CompletableFuture of the response string
+   * @return The CompletableFuture of the response string.
    */
   public CompletableFuture<String> getResponseBody(String URL, String requestBody) {
-    // Create the HTTP Request to send
-    HttpClient client = HttpClient.newHttpClient();
     Builder requestBuilder = HttpRequest.newBuilder().uri(URI.create(URL));
     if(requestBody != null) {
       requestBuilder = requestBuilder
@@ -111,7 +148,7 @@ public class Utilities {
         .setHeader("Content-Type", "application/json");
     }
     HttpRequest request = requestBuilder.build();
-    return client.sendAsync(request, BodyHandlers.ofString())
+    return regularClient.sendAsync(request, BodyHandlers.ofString())
       .thenApply(HttpResponse::body);
   }
 
