@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import AuthHTTP from '../../../utilities';
 import ROUTES from '../../../routes';
 import { Container } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -19,7 +19,7 @@ class Catalog extends React.Component {
     
     if(!itemsToCreate.length && !itemsToUpdate.length && !itemsToDelete.length) return this.props.history.push(ROUTES.merchant.dashboard);
     
-    axios.post(ROUTES.v1.post.updateCatalog.replace(":shopID", this.props.user.shop.shopID), {
+    AuthHTTP.post(ROUTES.v1.post.updateCatalog.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
       create: itemsToCreate,
       update: itemsToUpdate,
       delete: itemsToDelete

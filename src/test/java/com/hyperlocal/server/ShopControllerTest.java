@@ -137,7 +137,8 @@ public class ShopControllerTest {
     /* ARRANGE */
     assertThat(controller).isNotNull();
 
-    // Params: shopID, payload
+    // Params: merchantID, shopID, payload
+    String merchantID = "123698745";
     Long shopID = 1000000000000L;
     HashMap<String, Object> payload = new HashMap<String, Object>();
 
@@ -175,7 +176,7 @@ public class ShopControllerTest {
     when(template.publish(Constants.PUBSUB_URL, "1000000000000")).thenReturn(new AsyncResult<>("DONE"));
 
     /* ACT */
-    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(shopID,
+    CompletableFuture<HashMap<String, Object>> actualMapPromise = controller.upsertCatalog(merchantID, shopID,
         new Gson().toJson(payload));
 
     /* ASSERT */
@@ -475,7 +476,8 @@ public class ShopControllerTest {
       Double.toString(latitude),
       Double.toString(longitude),
       addressLine1,
-      shopID
+      shopID,
+      merchantID
     );
     CompletableFuture<QueryResult> queryResult = CompletableFuture
         .completedFuture(new QueryResult(1, "SUCCESS", resultSet));

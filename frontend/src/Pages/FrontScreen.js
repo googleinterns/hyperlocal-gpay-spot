@@ -3,7 +3,7 @@ import { Button } from 'react-bootstrap';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import { Link } from "react-router-dom";
-import axios from 'axios';
+import AuthHTTP from '../utilities';
 import ROUTES from '../routes';
 import { withRouter } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -47,10 +47,10 @@ class FrontScreen extends React.Component {
 
   setAsMerchant = async () => {
     this.setState({pageLoading: true});
-    let merchantShops = await axios.get(ROUTES.v1.get.shopsByMerchantID.replace('%b', this.props.user.ID));
+    let merchantShops = await AuthHTTP.get(ROUTES.v1.get.shopsByMerchantID.replace('%b', this.props.user.ID));
     if(!merchantShops.data[0])
     {
-        await axios.post(ROUTES.v1.post.insertMerchant, {
+        await AuthHTTP.post(ROUTES.v1.post.insertMerchant, {
             merchantID: this.props.user.ID,
             merchantName: this.props.user.name,
             merchantPhone: "0123456789" // TODO: Implement Phone Number API

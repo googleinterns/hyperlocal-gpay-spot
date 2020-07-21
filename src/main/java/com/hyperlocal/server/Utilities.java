@@ -1,15 +1,30 @@
 package com.hyperlocal.server;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+import java.util.concurrent.CompletableFuture;
+import java.util.HashMap;
+
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jwa.AlgorithmConstraints;
+import org.jose4j.jwa.AlgorithmConstraints.ConstraintType;
+import org.jose4j.jwk.JsonWebKey;
+import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwk.VerificationJwkSelector;
 
 public class Utilities {
+    public static final String IDENTITY_API_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
 
   /**
    * Generate a HashMap for error object
@@ -52,6 +67,35 @@ public class Utilities {
   }
 
   /**
+   * Verify a JWT token against Google's JWKS
+   * @param token The JWT token that needs to be verified
+   * @return The CompletableFuture of the decoded token, if verified successfully. Otherwise, {@code null}.
+   */
+  public static CompletableFuture<String> verifyAndDecodeIdJwt(String token) {
+    return getResponseBody(IDENTITY_API_JWKS_URL, null)
+        .thenApply((jsonWebKeySetString) -> {
+            try {
+                // Set token and algorithm
+                JsonWebSignature jsonWebSignature = new JsonWebSignature();
+                jsonWebSignature.setAlgorithmConstraints(new AlgorithmConstraints(ConstraintType.PERMIT,   AlgorithmIdentifiers.RSA_USING_SHA256));
+                jsonWebSignature.setCompactSerialization(token);
+
+                // Find and use relevant JWK
+                JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jsonWebKeySetString);
+                JsonWebKey jsonWebKey = new VerificationJwkSelector().select(jsonWebSignature, jsonWebKeySet.getJsonWebKeys());
+                jsonWebSignature.setKey(jsonWebKey.getKey());
+
+                if(!jsonWebSignature.verifySignature()) return null;
+
+                return jsonWebSignature.getPayload();
+            } catch(Exception ex) {
+                Logger.getLogger("JwtVerification").log(Level.WARNING, ex.getMessage(), ex);
+                return null;
+            }
+        });
+  }
+  
+  /**
    * Make an HTTP GET request and get the response's body.
    * @param URL The URL to make the request to.
    * @param requestBody The body of the GET request. {@code null} value refers to empty body.
@@ -70,4 +114,5 @@ public class Utilities {
     return client.sendAsync(request, BodyHandlers.ofString())
       .thenApply(HttpResponse::body);
   }
+
 }

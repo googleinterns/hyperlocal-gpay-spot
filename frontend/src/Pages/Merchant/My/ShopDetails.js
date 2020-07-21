@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import AuthHTTP from '../../../utilities';
 import { Container } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -16,7 +16,7 @@ class ShopDetails extends React.Component {
 
   setShopDetails = (shop) => {
     this.setState({pageLoading: true});
-    axios.put(ROUTES.v1.put.updateShop.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
+    AuthHTTP.put(ROUTES.v1.put.updateShop.replace(":merchantID", this.props.user.ID).replace(":shopID", this.props.user.shop.shopID), {
       shopName: shop.shopName,
       typeOfService: shop.typeOfService,
       addressLine1: shop.addressLine1,

@@ -323,9 +323,8 @@ public class ShopController {
    * @return {@code HashMap<"success",true>} if upsert is successful throws exception otherwise
    * @throws ResponseStatusException
    */
-  @PostMapping("/v1/shops/{shopID}/catalog:batchUpdate")
-  public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable Long shopID,
-      @RequestBody String updatePayload) {
+  @PostMapping("/v1/merchants/{merchantID}/shops/{shopID}/catalog:batchUpdate")
+  public CompletableFuture<HashMap<String, Object>> upsertCatalog(@PathVariable String merchantID, @PathVariable Long shopID, @RequestBody String updatePayload) {
     JsonObject commands = JsonParser.parseString(updatePayload).getAsJsonObject();
     JsonArray createCommands = commands.getAsJsonArray("create");
     JsonArray updateCommands = commands.getAsJsonArray("update");
@@ -433,9 +432,10 @@ public class ShopController {
       newShopDetails.get("shopName").getAsString(),
       newShopDetails.get("typeOfService").getAsString(), 
       newShopDetails.get("latitude").getAsString(),
-      newShopDetails.get("longitude").getAsString(), 
-      newShopDetails.get("addressLine1").getAsString(), 
-      shopID
+      newShopDetails.get("longitude").getAsString(),
+      newShopDetails.get("addressLine1").getAsString(),
+      shopID,
+      merchantID
     );
     return connection
     .sendPreparedStatement(Constants.SHOP_UPDATE_STATEMENT, queryParams)
