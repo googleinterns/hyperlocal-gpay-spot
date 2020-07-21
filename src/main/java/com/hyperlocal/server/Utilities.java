@@ -96,7 +96,7 @@ public class Utilities {
         }
     }
 
-    public static String getResponseBody(String url) {
+    private static String getResponseBody(String url) {
         
         HttpCacheContext context = HttpCacheContext.create();
         HttpGet httpget = new HttpGet(url);
