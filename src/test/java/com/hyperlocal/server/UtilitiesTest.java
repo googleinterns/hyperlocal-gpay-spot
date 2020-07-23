@@ -1,22 +1,6 @@
 package com.hyperlocal.server;
 
-import javax.servlet.http.HttpServletRequest;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import com.github.jasync.sql.db.Connection;
-import com.github.jasync.sql.db.QueryResult;
-import com.github.jasync.sql.db.ResultSet;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.hyperlocal.server.Data.Merchant;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
