@@ -30,25 +30,6 @@ public class MerchantController {
   }
 
   /**
-   * Updates details of a merchant
-   * @param merchantID The unique ID of the merchant
-   * @param postInputString JSON serialized {@link Merchant} details
-   * @return CompletableFuture of the updated Merchant
-   */
-  // @PutMapping("/v1/merchants/{merchantID}")
-  public CompletableFuture<Merchant> updateMerchant(@PathVariable String merchantID, @RequestBody String postInputString) {
-    // TODO: Rewrite method with ID JWT & phone JWT verification
-    JsonObject merchantJson = JsonParser.parseString(postInputString).getAsJsonObject();
-    String merchantName = merchantJson.get("merchantName").getAsString();
-    String merchantPhone = merchantJson.get("merchantPhone").getAsString();
-    return connection
-    .sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, Arrays.asList(merchantName, merchantPhone, merchantID))
-    .thenApply((resp) -> {
-      return Merchant.create(merchantID, merchantName, merchantPhone);
-    });
-  }
-
-  /**
    * Insert a new merchant
    * @param postInputString Serialized JSON with 'phoneJWT' key mapping to Base-64 JWT token issued by Spot Phone Number API
    * @return CompletableFuture of the newly inserted Merchant
