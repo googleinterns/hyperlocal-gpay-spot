@@ -62,7 +62,7 @@ import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.VerificationJwkSelector;
 
 public class Utilities {
-  public static final String IDENTITY_API_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+
   public static CacheConfig cacheConfig = CacheConfig.custom()
           .setMaxCacheEntries(10)
           .setMaxObjectSize(10000)
@@ -76,7 +76,12 @@ public class Utilities {
           .setDefaultRequestConfig(requestConfig)
           .build();
   public static HttpClient regularClient = HttpClient.newHttpClient();
-    
+  public static Utilities util = new Utilities();
+
+  public static Utilities get() {
+    return util;
+  }
+
   /**
    * Generate a HashMap for error object
    * @param msg The error message
@@ -118,20 +123,40 @@ public class Utilities {
   }
 
   /**
-   * Verify a JWT token against Google's JWKS
+   * Verify a JWT token against Google's ID JWKS
    * @param token The JWT token that needs to be verified
-   * @return The CompletableFuture of the decoded token, if verified successfully. Otherwise, {@code null}.
+   * @return The decoded token, if verified successfully. Otherwise, {@code null}.
    */
-  public static String verifyAndDecodeIdJwt(String token) {
-      String jsonWebKeySetString =  getCachedResponseBody(IDENTITY_API_JWKS_URL);
+  public String verifyAndDecodeIdJwt(String token) {
+      String jsonWebKeySetString =  getCachedResponseBody(Constants.IDENTITY_API_JWKS_URL);
+      return verifyAndDecodeJwt(token, jsonWebKeySetString);
+  }
+
+  /**
+   * Verify a JWT token against Google's Microapp JWKS
+   * @param token The JWT token that needs to be verified
+   * @return The decoded token, if verified successfully. Otherwise, {@code null}.
+   */
+  public String verifyAndDecodePhoneJwt(String token) {
+      String jsonWebKeySetString = getCachedResponseBody(Constants.PHONE_API_JWKS_URL);
+      return verifyAndDecodeJwt(token, jsonWebKeySetString);
+  }
+
+  /**
+   * Verify a JWT token
+   * @param jwt The JWT token that needs to be verified
+   * @param jwks The Json Web Key Set against which token needs to be verified
+   * @return The decoded token, if verified successfully. Otherwise, {@code null}.
+   */
+  private static String verifyAndDecodeJwt(String jwt, String jwks) {
       try {
           // Set token and algorithm
           JsonWebSignature jsonWebSignature = new JsonWebSignature();
           jsonWebSignature.setAlgorithmConstraints(new AlgorithmConstraints(ConstraintType.PERMIT,   AlgorithmIdentifiers.RSA_USING_SHA256));
-          jsonWebSignature.setCompactSerialization(token);
+          jsonWebSignature.setCompactSerialization(jwt);
 
           // Find and use relevant JWK
-          JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jsonWebKeySetString);
+          JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jwks);
           JsonWebKey jsonWebKey = new VerificationJwkSelector().select(jsonWebSignature, jsonWebKeySet.getJsonWebKeys());
           jsonWebSignature.setKey(jsonWebKey.getKey());
 
