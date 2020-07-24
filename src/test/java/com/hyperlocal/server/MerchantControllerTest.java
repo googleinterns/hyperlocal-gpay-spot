@@ -86,25 +86,4 @@ public class MerchantControllerTest {
     verify(connection).sendPreparedStatement(Constants.MERCHANT_INSERT_STATEMENT, queryParams);
   }
 
-  @Test
-  public void shouldUpdateMerchant() throws Exception {
-    // ARRANGE
-    assertThat(controller).isNotNull();
-    List<Object> queryParams = Arrays.asList(merchantName, merchantPhone, merchantID);
-    CompletableFuture<QueryResult> queryResult = CompletableFuture
-        .completedFuture(new QueryResult(1, "SUCCESS", resultSet));
-    when(connection.sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, queryParams))
-        .thenReturn(queryResult);
-    JsonObject newMerchantDetails = new JsonObject();
-    newMerchantDetails.addProperty("merchantName", merchantName);
-    newMerchantDetails.addProperty("merchantPhone", merchantPhone);
-    Merchant expectedOutput = merchant;
-    
-    // ACT
-    Merchant actualOutput = controller.updateMerchant(merchantID, new Gson().toJson(newMerchantDetails)).get();
-    
-    // ASSERT
-    assertEquals(expectedOutput, actualOutput);
-    verify(connection).sendPreparedStatement(Constants.MERCHANT_UPDATE_STATEMENT, queryParams);
-  }
 }
