@@ -360,7 +360,7 @@ public class ShopController {
         return connection.sendPreparedStatement(deleteQuery, deleteQueryParameters);
       });
     }
-    //publish promise not working -check that
+ 
     return statusPromise
       .thenCompose((QueryResult result) -> {
         // If successful, commit
